@@ -5,7 +5,7 @@ scrum master = DELIMA, Honey Mae D.
 
 ui/ux developer = ORTIZ NATALIA GABRILLE A.
 
-backend developer =
+backend developer = JOMERO, Feljun B.
 
 devsecops = FLORENTINO, Rex Matthew G.
 
