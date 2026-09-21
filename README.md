@@ -9,4 +9,4 @@ backend developer =
 
 devsecops = FLORENTINO, Rex Matthew G.
 
-test engineer = 
+test engineer = RAMOS, Christian Daryll Dave U.
