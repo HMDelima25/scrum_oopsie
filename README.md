@@ -1,12 +1,12 @@
 # scrum_oopsie
 this is our first group project
 
-scrum master = DELIMA, Honey Mae D.
+Scrum Master = DELIMA, Honey Mae D.
 
-ui/ux developer = ORTIZ NATALIA GABRILLE A.
+UI/UX developer = ORTIZ, NATALIA GABRILLE A.
 
-backend developer =
+Backend developer = JOMERO, Felijun
 
-devsecops = FLORENTINO, Rex Matthew G.
+DevSecOps = FLORENTINO, Rex Matthew G.
 
-test engineer = 
+Test Engineer = RAMOS, Christian Daryll Dave
