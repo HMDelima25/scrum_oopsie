@@ -65,7 +65,6 @@
                     type="password"
                     autocomplete="current-password"
                     placeholder="Enter your password"
-                    minlength="8"
                     required
                   />
                   <button
@@ -100,11 +99,41 @@
                 </svg>
               </button>
 
+              <div class="social-divider" aria-hidden="true">
+                <span></span>
+                <p>Or continue with</p>
+                <span></span>
+              </div>
+
+              <div class="social-login" aria-label="Other sign-in methods">
+                <button class="social-button" type="button" data-provider="Google" aria-label="Continue with Google">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M21.35 12.19c0-.64-.06-1.25-.17-1.84H12v3.48h5.25a4.49 4.49 0 0 1-1.95 2.94v2.26h3.16c1.85-1.7 2.89-4.22 2.89-6.84Z" />
+                    <path fill="#34A853" d="M12 21.72c2.64 0 4.86-.87 6.48-2.37l-3.16-2.45c-.88.59-2 .94-3.32.94-2.55 0-4.71-1.72-5.48-4.04H3.25v2.53A9.79 9.79 0 0 0 12 21.72Z" />
+                    <path fill="#FBBC05" d="M6.52 13.8A5.9 5.9 0 0 1 6.21 12c0-.63.11-1.23.31-1.8V7.67H3.25A9.78 9.78 0 0 0 2.21 12c0 1.57.37 3.06 1.04 4.33l3.27-2.53Z" />
+                    <path fill="#EA4335" d="M12 6.16c1.44 0 2.73.49 3.74 1.46l2.81-2.81A9.42 9.42 0 0 0 12 2.28a9.79 9.79 0 0 0-8.75 5.39l3.27 2.53C7.29 7.88 9.45 6.16 12 6.16Z" />
+                  </svg>
+                </button>
+
+                <button class="social-button social-button--email" type="button" data-provider="Email" aria-label="Continue with email">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4.75 5h14.5A2.75 2.75 0 0 1 22 7.75v8.5A2.75 2.75 0 0 1 19.25 19H4.75A2.75 2.75 0 0 1 2 16.25v-8.5A2.75 2.75 0 0 1 4.75 5Zm.05 2 6.53 5.04a1.1 1.1 0 0 0 1.34 0L19.2 7H4.8Zm15.2 2.1-6.11 4.72a3.1 3.1 0 0 1-3.78 0L4 9.1v7.15c0 .41.34.75.75.75h14.5a.75.75 0 0 0 .75-.75V9.1Z" />
+                  </svg>
+                </button>
+
+                <button class="social-button social-button--facebook" type="button" data-provider="Facebook" aria-label="Continue with Facebook">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06C2 17.08 5.66 21.25 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.77-3.91 1.09 0 2.23.2 2.23.2V8.6h-1.25c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22C18.34 21.25 22 17.08 22 12.06Z" />
+                  </svg>
+                </button>
+              </div>
+
               <div class="form-message" id="form-message" role="status" aria-live="polite"></div>
             </form>
 
             <p class="access-note">
-              Need an account? Contact your HOPE, Inc. administrator.
+              New to HOPE, Inc.?
+              <button class="inline-action" id="create-account" type="button">Create an account</button>
             </p>
           </div>
 
@@ -114,7 +143,6 @@
         <aside class="feature-panel" aria-label="HOPE, Inc. product highlights">
           <div class="feature-topline">
             <span>One connected workspace</span>
-            <span class="feature-count"><span id="slide-number">01</span> / 03</span>
           </div>
 
           <div class="feature-copy" aria-live="polite">
@@ -145,6 +173,12 @@
             </button>
           </div>
 
+          <div class="feature-pager" role="tablist" aria-label="Product highlights">
+            <button class="is-active" type="button" role="tab" aria-selected="true" aria-label="Show highlight 1" data-slide="0"><span></span></button>
+            <button type="button" role="tab" aria-selected="false" aria-label="Show highlight 2" data-slide="1"><span></span></button>
+            <button type="button" role="tab" aria-selected="false" aria-label="Show highlight 3" data-slide="2"><span></span></button>
+          </div>
+
           <div class="insight-card">
             <div class="insight-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M4 19V9h3v10H4Zm6.5 0V5h3v14h-3ZM17 19v-7h3v7h-3Z" /></svg>
@@ -158,16 +192,127 @@
       </section>
     </main>
 
-    <dialog id="reset-dialog" aria-labelledby="reset-title">
-      <form method="dialog" id="reset-form">
-        <button class="dialog-close" id="dialog-close" type="button" aria-label="Close password reset dialog">×</button>
-        <div class="dialog-icon" aria-hidden="true">@</div>
-        <h2 id="reset-title">Reset your password</h2>
-        <p>Enter your account email to request a secure password-reset link.</p>
-        <label for="reset-email">Email address</label>
-        <input id="reset-email" name="reset-email" type="email" placeholder="name@hopeinc.com" required />
-        <button class="primary-button" value="default" type="submit">Send reset link</button>
-        <p class="dialog-message" id="dialog-message" role="status" aria-live="polite"></p>
+    <dialog class="flow-dialog" id="reset-dialog" aria-labelledby="reset-title">
+      <div class="flow-dialog__surface">
+        <button class="dialog-close" id="reset-close" type="button" aria-label="Close password recovery">×</button>
+
+        <section class="flow-step is-active" id="reset-method-step">
+          <div class="dialog-heading">
+            <p class="feature-kicker">Account recovery</p>
+            <h2 id="reset-title">Forgot password?</h2>
+            <p>Choose how you want to confirm your identity and receive recovery instructions.</p>
+          </div>
+
+          <label class="compact-label" for="recovery-email">Account email</label>
+          <input class="dialog-input" id="recovery-email" type="email" placeholder="name@hopeinc.com" autocomplete="email" required />
+
+          <div class="recovery-methods" role="group" aria-label="Recovery method">
+            <button class="recovery-option is-selected" type="button" data-recovery="email" aria-pressed="true">
+              <span class="recovery-option__icon recovery-option__icon--email" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4.75 5h14.5A2.75 2.75 0 0 1 22 7.75v8.5A2.75 2.75 0 0 1 19.25 19H4.75A2.75 2.75 0 0 1 2 16.25v-8.5A2.75 2.75 0 0 1 4.75 5Zm.05 2 6.53 5.04a1.1 1.1 0 0 0 1.34 0L19.2 7H4.8Zm15.2 2.1-6.11 4.72a3.1 3.1 0 0 1-3.78 0L4 9.1v7.15c0 .41.34.75.75.75h14.5a.75.75 0 0 0 .75-.75V9.1Z" /></svg>
+              </span>
+              <span><strong>Send via email</strong><small>Receive a secure link at your account email.</small></span>
+              <span class="option-check" aria-hidden="true">✓</span>
+            </button>
+
+            <button class="recovery-option" type="button" data-recovery="google" aria-pressed="false">
+              <span class="recovery-option__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.35 12.19c0-.64-.06-1.25-.17-1.84H12v3.48h5.25a4.49 4.49 0 0 1-1.95 2.94v2.26h3.16c1.85-1.7 2.89-4.22 2.89-6.84Z" /><path fill="#34A853" d="M12 21.72c2.64 0 4.86-.87 6.48-2.37l-3.16-2.45c-.88.59-2 .94-3.32.94-2.55 0-4.71-1.72-5.48-4.04H3.25v2.53A9.79 9.79 0 0 0 12 21.72Z" /><path fill="#FBBC05" d="M6.52 13.8A5.9 5.9 0 0 1 6.21 12c0-.63.11-1.23.31-1.8V7.67H3.25A9.78 9.78 0 0 0 2.21 12c0 1.57.37 3.06 1.04 4.33l3.27-2.53Z" /><path fill="#EA4335" d="M12 6.16c1.44 0 2.73.49 3.74 1.46l2.81-2.81A9.42 9.42 0 0 0 12 2.28a9.79 9.79 0 0 0-8.75 5.39l3.27 2.53C7.29 7.88 9.45 6.16 12 6.16Z" /></svg>
+              </span>
+              <span><strong>Verify with Google</strong><small>Available for accounts linked with Google.</small></span>
+              <span class="option-check" aria-hidden="true">✓</span>
+            </button>
+
+            <button class="recovery-option" type="button" data-recovery="authenticator" aria-pressed="false">
+              <span class="recovery-option__icon recovery-option__icon--shield" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.1 3.4 9.7 8 11 4.6-1.3 8-5.9 8-11V5l-8-3Zm0 2.2L18 6.4V11c0 3.9-2.4 7.5-6 8.8-3.6-1.3-6-4.9-6-8.8V6.4l6-2.2Zm0 3.3a2.5 2.5 0 0 1 1 4.8V16h-2v-3.7a2.5 2.5 0 0 1 1-4.8Z" /></svg>
+              </span>
+              <span><strong>Use authenticator</strong><small>Enter a code if two-factor authentication is configured.</small></span>
+              <span class="option-check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+
+          <button class="primary-button" id="continue-recovery" type="button">
+            Continue
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 5.3a1 1 0 0 1 1.4 0l6 6a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4-1.4l4.3-4.3H4a1 1 0 1 1 0-2h13.5l-4.3-4.3a1 1 0 0 1 0-1.4Z" /></svg>
+          </button>
+          <p class="dialog-message" id="recovery-message" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="flow-step confirmation-step" id="reset-confirmation-step" hidden>
+          <div class="confirmation-art" aria-hidden="true">
+            <span class="confirmation-envelope"></span>
+            <span class="confirmation-shield">✓</span>
+          </div>
+          <p class="feature-kicker" id="recovery-confirmation-kicker">Check your inbox</p>
+          <h2 id="recovery-confirmation-title">Confirmation email sent</h2>
+          <p id="recovery-confirmation-copy">We sent password-recovery instructions to <strong id="masked-recovery-email"></strong>.</p>
+          <p class="confirmation-note">The link should expire after the time set by the backend security policy.</p>
+          <button class="primary-button" id="resend-recovery" type="button">Resend email</button>
+          <button class="secondary-button" id="change-recovery-method" type="button">Choose another method</button>
+          <p class="dialog-message" id="resend-message" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="flow-dialog flow-dialog--wide" id="create-dialog" aria-labelledby="create-title">
+      <form class="flow-dialog__surface" id="create-form" novalidate>
+        <button class="dialog-close" id="create-close" type="button" aria-label="Close account creation">×</button>
+        <div class="dialog-heading">
+          <p class="feature-kicker">Join HOPE, Inc.</p>
+          <h2 id="create-title">Create your account</h2>
+          <p>Register your details. New accounts start as pending Users and require administrator approval.</p>
+        </div>
+
+        <div class="create-grid">
+          <div class="dialog-field">
+            <label for="first-name">First name</label>
+            <input class="dialog-input" id="first-name" name="first-name" autocomplete="given-name" required />
+          </div>
+          <div class="dialog-field">
+            <label for="last-name">Last name</label>
+            <input class="dialog-input" id="last-name" name="last-name" autocomplete="family-name" required />
+          </div>
+          <div class="dialog-field dialog-field--full">
+            <label for="create-email">Email address</label>
+            <input class="dialog-input" id="create-email" name="create-email" type="email" autocomplete="email" placeholder="name@hopeinc.com" required />
+          </div>
+          <div class="dialog-field dialog-field--full">
+            <label for="create-username">Username</label>
+            <input class="dialog-input" id="create-username" name="create-username" type="text" autocomplete="username" placeholder="Choose a username" required />
+          </div>
+          <div class="dialog-field dialog-field--full">
+            <label for="birthdate">Birthdate</label>
+            <input class="dialog-input" id="birthdate" name="birthdate" type="date" autocomplete="bday" required />
+          </div>
+          <div class="dialog-field">
+            <label for="create-password">Password</label>
+            <input class="dialog-input" id="create-password" name="create-password" type="password" autocomplete="new-password" minlength="8" required />
+            <div class="password-strength" id="password-strength" data-strength="0" aria-live="polite">
+              <div class="password-strength__header">
+                <span>Password strength</span>
+                <strong id="strength-label">Enter a password</strong>
+              </div>
+              <div class="password-strength__meter" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <p id="strength-hint">Use 8+ characters with uppercase, lowercase, a number, and a symbol.</p>
+            </div>
+          </div>
+          <div class="dialog-field">
+            <label for="confirm-password">Confirm password</label>
+            <input class="dialog-input" id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="8" required />
+          </div>
+        </div>
+
+        <label class="checkbox-label create-consent">
+          <input id="account-terms" type="checkbox" required />
+          <span class="checkmark" aria-hidden="true"></span>
+          I confirm that the information provided is accurate.
+        </label>
+
+        <button class="primary-button" type="submit">Create account</button>
+        <p class="dialog-message" id="create-message" role="status" aria-live="polite"></p>
       </form>
     </dialog>
 

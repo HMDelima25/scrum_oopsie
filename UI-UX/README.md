@@ -20,7 +20,7 @@ Then open `http://127.0.0.1:4173`.
 
 - `index.html` - authentication entry point and accessible markup reference
 - `styles.css` - initial tokens, shared controls, page composition, and responsive rules
-- `script.js` - form validation, password visibility, password-reset interaction, and feature navigation
+- `script.js` - login and registration validation, password visibility, multi-method password recovery, confirmation states, and feature navigation
 - `FOUNDATION.md` - application architecture, extension rules, and migration safeguards
 
 ## Current integration status
