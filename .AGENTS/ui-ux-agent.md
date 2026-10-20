@@ -44,6 +44,24 @@ The database file is a data reference. Do not change database structure or busin
 
 HOPE, Inc. ERP is a database-driven business system that manages customers, products, employees, sales, reports, and user access in one application.
 
+### Approved website identity and description
+
+- **Website name:** HOPE, Inc.
+- **Product descriptor:** Enterprise Resource Planning System
+- **Primary description:** HOPE, Inc. brings customer management, product pricing, human resources, sales, payments, and reporting into one connected workspace.
+- **Supporting description:** Keep business records connected, manage everyday operations, and give each team member access to the tools permitted by their role.
+
+Use **HOPE, Inc.** as the visible brand name in navigation, authentication screens, page titles, and public-facing copy. Use **HOPE, Inc. ERP** when the fuller system name provides useful context, such as documentation, metadata, or an explanatory subtitle.
+
+Recommended authentication copy:
+
+- **Heading:** Welcome back
+- **Supporting text:** Sign in to manage customers, products, employees, sales, payments, and reports from one connected workspace.
+- **Feature-panel heading:** Everything your business needs, connected.
+- **Feature-panel text:** HOPE, Inc. keeps essential records and daily operations together so authorized users can work with consistent, up-to-date information.
+
+Copy must remain factual. Do not invent customer testimonials, awards, usage statistics, partner logos, or unsupported marketing claims.
+
 The required functional areas are:
 
 1. Authentication and account access
@@ -132,6 +150,44 @@ The visual identity should be original to our project:
 - Define exact color tokens and contrast-safe combinations in the design system before broad implementation.
 
 Do not let gold dominate large surfaces. Use it deliberately for emphasis, selection, or important accents while ocean blue carries the main brand identity.
+
+### Approved layout and style inspiration
+
+The authentication-page reference supplied by Natalia on October 20, 2026 is the approved inspiration for layout, composition, depth, and overall visual character. Follow its design language while replacing its branding, colors, content, and job-seeker purpose with HOPE, Inc.'s identity and ERP requirements.
+
+Carry forward these qualities:
+
+- A large centered application shell with generous outer breathing room.
+- A soft, atmospheric page background with a subtle grid or similarly restrained structure.
+- An asymmetric two-column desktop composition: the functional authentication form on the left and an expressive brand or product-information panel on the right.
+- Strong contrast between a softer translucent shell and a deep near-black or dark-ocean feature panel.
+- Layered cards, controlled overlap, soft glow, restrained blur, and selective depth.
+- Large rounded-square containers with occasional offset or notched corner treatment as a distinctive motif.
+- Bold, modern headings paired with calm supporting text.
+- Spacious form rhythm and a clear single primary action.
+- Small directional or carousel controls only when real content needs them.
+
+Translate the reference into our palette:
+
+- Replace the pink and purple atmosphere with ocean-blue and cool-blue gradients.
+- Use near-black, midnight blue, or blue-black for the dark feature panel.
+- Use gold for focused accents, active indicators, selected controls, small highlights, or subtle glow.
+- Use off-white or cool neutral surfaces instead of stark white where a softer layer is needed.
+- Maintain readable contrast and avoid placing long text over visually busy gradients.
+
+Do not copy the reference literally:
+
+- Do not reuse its logo, job-seeker wording, testimonial, names, social icons, starburst artwork, or decorative avatars.
+- Do not add Google, GitHub, Facebook, carousel, or testimonial controls unless those features genuinely exist in HOPE, Inc.
+- Do not make standard action buttons or text fields fully pill-shaped merely because the reference does; retain our rounded-square component rule.
+- Do not force the decorative authentication composition onto dense ERP tables and operational pages. Carry its palette, geometry, layering, typography, and depth into a more practical application shell.
+
+Responsive translation:
+
+- On wide screens, retain the two-panel composition and visual balance.
+- On tablets, reduce overlap and decorative depth before reducing usability or form width.
+- On mobile, prioritize the authentication form. Move the supporting feature panel below it, reduce it to a compact brand message, or omit nonessential decoration while retaining the HOPE, Inc. identity.
+- Decorative layers must never cover fields, actions, validation, or keyboard focus indicators.
 
 ## Product design principles
 
@@ -382,6 +438,23 @@ Prefer reusable, documented patterns for:
 - Report filters and print-friendly layouts
 
 Use centralized tokens for color, spacing, radius, typography, borders, shadows, and motion. Avoid one-off values when an established token fits.
+
+## Primary frontend application
+
+`UI-UX/` is the canonical and primary frontend application for HOPE, Inc. It is the codebase intended to grow into the finished website, not a disposable sample, isolated mockup, or temporary scaffold.
+
+- Extend the existing visual language, tokens, components, accessibility behavior, and responsive rules when adding pages.
+- Treat `UI-UX/index.html` as the current authentication entry point and the first implemented page of the main application.
+- Treat `UI-UX/styles.css` as the initial shared design-system and component baseline until the approved technology stack requires a deliberate migration.
+- Treat `UI-UX/script.js` as real frontend behavior with pending backend integration, not throwaway demo logic.
+- Keep unfinished API behavior explicit and isolated. Replace it with real integration when the backend contract is available.
+- Do not rebuild new modules with unrelated colors, radii, typography, controls, or spacing.
+- Extract reusable components and modules as the frontend grows instead of copying whole page sections.
+- Continue implementing the ERP in this application unless the team explicitly approves a framework migration or replacement.
+- Preserve working behavior during any approved migration and document the migration path.
+- New pages must satisfy the same responsive, accessibility, state, and interaction standards in this guide.
+
+The primary application is intentionally buildless while the team evaluates the final frontend stack. Buildless code is still main project code. Do not treat it as temporary or assume that a framework rewrite will replace it.
 
 ## Implementation workflow
 
