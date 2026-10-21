@@ -24,7 +24,7 @@ window.HOPE_MODULES = {
     ]
   },
   "human-resources": {
-    eyebrow: "Human resources", title: "Employees", description: "Review employee records and open job history without exposing it in navigation.", action: "Add employee", stats: [["Total employees","32","Seeded records"],["Active employees","27","No separation date"],["Departments","8","14 job roles"]],
+    eyebrow: "People and organization", title: "Human Resources", description: "Review employee records and open job history without exposing it in navigation.", action: "Add employee", stats: [["Total employees","32","Seeded records"],["Active employees","27","No separation date"],["Departments","8","14 job roles"]],
     columns: ["Employee", "Gender", "Birth date", "Hire date", "Separation", "Status", "Actions"],
     rows: [
       ["00001|John Smith", "Male", "Feb 20, 1985", "May 11, 2010", "-", "Active", "Seed import", "History|Edit|Delete"],
