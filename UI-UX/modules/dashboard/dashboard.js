@@ -83,7 +83,8 @@ menuButton.addEventListener("click", () => {
 });
 
 document.querySelectorAll(".sidebar-nav .nav-icon").forEach((button) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (event) => {
+    if (button.getAttribute("href") === "#") event.preventDefault();
     document.querySelectorAll(".sidebar-nav .nav-icon").forEach((item) => {
       item.classList.toggle("is-active", item === button);
       item.removeAttribute("aria-current");
@@ -124,11 +125,14 @@ document.querySelector("#chart-period").addEventListener("change", (event) => {
 });
 
 document.querySelector("#notifications-button").addEventListener("click", () => showToast("4 user approvals and 12 price reviews need attention."));
-document.querySelector("#help-button").addEventListener("click", () => showToast("Help center documentation is being prepared."));
+document.querySelector("#settings-button").addEventListener("click", () => showToast("Settings interface is ready for backend integration."));
+document.querySelector("#logout-button").addEventListener("click", () => {
+  if (window.confirm("Log out and return to the HOPE, Inc. sign-in screen?")) window.location.href = "../../index.html";
+});
 document.querySelector("#view-all").addEventListener("click", () => showToast("Full activity and audit views require backend integration."));
 document.querySelector("#profile-button").addEventListener("click", () => {
-  const shouldSignOut = window.confirm("Signed in as Admin. Return to the login screen?");
-  if (shouldSignOut) window.location.href = "../../index.html";
+  const popover = document.querySelector("#profile-popover");
+  popover.hidden = !popover.hidden;
 });
 
 document.addEventListener("keydown", (event) => {
@@ -136,3 +140,6 @@ document.addEventListener("keydown", (event) => {
 });
 
 renderDatabaseSnapshot();
+
+const requestedView = new URLSearchParams(window.location.search).get("view");
+if (requestedView) showToast(`${requestedView === "user-management" ? "User Management" : "Administrator"} workspace is awaiting backend integration.`);
