@@ -6,7 +6,7 @@ window.HOPE_DB_DATA = Object.freeze({
   metrics: {
     totalSales: 688935.47,
     totalPayments: 665326.58,
-    outstanding: 24608.89,
+    outstanding: 23608.89,
     employees: 32,
     activeEmployees: 27,
     customers: 82,
@@ -26,6 +26,40 @@ window.HOPE_DB_DATA = Object.freeze({
     { date: "2011-04-07", sales: 12147.95, payments: 12147.95 },
     { date: "2011-04-10", sales: 181202.57, payments: 7000 }
   ],
+  insights: {
+    customerTerms: [
+      { label: "45 days", value: 30 },
+      { label: "30 days", value: 28 },
+      { label: "Cash on delivery", value: 24 }
+    ],
+    productUnits: [
+      { label: "Each (ea)", value: 37 },
+      { label: "Piece (pc)", value: 20 }
+    ],
+    employeeStatus: [
+      { label: "Active", value: 27 },
+      { label: "Separated", value: 5 }
+    ],
+    employeeGender: [
+      { label: "Women", value: 19 },
+      { label: "Men", value: 13 }
+    ],
+    employees: [
+      { name: "John Smith", role: "Employee", status: "Active", initials: "JS" },
+      { name: "Jane Smith", role: "Employee", status: "Active", initials: "JS" },
+      { name: "Don King", role: "Employee", status: "Active", initials: "DK" },
+      { name: "Floyd Jenskin", role: "Employee", status: "Active", initials: "FJ" },
+      { name: "Bambie Cerudo", role: "Employee", status: "Active", initials: "BC" }
+    ],
+    monthlyPayments: [
+      { label: "Dec", value: 16020.63 },
+      { label: "Jan", value: 32836.63 },
+      { label: "Feb", value: 108304.60 },
+      { label: "Mar", value: 91830.88 },
+      { label: "Apr", value: 136735.00 },
+      { label: "May", value: 211366.53 }
+    ]
+  },
   recentRecords: [
     { title: "Sale TR000042", detail: "Datapop - $522.68", module: "Sales", owner: "Don King", status: "Recorded", tone: "success", date: "2020-10-25" },
     { title: "Payment OR000163", detail: "TR000120 - $43,708.17", module: "Payments", owner: "Seed record", status: "Received", tone: "success", date: "2011-05-30" },
