@@ -4,6 +4,7 @@ const sidebarToggle = document.querySelector("#sidebar-toggle");
 const menuButton = document.querySelector("#mobile-menu");
 const toast = document.querySelector("#toast");
 const searchInput = document.querySelector("#dashboard-search");
+const sidebarPreferenceKey = "hopeSidebarExpanded";
 let toastTimer;
 const databaseData = window.HOPE_DB_DATA;
 
@@ -51,6 +52,60 @@ function renderDatabaseSnapshot() {
       <td>${record.module}</td><td>${record.owner}</td>
       <td><span class="status status--${record.tone}">${record.status}</span></td><td>${record.date}</td>
     </tr>`).join("");
+
+  renderInsightViews(metrics, collectionRate);
+}
+
+function renderDistribution(items, listSelector, donutSelector) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  let cursor = 0;
+  const colors = ["var(--gold)", "var(--ocean)", "var(--navy)"];
+  const stops = items.map((item, index) => {
+    const start = cursor;
+    cursor += (item.value / total) * 100;
+    return `${colors[index]} ${start}% ${cursor}%`;
+  });
+  document.querySelector(donutSelector).style.background = `conic-gradient(${stops.join(",")})`;
+  document.querySelector(listSelector).innerHTML = items.map((item, index) => `
+    <div><i style="--swatch:${colors[index]}"></i><span>${item.label}</span><strong>${item.value}</strong><small>${((item.value / total) * 100).toFixed(0)}%</small></div>`).join("");
+}
+
+function renderHorizontalBars(items, selector) {
+  const maximum = Math.max(...items.map((item) => item.value));
+  document.querySelector(selector).innerHTML = items.map((item) => `
+    <div class="horizontal-bar"><span>${item.label}</span><strong>${item.value}</strong><i><b style="width:${(item.value / maximum) * 100}%"></b></i></div>`).join("");
+}
+
+function renderInsightViews(metrics, collectionRate) {
+  document.querySelector("#operations-customers").textContent = metrics.customers;
+  document.querySelector("#operations-products").textContent = metrics.products;
+  document.querySelector("#operations-sales").textContent = metrics.salesTransactions;
+  renderDistribution(databaseData.insights.customerTerms, "#terms-list", "#terms-donut");
+  renderHorizontalBars(databaseData.insights.productUnits, "#unit-bars");
+  document.querySelector("#operations-table").innerHTML = databaseData.recentRecords.map((record) => `<tr><td><strong>${record.title}</strong><span>${record.detail}</span></td><td>${record.module}</td><td>${record.owner}</td><td><span class="status status--${record.tone}">${record.status}</span></td><td>${record.date}</td></tr>`).join("");
+
+  document.querySelector("#people-total").textContent = metrics.employees;
+  document.querySelector("#people-active").textContent = metrics.activeEmployees;
+  document.querySelector("#people-departments").textContent = metrics.departments;
+  renderDistribution(databaseData.insights.employeeStatus, "#status-list", "#status-donut");
+  renderHorizontalBars(databaseData.insights.employeeGender, "#gender-bars");
+  document.querySelector("#people-cards").innerHTML = databaseData.insights.employees.map((person) => `<button type="button" class="person-row" data-person="${person.name}"><span>${person.initials}</span><div><strong>${person.name}</strong><small>${person.role}</small></div><b>${person.status}</b></button>`).join("");
+
+  document.querySelector("#finance-sales").textContent = formatMoney(metrics.totalSales);
+  document.querySelector("#finance-payments").textContent = formatMoney(metrics.totalPayments);
+  document.querySelector("#finance-outstanding").textContent = formatMoney(metrics.outstanding);
+  document.querySelector("#finance-rate").textContent = `${collectionRate.toFixed(1)}% collected`;
+  document.querySelector("#collection-rate-label").textContent = `${collectionRate.toFixed(1)}%`;
+  document.querySelector("#collection-gap").textContent = formatMoney(metrics.outstanding);
+  document.querySelector("#collection-donut").style.background = `conic-gradient(var(--gold) 0 ${Math.min(collectionRate, 100)}%, rgba(7,62,87,.1) ${Math.min(collectionRate, 100)}% 100%)`;
+  const monthlyMaximum = Math.max(...databaseData.insights.monthlyPayments.map((item) => item.value));
+  document.querySelector("#monthly-payment-chart").innerHTML = databaseData.insights.monthlyPayments.map((item) => `<div title="${item.label}: ${formatMoney(item.value)}"><strong>${formatMoney(item.value)}</strong><i style="height:${Math.max(10, (item.value / monthlyMaximum) * 100)}%"></i><span>${item.label}</span></div>`).join("");
+  document.querySelector("#finance-table").innerHTML = databaseData.recentRecords.filter((record) => record.module === "Payments").map((record) => {
+    const [transaction, amount] = record.detail.split(" - ");
+    return `<tr><td><strong>${record.title}</strong></td><td>${transaction}</td><td>${amount}</td><td><span class="status status--success">${record.status}</span></td><td>${record.date}</td></tr>`;
+  }).join("");
+
+  document.querySelectorAll(".person-row").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.person} quick view selected.`)));
 }
 
 function showToast(message) {
@@ -70,7 +125,10 @@ function setSidebarExpanded(expanded) {
   dashboardShell.classList.toggle("sidebar-expanded", expanded);
   sidebarToggle.setAttribute("aria-expanded", String(expanded));
   sidebarToggle.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
+  window.localStorage.setItem(sidebarPreferenceKey, String(expanded));
 }
+
+setSidebarExpanded(window.localStorage.getItem(sidebarPreferenceKey) === "true");
 
 sidebarToggle.addEventListener("click", () => {
   setSidebarExpanded(!sidebar.classList.contains("is-expanded"));
@@ -97,11 +155,12 @@ document.querySelectorAll(".sidebar-nav .nav-icon").forEach((button) => {
 
 document.querySelectorAll(".module-tabs button").forEach((button) => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".module-tabs button").forEach((item) => item.classList.toggle("is-active", item === button));
-    const selected = button.dataset.tab;
-    document.querySelectorAll("[data-area]").forEach((card) => {
-      card.hidden = selected !== "overview" && !card.dataset.area.split(" ").includes(selected);
+    document.querySelectorAll(".module-tabs button").forEach((item) => {
+      item.classList.toggle("is-active", item === button);
+      item.setAttribute("aria-selected", String(item === button));
     });
+    const selected = button.dataset.tab;
+    document.querySelectorAll("[data-view]").forEach((view) => { view.hidden = view.dataset.view !== selected; });
   });
 });
 
