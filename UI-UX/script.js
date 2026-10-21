@@ -81,8 +81,10 @@ loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   setFieldError(emailInput, "");
   setFieldError(passwordInput, "");
-  formMessage.textContent =
-    "Demo sign-in continued. Authentication API integration is pending.";
+  formMessage.textContent = "Opening the administrator dashboard…";
+  window.setTimeout(() => {
+    window.location.href = "modules/dashboard/index.html";
+  }, 320);
 });
 
 emailInput.addEventListener("input", () => {

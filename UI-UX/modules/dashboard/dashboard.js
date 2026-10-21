@@ -1,0 +1,138 @@
+const sidebar = document.querySelector("#sidebar");
+const dashboardShell = document.querySelector(".dashboard-shell");
+const sidebarToggle = document.querySelector("#sidebar-toggle");
+const menuButton = document.querySelector("#mobile-menu");
+const toast = document.querySelector("#toast");
+const searchInput = document.querySelector("#dashboard-search");
+let toastTimer;
+const databaseData = window.HOPE_DB_DATA;
+
+function formatMoney(value) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+
+function renderDatabaseSnapshot() {
+  if (!databaseData) {
+    showToast("The SQL seed snapshot could not be loaded.");
+    return;
+  }
+
+  const { metrics } = databaseData;
+  const collectionRate = metrics.totalSales ? (metrics.totalPayments / metrics.totalSales) * 100 : 0;
+  document.querySelector("#metric-sales").textContent = formatMoney(metrics.totalSales);
+  document.querySelector("#metric-sales-note").textContent = `${metrics.salesTransactions} seeded sales transactions`;
+  document.querySelector("#metric-outstanding").textContent = formatMoney(metrics.outstanding);
+  document.querySelector("#metric-outstanding-note").textContent = `${metrics.paymentRecords} payment records`;
+  document.querySelector("#collection-progress").style.width = `${Math.min(collectionRate, 100)}%`;
+  document.querySelector("#collection-note").textContent = `${collectionRate.toFixed(1)}% of seeded sales collected`;
+  document.querySelector("#metric-employees").textContent = metrics.activeEmployees;
+  document.querySelector("#metric-employees-note").textContent = `${metrics.employees} total employees in the seed`;
+  document.querySelector("#employee-total").textContent = `${metrics.employees} staff`;
+  document.querySelector("#department-total").textContent = `${metrics.departments} depts`;
+  document.querySelector("#job-total").textContent = `${metrics.jobs} jobs`;
+  document.querySelector("#metric-products").textContent = metrics.products;
+  document.querySelector("#metric-products-note").textContent = `${metrics.priceHistoryEntries} price-history entries`;
+  document.querySelector("#product-count").textContent = `${metrics.products} products`;
+  document.querySelector("#price-count").textContent = `${metrics.priceHistoryEntries} prices`;
+  document.querySelector("#chart-total").textContent = formatMoney(metrics.totalSales);
+  document.querySelector("#data-source-label").textContent = databaseData.snapshotLabel;
+
+  const maximum = Math.max(...databaseData.dailyPerformance.flatMap((item) => [item.sales, item.payments]));
+  document.querySelector("#payment-chart").innerHTML = databaseData.dailyPerformance.map((item) => {
+    const salesHeight = item.sales ? Math.max(8, (item.sales / maximum) * 100) : 0;
+    const paymentHeight = item.payments ? Math.max(8, (item.payments / maximum) * 100) : 0;
+    const label = new Date(`${item.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return `<div title="Sales ${formatMoney(item.sales)}; Payments ${formatMoney(item.payments)}"><span class="bar-pair"><i class="bar-sales" style="height:${salesHeight}%"></i><i class="bar-payments" style="height:${paymentHeight}%"></i></span><small>${label}</small></div>`;
+  }).join("");
+
+  document.querySelector("#activity-body").innerHTML = databaseData.recentRecords.map((record) => `
+    <tr>
+      <td><strong>${record.title}</strong><span>${record.detail}</span></td>
+      <td>${record.module}</td><td>${record.owner}</td>
+      <td><span class="status status--${record.tone}">${record.status}</span></td><td>${record.date}</td>
+    </tr>`).join("");
+}
+
+function showToast(message) {
+  window.clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
+}
+
+function closeMobileNavigation() {
+  sidebar.classList.remove("is-open");
+  menuButton.setAttribute("aria-expanded", "false");
+}
+
+function setSidebarExpanded(expanded) {
+  sidebar.classList.toggle("is-expanded", expanded);
+  dashboardShell.classList.toggle("sidebar-expanded", expanded);
+  sidebarToggle.setAttribute("aria-expanded", String(expanded));
+  sidebarToggle.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
+}
+
+sidebarToggle.addEventListener("click", () => {
+  setSidebarExpanded(!sidebar.classList.contains("is-expanded"));
+});
+
+menuButton.addEventListener("click", () => {
+  const opening = !sidebar.classList.contains("is-open");
+  sidebar.classList.toggle("is-open", opening);
+  menuButton.setAttribute("aria-expanded", String(opening));
+});
+
+document.querySelectorAll(".sidebar-nav .nav-icon").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".sidebar-nav .nav-icon").forEach((item) => {
+      item.classList.toggle("is-active", item === button);
+      item.removeAttribute("aria-current");
+    });
+    button.setAttribute("aria-current", "page");
+    showToast(`${button.dataset.page} module is ready for its backend screen.`);
+    closeMobileNavigation();
+  });
+});
+
+document.querySelectorAll(".module-tabs button").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".module-tabs button").forEach((item) => item.classList.toggle("is-active", item === button));
+    const selected = button.dataset.tab;
+    document.querySelectorAll("[data-area]").forEach((card) => {
+      card.hidden = selected !== "overview" && !card.dataset.area.split(" ").includes(selected);
+    });
+  });
+});
+
+document.querySelectorAll(".quick-action").forEach((button) => {
+  button.addEventListener("click", () => showToast(`${button.dataset.action} selected. Form integration is pending.`));
+});
+
+document.querySelectorAll(".card-heading button").forEach((button) => {
+  button.addEventListener("click", () => showToast(`${button.closest(".metric-card").querySelector(".card-heading > span:nth-child(2)").textContent} options opened.`));
+});
+
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim().toLowerCase();
+  document.querySelectorAll("tbody tr").forEach((row) => {
+    row.hidden = Boolean(query) && !row.textContent.toLowerCase().includes(query);
+  });
+});
+
+document.querySelector("#chart-period").addEventListener("change", (event) => {
+  showToast(`Sales chart changed to ${event.target.value.toLowerCase()}. Live data integration is pending.`);
+});
+
+document.querySelector("#notifications-button").addEventListener("click", () => showToast("4 user approvals and 12 price reviews need attention."));
+document.querySelector("#help-button").addEventListener("click", () => showToast("Help center documentation is being prepared."));
+document.querySelector("#view-all").addEventListener("click", () => showToast("Full activity and audit views require backend integration."));
+document.querySelector("#profile-button").addEventListener("click", () => {
+  const shouldSignOut = window.confirm("Signed in as Admin. Return to the login screen?");
+  if (shouldSignOut) window.location.href = "../../index.html";
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMobileNavigation();
+});
+
+renderDatabaseSnapshot();
