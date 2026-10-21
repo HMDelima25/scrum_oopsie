@@ -3,7 +3,7 @@ this is our first group project
 
 scrum master = DELIMA, Honey Mae D.
 
-ui/ux developer = ORTIZ NATALIA GABRILLE A.
+ui/ux developer = ORTIZ NATALIA GABRIELLE A.
 
 backend developer = JOMERO, Feljun B.
 
