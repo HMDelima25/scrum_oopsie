@@ -19,6 +19,12 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// --- Import Routes ---
+const authRoutes = require('./routes/auth.routes');
+
+// --- Use Routes ---
+app.use('/api/auth', authRoutes);
+
 // --- Health Check Route ---
 app.get('/api/health', async (req, res) => {
   try {
