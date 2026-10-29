@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Guide to the Directories
 
 my-backend-app/
@@ -36,3 +37,17 @@ This project relies on the following primary packages to run the backend engine:
 Please do note that all of these dependencies are not included in the repository, but must be installed locally to run. To install all these dependencies, open your terminal, copy and paste:
 
 npm install express dotenv cors helmet morgan @supabase/supabase-js
+=======
+# scrum_oopsie
+this is our first group project
+
+scrum master = DELIMA, Honey Mae D.
+
+ui/ux developer = ORTIZ NATALIA GABRIELLE A.
+
+backend developer = JOMERO, Feljun B.
+
+devsecops = FLORENTINO, Rex Matthew G.
+
+test engineer = RAMOS, Christian Daryll Dave U.
+>>>>>>> 9c1bf780c034bcf5355ceb165369875a67ecabfd
