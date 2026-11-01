@@ -1,21 +1,16 @@
 <<<<<<< HEAD
 # Guide to the Directories
 
-my-backend-app/
-├── src/                   # All source code files of the website are placed here
-│   ├── config/               # Directories for all configuration
-│   │   └── supabase.js         # Supabase client initialization
-│   ├── controllers/          # Route controllers of API (to be added)
-│   ├── middleware/           # Auth & permission middleware (to be added)
-│   ├── routes/               # API routes (to be added)
-│   └── server.js             # Entry point / Express app skeleton
-├── .env                      # Environment variables (local)
-├── .env.example              # Template for environment variables
-├── package.json
-└── README.md
+<img width="637" height="244" alt="Screenshot 2026-11-01 175357" src="https://github.com/user-attachments/assets/6984f204-0b07-4936-9473-d0c99ad4c96c" />
+
 
 ## .env.example 
-the .env.example is the template to follow when initializing the database connection. If you were to run this to your local machine for testing, create a .env file and follow the template. Paste in your SUPABASE URL and SUPABASE SECRET KEY (in SUPABASE_SERVICE_ROLE_KEY).
+the .env.example is the template to follow when initializing the database connection. If you were to run this to your local machine for testing, create a .env file and follow the template. Here is a guide to the format. Copy and paste it to your .env file:
+
+NODE_ENV=development
+SUPABASE_URL= Paste in your SUPABASE URL here
+SUPABASE_SERVICE_ROLE_KEY= SUPABASE SECRET KEY (in SUPABASE_SERVICE_ROLE_KEY).
+SESSION_SECRET= This is for session management as Superadmin, type in here a string, serving as your password
 
 ## Project dependencies
 This project relies on the following primary packages to run the backend engine:
