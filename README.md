@@ -5,12 +5,12 @@
 
 
 ## .env.example 
-the .env.example is the template to follow when initializing the database connection. If you were to run this to your local machine for testing, create a .env file and follow the template. Here is a guide to the format. Copy and paste it to your .env file:
+the .env.example is the template to follow when initializing the database connection. If you were to run this to your local machine for testing, create a .env file and follow the template. Here is a guide to the format. Copy and paste it to your .env file and manually paste/type in your Supabase URL, Supabase Key, and Session Key:
 
-NODE_ENV=development
-SUPABASE_URL= Paste in your SUPABASE URL here
-SUPABASE_SERVICE_ROLE_KEY= SUPABASE SECRET KEY (in SUPABASE_SERVICE_ROLE_KEY).
-SESSION_SECRET= This is for session management as Superadmin, type in here a string, serving as your password
+- NODE_ENV=development
+- SUPABASE_URL= Paste in your SUPABASE URL here
+- SUPABASE_SERVICE_ROLE_KEY= SUPABASE SECRET KEY (in SUPABASE_SERVICE_ROLE_KEY).
+- SESSION_SECRET= This is for session management as Superadmin, type in here a string, serving as your password
 
 ## Project dependencies
 This project relies on the following primary packages to run the backend engine:
