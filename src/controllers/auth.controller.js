@@ -5,7 +5,7 @@ const crypto = require('crypto');
 // @desc    Register a new user with password (status defaults to 'pending')
 const registerUser = async (req, res) => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name } = req.body;
 
     if (!email || !name || !password) {
       return res.status(400).json({ status: 'error', message: 'Please provide email, name, and password.' });
@@ -214,6 +214,17 @@ const resetPassword = async (req, res) => {
     console.error('Reset Password Error:', err.message);
     return res.status(500).json({ status: 'error', message: 'Internal server error during password reset.', error: err.message });
   }
+};
+
+// @desc    Logout user and destroy session
+const logoutUser = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ status: 'error', message: 'Could not log out, please try again.' });
+    }
+    res.clearCookie('connect.sid'); // Clear session cookie
+    return res.status(200).json({ status: 'success', message: 'Logged out successfully.' });
+  });
 };
 
 module.exports = {
