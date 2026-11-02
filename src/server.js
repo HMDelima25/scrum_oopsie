@@ -18,6 +18,21 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+const session = require('express-session');
+
+// express-session
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'super_secret_key_change_in_production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // true if HTTPS in production
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, // 1 day session validity
+    },
+  })
+);
 
 // --- Import Routes ---
 const authRoutes = require('./routes/auth.routes');
