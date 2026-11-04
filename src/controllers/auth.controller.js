@@ -2,15 +2,16 @@ const supabase = require('../config/supabase');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-// @desc    Register a new user (status defaults to 'pending')
+// @desc    Register a new user with password (status defaults to 'pending')
 const registerUser = async (req, res) => {
   try {
-    const { email, name } = req.body;
+    const { email, name, password } = req.body;
 
-    if (!email || !name) {
-      return res.status(400).json({ status: 'error', message: 'Please provide both email and name.' });
+    if (!email || !name || !password) {
+      return res.status(400).json({ status: 'error', message: 'Please provide email, name, and password.' });
     }
 
+    // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -21,9 +22,20 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'A user with this email already exists.' });
     }
 
+    // Hash the password right away
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Insert user with password_hash and 'pending' status
     const { data: newUser, error: insertError } = await supabase
       .from('users')
-      .insert([{ email, name, status: 'pending', role: 'user' }])
+      .insert([{
+        email,
+        name,
+        password_hash: hashedPassword,
+        status: 'pending',
+        role: 'user'
+      }])
       .select('id, email, name, status, role, created_at')
       .single();
 
@@ -31,7 +43,7 @@ const registerUser = async (req, res) => {
 
     return res.status(201).json({
       status: 'success',
-      message: 'Registration successful! Your account is pending Superadmin approval.',
+      message: 'Registration successful! Your account has been created and is pending Superadmin approval.',
       data: newUser,
     });
   } catch (err) {
@@ -40,7 +52,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Login user, handle first-time password setting, and block checks
+// @desc    Login user (standard login with password comparison)
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
