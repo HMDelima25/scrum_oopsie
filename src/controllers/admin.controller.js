@@ -6,11 +6,9 @@ const getUsersList = async (req, res) => {
   try {
     let query = supabase.from('users').select('id, email, name, status, role, created_at');
 
-    // If requester is an Admin, restrict view to regular users only (hide superadmins/admins)
     if (req.session.userRole === 'admin') {
       query = query.eq('role', 'user');
     } else if (req.session.userRole === 'superadmin') {
-      // Superadmins can see users and admins, but hide other superadmins for safety
       query = query.neq('role', 'superadmin');
     }
 
@@ -38,12 +36,10 @@ const addUser = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Please provide email, name, and password.' });
     }
 
-    // Admins cannot create admin/superadmin accounts
     if (req.session.userRole === 'admin' && role !== 'user') {
       return res.status(403).json({ status: 'error', message: 'Admins can only create standard user accounts.' });
     }
 
-    // Check if user exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -83,13 +79,13 @@ const addUser = async (req, res) => {
   }
 };
 
-// @desc    Edit user details (Name, Email, Role, Status)
+// @desc    Edit user details (Name, Email, Role, Status) with Last Superadmin Protection
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, status, role } = req.body;
 
-    // 1. Fetch target user to check permissions
+    // 1. Fetch target user
     const { data: targetUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
@@ -100,17 +96,40 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ status: 'error', message: 'User not found.' });
     }
 
-    // 2. Enforce Admin restriction (Admins cannot edit superadmins or other admins)
+    // 2. Enforce Admin restrictions
     if (req.session.userRole === 'admin' && targetUser.role !== 'user') {
       return res.status(403).json({ status: 'error', message: 'Admins can only modify standard user accounts.' });
     }
 
-    // Prevent modifying own account status/role here
     if (req.session.userId === id) {
       return res.status(400).json({ status: 'error', message: 'You cannot modify your own account via user management.' });
     }
 
-    // Build update payload dynamically
+    // 3. SAFETY CHECK: If target user is a superadmin, ensure we don't demote or block them if they are the LAST superadmin
+    if (targetUser.role === 'superadmin') {
+      const isDemoting = role && role !== 'superadmin';
+      const isBlocking = status && status !== 'approved';
+
+      if (isDemoting || isBlocking) {
+        // Count how many active superadmins exist
+        const { data: superadmins, error: countError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'superadmin')
+          .eq('status', 'approved');
+
+        if (countError) throw countError;
+
+        if (superadmins.length <= 1) {
+          return res.status(400).json({
+            status: 'error',
+            message: 'Action denied. You cannot demote or block the last remaining active Superadmin.',
+          });
+        }
+      }
+    }
+
+    // 4. Build update payload dynamically
     const updateData = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
@@ -124,7 +143,7 @@ const updateUser = async (req, res) => {
       if (req.session.userRole === 'admin') {
         return res.status(403).json({ status: 'error', message: 'Admins cannot change user roles.' });
       }
-      if (!['user', 'admin'].includes(role)) {
+      if (!['user', 'admin', 'superadmin'].includes(role)) {
         return res.status(400).json({ status: 'error', message: 'Invalid role value.' });
       }
       updateData.role = role;
@@ -151,11 +170,11 @@ const updateUser = async (req, res) => {
   }
 };
 
-// @desc    Quick Block / Unblock user status
+// @desc    Quick Block / Unblock user status with Last Superadmin Protection
 const toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body; // 'approved' or 'blocked'
+    const { status } = req.body; // 'approved' or 'blocked' or 'pending'
 
     if (!['approved', 'blocked', 'pending'].includes(status)) {
       return res.status(400).json({ status: 'error', message: 'Invalid status.' });
@@ -173,6 +192,24 @@ const toggleUserStatus = async (req, res) => {
 
     if (req.session.userRole === 'admin' && targetUser.role !== 'user') {
       return res.status(403).json({ status: 'error', message: 'Admins can only block/unblock standard users.' });
+    }
+
+    // SAFETY CHECK: If blocking a superadmin, ensure they aren't the last one
+    if (targetUser.role === 'superadmin' && status !== 'approved') {
+      const { data: superadmins, error: countError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('role', 'superadmin')
+        .eq('status', 'approved');
+
+      if (countError) throw countError;
+
+      if (superadmins.length <= 1) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Action denied. You cannot block or suspend the last remaining active Superadmin.',
+        });
+      }
     }
 
     const { data: updatedUser, error } = await supabase
