@@ -10,11 +10,11 @@ We agree on how we work together so that everyone knows what to expect, problems
 
 | Name | GitHub username | Role |
 |---|---|---|
-| | HMDelima25 | Scrum Master |
-| | feljunjomero | Backend Developer |
-| | RamosCDD18 | Tester |
-| | riellealia | UI/UX |
-| | rmflorentino-45th | DB Admin |
+| Honey Mae Delima | HMDelima25 | Scrum Master |
+| Feljun Jomero | feljunjomero | Backend Developer |
+| Christian Ramos | RamosCDD18 | Tester |
+| Natalia Ortiz | riellealia | UI/UX |
+| Rex Matthew Florentino | rmflorentino-45th | DB Admin |
 
 Role details are in `docs/role-guide.md`.
 
