@@ -1,5 +1,14 @@
 # Guide to the Directories
 
+Scrum Master = DELIMA, Honey Mae D.
+
+UI/UX developer = ORTIZ, NATALIA GABRILLE A.
+
+Backend developer = JOMERO, Felijun
+
+DevSecOps = FLORENTINO, Rex Matthew G.
+
+Test Engineer = RAMOS, Christian Daryll Dave
 <img width="637" height="244" alt="image" src="https://github.com/user-attachments/assets/1d34a19d-40f2-48cc-9d4d-e9d0d1c44846" />
 
 ## .env.example 

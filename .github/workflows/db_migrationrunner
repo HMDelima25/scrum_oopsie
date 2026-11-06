@@ -1,0 +1,24 @@
+name: Deploy Migration Runner Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run Migrations
+        env:
+          # Use your Supabase DB password from GitHub Secrets
+          DATABASE_URL: "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co:5432/postgres"
+        run: |
+          chmod +x ./run_migrations.sh
+          ./run_migrations.sh
