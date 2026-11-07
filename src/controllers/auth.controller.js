@@ -101,6 +101,7 @@ const loginUser = async (req, res) => {
     req.session.userId = user.id;
     req.session.userRole = user.role;
     req.session.userEmail = user.email;
+    req.session.rights = user.rights || {};
 
     return res.status(200).json({
       status: 'success',
@@ -229,10 +230,38 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// @desc    Get currently logged-in user session profile and rights
+const getMe = async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ status: 'error', message: 'Not authenticated.' });
+    }
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, status, rights')
+      .eq('id', req.session.userId)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ status: 'error', message: 'User not found.' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: user,
+    });
+  } catch (err) {
+    console.error('Get Me Error:', err.message);
+    return res.status(500).json({ status: 'error', message: 'Internal server error.' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   requestPasswordReset,
   resetPassword,
+  getMe,
 };
