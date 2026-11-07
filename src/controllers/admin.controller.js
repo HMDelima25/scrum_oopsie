@@ -233,9 +233,104 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 
+// @desc    Get specific user's rights/permissions
+const getUserRights = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: targetUser, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, rights')
+      .eq('id', id)
+      .single();
+
+    if (error || !targetUser) {
+      return res.status(404).json({ status: 'error', message: 'User not found.' });
+    }
+
+    // Admin restriction check
+    if (req.session.userRole === 'admin' && targetUser.role !== 'user') {
+      return res.status(403).json({ status: 'error', message: 'Admins can only view standard user rights.' });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: targetUser.rights || {},
+    });
+  } catch (err) {
+    console.error('Get User Rights Error:', err.message);
+    return res.status(500).json({ status: 'error', message: 'Internal server error.' });
+  }
+};
+
+// @desc    Update user rights by module and log action in audit_log
+const updateUserRights = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rights } = req.body; // Expected format: { Customer: {create: true, read: true, ...}, Product: {...}, ... }
+
+    if (!rights || typeof rights !== 'object') {
+      return res.status(400).json({ status: 'error', message: 'Invalid rights payload provided.' });
+    }
+
+    // 1. Fetch target user
+    const { data: targetUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !targetUser) {
+      return res.status(404).json({ status: 'error', message: 'User not found.' });
+    }
+
+    // 2. Enforce Admin restrictions
+    if (req.session.userRole === 'admin' && targetUser.role !== 'user') {
+      return res.status(403).json({ status: 'error', message: 'Admins can only modify standard user rights.' });
+    }
+
+    // 3. Update user's rights in Supabase
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({ rights })
+      .eq('id', id)
+      .select('id, email, name, rights')
+      .single();
+
+    if (updateError) throw updateError;
+
+    // 4. Log the rights change in audit_log
+    const { error: auditError } = await supabase
+      .from('audit_log')
+      .insert([{
+        admin_id: req.session.userId,
+        target_user_id: id,
+        action: 'UPDATE_USER_RIGHTS',
+        details: { new_rights: rights },
+      }]);
+
+    if (auditError) {
+      console.error('Audit Log Error:', auditError.message);
+      // Non-blocking, but good to catch
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'User rights updated and logged successfully.',
+      data: updatedUser,
+    });
+
+  } catch (err) {
+    console.error('Update User Rights Error:', err.message);
+    return res.status(500).json({ status: 'error', message: 'Internal server error.' });
+  }
+};
+
 module.exports = {
   getUsersList,
   addUser,
   updateUser,
+  getUserRights,
+  updateUserRights,
   toggleUserStatus,
 };

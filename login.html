@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Test</title>
+</head>
+<body>
+    <h2>Log In</h2>
+    <form id="loginForm">
+        <label>Email:</label><br>
+        <input type="email" id="email" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" id="password" required><br><br>
+
+        <button type="submit">Log In</button>
+    </form>
+    <pre id="response"></pre>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // credentials: 'include' is important if you want Express-session cookies to save in the browser!
+                credentials: 'include', 
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+            document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
+</body>
+</html>
