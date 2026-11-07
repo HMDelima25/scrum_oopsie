@@ -1,0 +1,23 @@
+:root {
+  --ocean-950: #03141e;
+  --ocean-900: #052637;
+  --ocean-800: #073e57;
+  --ocean-700: #075b7b;
+  --ocean-600: #087da4;
+  --ocean-500: #0ca4cc;
+  --ocean-300: #62d3e9;
+  --ocean-100: #d8f5fa;
+  --gold-500: #d6a72d;
+  --gold-400: #ecc354;
+  --gold-200: #f9e6a1;
+  --ink: #07131a;
+  --muted: #54656d;
+  --line: rgba(7, 62, 87, 0.14);
+  --surface: rgba(247, 253, 253, 0.76);
+  --white: #ffffff;
+  --danger: #b93838;
+  --radius-shell: 34px;
+  --radius-card: 28px;
+  --radius-control: 14px;
+  --shadow-shell: 0 36px 90px rgba(3, 20, 30, 0.2);
+}
