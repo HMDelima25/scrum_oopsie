@@ -5,7 +5,18 @@ const {
   addUser,
   updateUser,
   toggleUserStatus,
+  getUserRights,
+  updateUserRights,
 } = require('../controllers/admin.controller');
+
+// EXISTING ROUTES
+
+// GET /api/admin/users/:id/rights - Get user rights
+router.get('/users/:id/rights', getUserRights);
+
+// PUT /api/admin/users/:id/rights - Update user rights & audit log
+router.put('/users/:id/rights', updateUserRights);
+
 const { requireAdmin } = require('../middleware/auth.middleware');
 
 // Protect all admin routes
