@@ -11,21 +11,29 @@ test('Username, email and Google authentication guards',async t=>{
   assert.equal((await req('/api/auth/login','POST',{identifier:'admin',password:'incorrect'})).status,401);
   assert.equal((await req('/api/auth/me')).status,401);
  });
+ await t.test('login identifies the field for missing accounts and incorrect passwords',async()=>{
+  const email=await req('/api/auth/login','POST',{identifier:'missing@example.test',password:'incorrect'});assert.equal(email.status,401);assert.equal(email.data.field,'identifier');assert.match(email.data.message,/email does not exist/);
+  const username=await req('/api/auth/login','POST',{identifier:'missing-user',password:'incorrect'});assert.equal(username.status,401);assert.equal(username.data.field,'identifier');assert.match(username.data.message,/username does not exist/);
+  const pass=await req('/api/auth/login','POST',{identifier:'admin',password:'incorrect'});assert.equal(pass.status,401);assert.equal(pass.data.field,'password');assert.match(pass.data.message,/password is incorrect/);
+ });
+ await t.test('weak new passwords are rejected by registration without creating an account',async()=>{
+  const r=await req('/api/auth/register','POST',{name:'Weak',username:'weak-user',email:'weak@example.test',password:'A-long-password'});assert.equal(r.status,400);assert.equal(r.data.field,'password');assert.equal((await db.pg.query("SELECT count(*)::int n FROM users WHERE username='weak-user'")).rows[0].n,0);
+ });
  await t.test('requested Admin credentials work through actual password verification',async()=>{
   assert.equal((await req('/api/auth/login','POST',{identifier:'ADMIN',password:'admin123'})).status,200);
   const me=await req('/api/auth/me');assert.equal(me.data.data.id,admin.id);assert.equal(me.data.data.username,'admin');assert.equal(me.data.data.role,'admin');
   await req('/api/auth/logout','POST',{});assert.equal((await req('/api/auth/me')).status,401);
  });
  await t.test('registration persists username and password but never public Admin privileges',async()=>{
-  const r=await req('/api/auth/register','POST',{firstName:'Account',lastName:'Test',username:'new-user',email:'new@example.test',password:'A-real-test-password',role:'admin',status:'approved'});
+  const r=await req('/api/auth/register','POST',{firstName:'Account',lastName:'Test',username:'new-user',email:'new@example.test',password:'A-real-test-password-1',role:'admin',status:'approved'});
   assert.equal(r.status,201);assert.equal(r.data.data.username,'new-user');assert.equal(r.data.data.status,'pending');assert.equal(r.data.data.role,'user');
-  const row=(await db.pg.query(`SELECT * FROM users WHERE username='new-user'`)).rows[0];assert.ok(await bcrypt.compare('A-real-test-password',row.password_hash));assert.equal(r.data.data.password_hash,undefined);
-  assert.equal((await req('/api/auth/login','POST',{identifier:'new-user',password:'A-real-test-password'})).status,403);
+  const row=(await db.pg.query(`SELECT * FROM users WHERE username='new-user'`)).rows[0];assert.ok(await bcrypt.compare('A-real-test-password-1',row.password_hash));assert.equal(r.data.data.password_hash,undefined);
+  assert.equal((await req('/api/auth/login','POST',{identifier:'new-user',password:'A-real-test-password-1'})).status,403);
   await db.pg.query(`UPDATE users SET status='approved' WHERE username='new-user'`);
-  assert.equal((await req('/api/auth/login','POST',{email:'new@example.test',password:'A-real-test-password'})).status,200);
+  assert.equal((await req('/api/auth/login','POST',{email:'new@example.test',password:'A-real-test-password-1'})).status,200);
  });
  await t.test('duplicate usernames and malformed usernames are rejected',async()=>{
-  const b={name:'Duplicate',email:'other@example.test',username:'new-user',password:'A-real-test-password'};
+  const b={name:'Duplicate',email:'other@example.test',username:'new-user',password:'A-real-test-password-1'};
   assert.equal((await req('/api/auth/register','POST',b)).status,409);b.username='bad@name';assert.equal((await req('/api/auth/register','POST',b)).status,400);
  });
  await t.test('Google callback cannot log in using an unverified or client-supplied code',async()=>{

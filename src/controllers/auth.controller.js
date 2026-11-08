@@ -45,13 +45,19 @@ async function loginUser(req, res) {
     254,
   ).toLowerCase();
   const field = identifier.includes("@") ? "email" : "username";
-  const address = field === "email" ? email(identifier) : username(identifier);
+  let address;
+  try {
+    address = field === "email" ? email(identifier) : username(identifier);
+  } catch (error) {
+    error.field = "identifier";
+    throw error;
+  }
   if (
     typeof b.password !== "string" ||
     !b.password ||
     Buffer.byteLength(b.password) > 72
   )
-    throw new HttpError(400, "Enter your password.");
+    throw new HttpError(400, "Enter your password.", "password");
   const user = check(
     await req.app.locals.db
       .from("users")
@@ -59,19 +65,26 @@ async function loginUser(req, res) {
       .eq(field, address)
       .maybeSingle(),
   );
+  if (!user || user.is_deleted)
+    throw new HttpError(
+      401,
+      field === "email"
+        ? "This email does not exist."
+        : "This username does not exist.",
+      "identifier",
+    );
   if (
-    !user ||
-    user.is_deleted ||
     !user.password_hash ||
     !(await bcrypt.compare(b.password, user.password_hash))
   )
-    throw new HttpError(401, "Email or password is incorrect.");
+    throw new HttpError(401, "The password is incorrect.", "password");
   if (user.status !== "approved")
     throw new HttpError(
       403,
       user.status === "pending"
         ? "Your account is awaiting approval."
         : "Your account is blocked.",
+      "identifier",
     );
   await new Promise((resolve, reject) =>
     req.session.regenerate((e) => (e ? reject(e) : resolve())),

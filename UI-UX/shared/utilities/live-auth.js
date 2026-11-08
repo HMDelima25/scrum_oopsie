@@ -8,9 +8,127 @@
       body: JSON.stringify(data),
     });
     const result = await r.json();
-    if (!r.ok) throw new Error(result.message);
+    if (!r.ok) {
+      const error = new Error(result.message);
+      error.field = result.field;
+      error.status = r.status;
+      throw error;
+    }
     return result;
   }
+  function fieldError(input, text) {
+    let node = document.getElementById(input.id + "-error");
+    if (!node) {
+      node = document.createElement("p");
+      node.id = input.id + "-error";
+      node.className = "auth-inline-error";
+      (input.type === "checkbox"
+        ? input.closest("label")
+        : input
+      ).insertAdjacentElement("afterend", node);
+    }
+    node.setAttribute("aria-live", "polite");
+    node.textContent = text;
+    input.setAttribute("aria-invalid", String(Boolean(text)));
+    input.setAttribute(
+      "aria-describedby",
+      [
+        ...new Set(
+          (input.getAttribute("aria-describedby") || "")
+            .split(" ")
+            .filter(Boolean)
+            .concat(node.id),
+        ),
+      ].join(" "),
+    );
+    input.closest(".field-group")?.classList.toggle("has-error", Boolean(text));
+  }
+  function validateInputs(inputs) {
+    let first;
+    for (const input of inputs) {
+      if (input.disabled) continue;
+      const name =
+        document
+          .querySelector('label[for="' + input.id + '"]')
+          ?.textContent.trim()
+          .toLowerCase() || "this field";
+      let notice = "";
+      if (input.validity.valueMissing)
+        notice =
+          input.type === "checkbox"
+            ? "Please confirm this information."
+            : "Enter your " + name + ".";
+      else if (input.validity.typeMismatch)
+        notice = "Enter a valid email address.";
+      else if (input.validity.patternMismatch)
+        notice =
+          input.id === "create-username"
+            ? "Use 3–32 letters, numbers, dots, underscores or hyphens. Start with a letter."
+            : "Enter the six-digit code from your email.";
+      else if (!input.validity.valid) notice = input.validationMessage;
+      fieldError(input, notice);
+      if (notice && !first) first = input;
+    }
+    first?.focus();
+    return !first;
+  }
+  document
+    .querySelectorAll("input")
+    .forEach((input) =>
+      input.addEventListener("input", () => fieldError(input, "")),
+    );
+  const guides = ["create-password", "recovery-password"].map((id) =>
+    HopePasswordGuide.attach($("#" + id)),
+  );
+  function matchPassword(input, confirmation) {
+    confirmation.setCustomValidity(
+      confirmation.value && input.value !== confirmation.value
+        ? "The passwords do not match."
+        : "",
+    );
+  }
+  for (const [passwordId, confirmId] of [
+    ["create-password", "confirm-password"],
+    ["recovery-password", "recovery-password-confirm"],
+  ]) {
+    const input = $("#" + passwordId),
+      confirmation = $("#" + confirmId);
+    const match = () => {
+      matchPassword(input, confirmation);
+      if (confirmation.value)
+        fieldError(confirmation, confirmation.validationMessage);
+    };
+    input.addEventListener("input", match);
+    confirmation.addEventListener("input", match);
+  }
+  const successDialog = $("#login-success-dialog");
+  function signedIn(user) {
+    if (user.role !== "user") {
+      location.assign("modules/dashboard/index.html");
+      return;
+    }
+    $("#form-message").textContent = "";
+    $("#password").value = "";
+    successDialog.showModal();
+  }
+  $("#login-success-close").onclick = () => successDialog.close();
+  $("#login-success-logout").onclick = async () => {
+    try {
+      await send("logout", {});
+      successDialog.close();
+    } catch (error) {
+      $("#login-success-message").textContent = error.message;
+    }
+  };
+  successDialog.addEventListener("click", (e) => {
+    if (e.target === successDialog) successDialog.close();
+  });
+  fetch("/api/auth/me", { credentials: "same-origin" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((result) => {
+      if (result?.data?.role === "user") signedIn(result.data);
+    })
+    .catch(() => {});
   const form = $("#login-form"),
     email = $("#email"),
     password = $("#password"),
@@ -23,24 +141,28 @@
     "Email or username";
   const authMessage = new URLSearchParams(location.search).get("authMessage");
   if (authMessage) {
-    message.textContent = authMessage;
+    fieldError(email, authMessage);
     history.replaceState(null, "", location.pathname);
   }
   password.required = true;
   form.onsubmit = async (e) => {
     e.preventDefault();
-    if (!form.reportValidity()) return;
+    if (!validateInputs([email, password])) return;
     const b = form.querySelector('[type="submit"]');
     b.disabled = true;
     message.textContent = "Signing in…";
     try {
-      await send("login", {
+      const result = await send("login", {
         identifier: email.value,
         password: password.value,
       });
-      location.assign("modules/dashboard/index.html");
+      signedIn(result.data);
     } catch (error) {
-      message.textContent = error.message;
+      message.textContent = "";
+      fieldError(
+        error.field === "identifier" ? email : password,
+        error.message,
+      );
     } finally {
       b.disabled = false;
     }
@@ -66,12 +188,10 @@
     button.onclick = () => {
       if (provider === "Email") {
         email.focus();
-        message.textContent =
-          "Enter your registered email or username and password.";
+        fieldError(email, "Enter your registered email or username.");
       } else if (googleEnabled) location.assign("/api/auth/google");
       else
-        message.textContent =
-          "Google sign-in is awaiting provider configuration.";
+        fieldError(email, "Google sign-in is awaiting provider configuration.");
     };
   });
   const create = $("#create-dialog");
@@ -90,13 +210,14 @@
   $("#create-username").pattern = "[A-Za-z][A-Za-z0-9._-]{2,31}";
   $("#create-password").minLength = 12;
   $("#confirm-password").minLength = 12;
-  $("#password-strength").hidden = true;
+
   $("#create-form").onsubmit = async (e) => {
     e.preventDefault();
     const f = e.currentTarget;
-    if (!f.reportValidity()) return;
+    matchPassword($("#create-password"), $("#confirm-password"));
+    if (!validateInputs([...f.querySelectorAll("input")])) return;
     if ($("#create-password").value !== $("#confirm-password").value) {
-      $("#create-message").textContent = "The passwords do not match.";
+      fieldError($("#confirm-password"), "The passwords do not match.");
       $("#confirm-password").focus();
       return;
     }
@@ -114,7 +235,16 @@
       $("#create-message").textContent = result.message;
       f.reset();
     } catch (error) {
-      $("#create-message").textContent = error.message;
+      $("#create-message").textContent = "";
+      const target = /username/i.test(error.message)
+        ? "#create-username"
+        : /email/i.test(error.message)
+          ? "#create-email"
+          : /password/i.test(error.message)
+            ? "#create-password"
+            : null;
+      if (target) fieldError($(target), error.message);
+      else $("#create-message").textContent = error.message;
     } finally {
       b.disabled = false;
     }
@@ -126,9 +256,11 @@
   let resendAt = 0;
   const steps = ["method", "confirmation", "password", "success"];
   function recoveryStep(step) {
+    guides.forEach((guide) => guide.update());
     steps.forEach(
       (name) => ($("#reset-" + name + "-step").hidden = name !== step),
     );
+    reset.querySelector('.flow-dialog__surface').scrollTop = 0;
     $("#reset-title").textContent = "Forgot password?";
     reset.removeAttribute("aria-labelledby");
     reset.setAttribute(
@@ -142,6 +274,7 @@
     );
   }
   function clearRecovery() {
+    reset.querySelectorAll("input").forEach((input) => fieldError(input, ""));
     [
       "#recovery-code",
       "#recovery-password",
@@ -164,7 +297,7 @@
   $("#recovery-done").onclick = () => reset.close();
   async function recover() {
     const address = $("#recovery-email");
-    if (!address.reportValidity()) return;
+    if (!validateInputs([address])) return;
     const buttons = [$("#continue-recovery"), $("#resend-recovery")];
     buttons.forEach((b) => (b.disabled = true));
     $("#recovery-message").textContent = "";
@@ -174,7 +307,7 @@
       resendAt = Date.now() + result.retryAfter * 1000;
       $("#recovery-code").value = "";
       recoveryStep("confirmation");
-      $("#recovery-code").focus();
+      $("#recovery-code").focus({preventScroll:true});
     } catch (error) {
       const target = $("#reset-method-step").hidden
         ? "#resend-message"
@@ -205,16 +338,16 @@
   $("#confirm-recovery-code").onclick = async () => {
     const input = $("#recovery-code"),
       button = $("#confirm-recovery-code");
-    if (!input.reportValidity()) return;
+    if (!validateInputs([input])) return;
     button.disabled = true;
     $("#resend-message").textContent = "";
     try {
       await send("verify-recovery-code", { code: input.value });
       input.value = "";
       recoveryStep("password");
-      $("#recovery-password").focus();
+      $("#recovery-password").focus({preventScroll:true});
     } catch (error) {
-      $("#resend-message").textContent = error.message;
+      fieldError(input, error.message);
     } finally {
       button.disabled = false;
     }
@@ -223,10 +356,10 @@
     const input = $("#recovery-password"),
       confirmation = $("#recovery-password-confirm"),
       button = $("#save-recovery-password");
-    if (!input.reportValidity() || !confirmation.reportValidity()) return;
+    matchPassword(input, confirmation);
+    if (!validateInputs([input, confirmation])) return;
     if (input.value !== confirmation.value) {
-      $("#recovery-password-message").textContent =
-        "The passwords do not match.";
+      fieldError(confirmation, "The passwords do not match.");
       return;
     }
     button.disabled = true;
@@ -238,7 +371,7 @@
       clearRecovery();
       recoveryStep("success");
     } catch (error) {
-      $("#recovery-password-message").textContent = error.message;
+      fieldError(input, error.message);
     } finally {
       button.disabled = false;
     }

@@ -121,8 +121,8 @@ test("Six-digit email recovery lifecycle", async (t) => {
       assert.equal(
         (
           await post("change-recovered-password", {
-            newPassword: "Another-password",
-            confirmPassword: "Another-password",
+            newPassword: "Another-password-1",
+            confirmPassword: "Another-password-1",
           })
         ).status,
         400,

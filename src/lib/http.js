@@ -1,7 +1,8 @@
 class HttpError extends Error {
-  constructor(status, message) {
+  constructor(status, message, field) {
     super(message);
     this.status = status;
+    this.field = field;
   }
 }
 const wrap = (fn) => (req, res, next) =>
@@ -56,6 +57,17 @@ function password(v) {
     throw new HttpError(
       400,
       "Use a password of at least 12 characters and no more than 72 UTF-8 bytes.",
+    );
+  if (
+    !/[a-z]/.test(v) ||
+    !/[A-Z]/.test(v) ||
+    !/[0-9]/.test(v) ||
+    !/[^A-Za-z0-9\s]/.test(v)
+  )
+    throw new HttpError(
+      400,
+      "Include an uppercase letter, a lowercase letter, a number and a symbol.",
+      "password",
     );
   return v;
 }

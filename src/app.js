@@ -107,6 +107,7 @@ module.exports = function createApp({
     if (status >= 500) console.error("Request failed:", err.code || err.name);
     res.status(status).json({
       status: "error",
+      ...(err.field ? { field: err.field } : {}),
       message:
         status >= 500 && !(err instanceof HttpError && err.expose === true)
           ? "The server could not complete the request."

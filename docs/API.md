@@ -16,7 +16,7 @@ Base URL: `http://127.0.0.1:5000`. JSON responses use `{status:"success",data:..
 | POST /api/auth/set-password    | `{token,newPassword}`                                                                                 | Consumes unexpired one-time setup/reset token                                                  |
 | POST /api/auth/reset-password  | `{token,newPassword}`                                                                                 | Same atomic token/password processing                                                          |
 
-Passwords must contain at least 12 characters and at most 72 UTF-8 bytes (bcrypt limit). Public registration/login/reset requests are rate-limited. Forgot password sends codes, never links. Setup and legacy tokens live in the link fragment; the password page removes the fragment and sends the token in the JSON request body. First passwords are never silently assigned during login.
+New passwords must contain at least 12 characters, uppercase and lowercase letters, a number and a symbol, and at most 72 UTF-8 bytes (bcrypt limit). Existing login passwords are still accepted. Public registration/login/reset requests are rate-limited. Forgot password sends codes, never links. Setup and legacy tokens live in the link fragment; the password page removes the fragment and sends the token in the JSON request body. First passwords are never silently assigned during login.
 
 ## Administration
 

@@ -180,7 +180,11 @@ async function googleCallback(req, res) {
     delete req.session.oauthStorage;
     delete req.session.oauthLinkUserId;
     await establishSession(req, user);
-    res.redirect("/UI-UX/modules/dashboard/index.html");
+    res.redirect(
+      user.role === "user"
+        ? "/UI-UX/index.html?signin=success"
+        : "/UI-UX/modules/dashboard/index.html",
+    );
   } catch (error) {
     delete req.session.oauthStorage;
     delete req.session.oauthLinkUserId;

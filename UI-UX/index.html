@@ -9,6 +9,7 @@
     />
     <title>Sign in | HOPE, Inc.</title>
     <link rel="stylesheet" href="styles.css" />
+      <link rel="stylesheet" href="/account/password-guide.css" />
   </head>
   <body>
     <a class="skip-link" href="#login-form">Skip to sign in</a>
@@ -304,21 +305,11 @@
           </div>
           <div class="dialog-field">
             <label for="create-password">Password</label>
-            <input class="dialog-input" id="create-password" name="create-password" type="password" autocomplete="new-password" minlength="8" required />
-            <div class="password-strength" id="password-strength" data-strength="0" aria-live="polite">
-              <div class="password-strength__header">
-                <span>Password strength</span>
-                <strong id="strength-label">Enter a password</strong>
-              </div>
-              <div class="password-strength__meter" aria-hidden="true">
-                <span></span><span></span><span></span><span></span>
-              </div>
-              <p id="strength-hint">Use 8+ characters with uppercase, lowercase, a number, and a symbol.</p>
-            </div>
+            <input class="dialog-input" id="create-password" name="create-password" type="password" autocomplete="new-password" minlength="12" required />
           </div>
           <div class="dialog-field">
             <label for="confirm-password">Confirm password</label>
-            <input class="dialog-input" id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="8" required />
+            <input class="dialog-input" id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="12" required />
           </div>
         </div>
 
@@ -333,6 +324,20 @@
       </form>
     </dialog>
 
+    <dialog class="flow-dialog" id="login-success-dialog" aria-labelledby="login-success-title">
+      <div class="flow-dialog__surface">
+        <button class="dialog-close" id="login-success-close" type="button" aria-label="Close sign-in confirmation">×</button>
+        <section class="confirmation-step">
+          <div class="confirmation-art" aria-hidden="true"><span class="confirmation-envelope"></span><span class="confirmation-shield">✓</span></div>
+          <p class="feature-kicker">Welcome to HOPE, Inc.</p>
+          <h2 id="login-success-title">Signed in successfully</h2>
+          <p>Your account is signed in. The User workspace is still being prepared.</p>
+          <button class="secondary-button" id="login-success-logout" type="button">Sign out</button>
+          <p class="dialog-message" id="login-success-message" role="status"></p>
+        </section>
+      </div>
+    </dialog>
+    <script src="/account/password-guide.js"></script>
     <script src="shared/utilities/live-auth.js"></script>
   </body>
 </html>

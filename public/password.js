@@ -8,17 +8,42 @@ if (!token) {
   message.textContent =
     "This link is missing its token. Request a fresh account setup or password reset link.";
 }
+const passwordInput = document.querySelector("#password"),
+  confirmInput = document.querySelector("#confirm");
+const guide = HopePasswordGuide.attach(passwordInput);
+function showError(input, text) {
+  document.querySelector("#" + input.id + "-error").textContent = text;
+  input.setAttribute("aria-invalid", String(Boolean(text)));
+  input.setAttribute(
+    "aria-describedby",
+    input.id + "-error " + (input.id === "password" ? input.id + "-guide" : ""),
+  );
+}
+for (const input of [passwordInput, confirmInput])
+  input.addEventListener("input", () => showError(input, ""));
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const password = document.querySelector("#password");
   const confirm = document.querySelector("#confirm");
-  if (password.value !== confirm.value) {
-    message.textContent = "The passwords do not match.";
+  showError(password, guide.error());
+  showError(
+    confirm,
+    !confirm.value
+      ? "Confirm your new password."
+      : password.value !== confirm.value
+        ? "The passwords do not match."
+        : "",
+  );
+  if (guide.error()) {
+    password.focus();
+    return;
+  }
+  if (!confirm.value || password.value !== confirm.value) {
     confirm.focus();
     return;
   }
   if (new TextEncoder().encode(password.value).length > 72) {
-    message.textContent = "Choose a password no longer than 72 UTF-8 bytes.";
+    showError(password, "Choose a password no longer than 72 UTF-8 bytes.");
     password.focus();
     return;
   }
