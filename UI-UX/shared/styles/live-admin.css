@@ -332,3 +332,41 @@ select:focus-visible {
 .live-group-heading small{margin-left:10px;color:var(--muted);font-size:.63rem;font-weight:500}
 .record-pages[hidden]{display:none}
 @media(max-width:600px){#live-toolbar .module-search{flex-basis:100%}.live-tool-panel{left:0}.live-table-filters{width:285px}}
+/* Shared Add/Edit dialog scale and action typography. */
+.module-primary,.dialog-secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:10px;font-family:"DM Sans",system-ui,sans-serif;font-size:.75rem;font-weight:700;line-height:1.2;white-space:nowrap}
+.record-dialog,.record-dialog.record-dialog--wide{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 32px);border-radius:18px}
+.record-dialog[data-layout="standard"]{width:min(620px,calc(100vw - 32px))}
+.record-dialog[data-layout="sale"],.record-dialog[data-layout="rights"]{width:min(720px,calc(100vw - 32px))}
+.record-dialog form{max-height:calc(100dvh - 32px);padding:20px;gap:0}
+.record-dialog .dialog-header{margin:0 0 14px;align-items:flex-start;gap:12px}
+.record-dialog .dialog-header .eyebrow{margin:0 0 5px;font-size:.58rem;line-height:1.3}
+.record-dialog .dialog-header h2{margin:0;font:800 1.18rem/1.3 "Manrope",system-ui,sans-serif}
+.record-dialog .dialog-header p:not(.eyebrow){margin:5px 0 0;font-size:.7rem;line-height:1.45}
+.record-dialog .dialog-close{display:inline-grid;place-items:center;flex:0 0 28px;width:28px;height:28px;min-height:28px;padding:0;border-radius:8px;font:500 1.05rem/1 "DM Sans",system-ui,sans-serif}
+.record-dialog .live-edit-fields{margin:0;padding:0;border:0;min-width:0}
+.record-dialog .dialog-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.record-dialog .field{min-width:0;gap:5px;align-content:start}
+.record-dialog .field>span{font-size:.68rem;font-weight:700;line-height:1.3}
+.record-dialog .field input,.record-dialog .field select{height:36px;min-height:36px;padding:7px 9px;border-radius:9px;font:400 .75rem/1.35 "DM Sans",system-ui,sans-serif}
+.record-dialog .field textarea{min-height:68px;padding:8px 9px;border-radius:9px;font:400 .75rem/1.4 "DM Sans",system-ui,sans-serif}
+.record-dialog .field small{font-size:.61rem;line-height:1.4}
+.record-dialog .live-edit-fields>.field{margin-top:12px}
+.record-dialog .live-dialog-notice{margin:0 0 10px;font-size:.7rem;line-height:1.45}
+.record-dialog .live-dialog-notice:empty{display:none}
+.record-dialog .dialog-actions{position:static;bottom:auto;margin:14px 0 0;padding:12px 0 0;gap:8px;align-items:center}
+.record-dialog .dialog-actions .module-primary,.record-dialog .dialog-actions .dialog-secondary{height:36px;min-height:36px;min-width:74px;font-family:"DM Sans",system-ui,sans-serif;font-size:.75rem;font-weight:700;line-height:1.2}
+.record-dialog .module-primary{box-shadow:0 5px 12px rgba(8,125,164,.16)}
+.record-dialog .live-sale-lines{margin-top:16px}
+.record-dialog .live-sale-lines h3{margin:0 0 5px;font-size:.8rem}
+.record-dialog .live-sale-lines>p{margin:5px 0 10px;font-size:.68rem;line-height:1.45}
+.record-dialog .live-sale-line{gap:8px;padding:10px 0;grid-template-columns:minmax(140px,2fr) minmax(65px,.8fr) minmax(65px,.8fr) minmax(65px,.8fr) auto}
+.record-dialog .live-sale-line output{display:flex;align-items:center;min-height:36px;padding:6px 0;font-size:.75rem}
+.record-dialog .live-rights-tools{gap:8px;margin:0 0 12px}
+@media(max-width:560px){
+ .record-dialog form{padding:16px}
+ .record-dialog .dialog-fields{grid-template-columns:1fr;gap:10px}
+ .record-dialog .live-sale-line{grid-template-columns:1fr 1fr}
+ .record-dialog .live-sale-line>.field:first-child{grid-column:1/-1}
+ .record-dialog .dialog-actions{flex-wrap:wrap}
+}
+.module-primary[hidden],.dialog-secondary[hidden]{display:none!important}
