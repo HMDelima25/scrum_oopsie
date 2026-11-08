@@ -16,3 +16,14 @@
  .sidebar.is-expanded .brand-title{min-width:95px;padding-left:7px}
  .sidebar.is-expanded .brand-toggle{grid-template-columns:46px 1fr 16px}
 }
+/* Compact navigation switches immediately; expanded navigation retains its motion. */
+.dashboard-shell:not(.sidebar-expanded) .sidebar-nav .nav-icon,
+.dashboard-shell:not(.sidebar-expanded) .sidebar-nav .nav-icon svg,
+.dashboard-shell:not(.sidebar-expanded) .sidebar-nav .nav-icon span {
+  animation: none !important;
+  transition: none !important;
+}
+.dashboard-shell:not(.sidebar-expanded) .workspace,
+.dashboard-shell:not(.sidebar-expanded) .insight-view {
+  animation: none !important;
+}
