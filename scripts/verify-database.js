@@ -44,11 +44,15 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 13);
+  assert.equal(result.tables.app_migration, 14);
   const directory=await db.from('employee_directory').select('empno,jobname,deptname',{count:'exact',head:true});
   if(directory.error)throw new Error('employee_directory: '+directory.error.code);
   assert.equal(directory.count,result.tables.employee);
   result.employeeDirectoryRows=directory.count;
+  const jobDirectory=await db.from('job_directory').select('jobcode,deptcode,deptname',{count:'exact',head:true});
+  if(jobDirectory.error)throw new Error('job_directory: '+jobDirectory.error.code);
+  assert.equal(jobDirectory.count,result.tables.job);
+  result.jobDirectoryRows=jobDirectory.count;
   for (const report of [
     "topCustomers",
     "productMaster",
@@ -78,6 +82,9 @@ async function main() {
     const directoryRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/employee_directory?select=empno`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
     assert.ok([401,403].includes(directoryRead.status));
     result.anonymousDirectoryReadDenied=true;
+    const jobDirectoryRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/job_directory?select=jobcode`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
+    assert.ok([401,403].includes(jobDirectoryRead.status));
+    result.anonymousJobDirectoryReadDenied=true;
     result.anonymousReadDenied = true;
   }
   const url = `http://127.0.0.1:${process.env.PORT || 5000}`;

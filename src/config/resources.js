@@ -47,8 +47,11 @@ module.exports = {
   },
   jobs: {
     table: "job",
+    listView: "job_directory",
+    readFields: ["deptname"],
+    displayFields: ["jobcode", "jobname", "deptname", "jobdesc"],
     pk: ["jobcode"],
-    fields: ["jobcode", "jobname", "jobprefix", "jobdesc"],
+    fields: ["jobcode", "jobname", "jobprefix", "deptcode", "jobdesc"],
     module: "hr",
     actions: ["jobAdd", "jobEdit", "jobDelete"],
   },

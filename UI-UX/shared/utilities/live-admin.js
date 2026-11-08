@@ -616,7 +616,7 @@
                   ? ["total", "paid", "balance"]
                   : []),
             ]),
-          ].concat(admin() ? ["is_deleted", "stamp"] : []);
+          ].concat(admin() ? ["is_deleted", "stamp"] : []).filter(field=>!(view==='jobs'&&field==='deptname'));
     const editable = permitted(1) && !(view === "users" && (row.id === user.id || row.is_deleted));
     let actions = `${editable ? '<button type="button" class="module-primary" id="live-edit">Edit</button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="dialog-secondary live-danger" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
     if(view==='employees'&&admin()&&can('hr.empEdit')&&can('hr.empDelete')&&!row.is_deleted&&!row.sepdate)actions+='<button type="button" class="dialog-secondary live-danger" id="live-fire">Fire employee</button>';
@@ -672,11 +672,11 @@
 
   function input(field, row, editing) {
     if(!editing && schema.autoCodes?.[view]?.field===field)return `<label class="field"><span>${h(fieldLabel(field))}</span><input name="${field}" value="" placeholder="Generating code…" readonly data-auto-code><small>Assigned automatically when saved.</small></label>`;
-    const meta = schema.fields[field],
+    const meta = view==='jobs'&&field==='deptcode'?['Department',...schema.fields[field].slice(1)]:schema.fields[field],
       foreign = schema.lookups[view]?.[field];
     const immutable = editing && (cfg().pk.includes(field)||(view==='jobs'&&field==='jobprefix'));
     const required =
-      cfg().pk.includes(field) ||
+      cfg().pk.includes(field) || (view==='jobs'&&field==='deptcode') ||
       !["birthdate", "gender", "sepdate", "deptcode"].includes(field);
     const attrs = `name="${field}" ${required ? "required" : ""} ${immutable ? "disabled" : ""}`;
     const raw = row?.[field] ?? "";
@@ -766,7 +766,7 @@
     const editing = !!row;
     const c = cfg();
     const automatic=!editing&&schema.autoCodes?.[view];
-    const fields = (isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields).filter(field=>!(view==='employees'&&!editing&&field==='sepdate'));
+    const fields = (isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields).filter(field=>!(view==='employees'&&!editing&&field==='sepdate')&&!(view==='jobs'&&field==='jobprefix'));
     let body = isUser
       ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
       : `<div class="dialog-fields">${fields.map((f) => input(f, row, editing)).join("")}</div>`;
@@ -812,10 +812,10 @@
     }
     if(automatic){
       let codePreviewVersion=0;
-      const preview=async(prefix)=>{const attempt=++codePreviewVersion;d.querySelector("[data-auto-code]").value="";const result=(await request(`/api/next-code/${resource}`+(prefix?`?prefix=${encodeURIComponent(prefix)}`:""))).data;if(!d.open||resource!==view||attempt!==codePreviewVersion)return;d.querySelector("[data-auto-code]").value=result.code;const select=d.querySelector('[name="_code_prefix"]');if(select){select.innerHTML=result.prefixes.map(p=>`<option value="${h(p)}">${h(p)}</option>`).join("");select.value=result.prefix;select.onchange=()=>preview(select.value).catch(e=>d.querySelector(".live-dialog-notice").textContent=e.message);}};
-      if(automatic.manualPrefix){
-        const prefixInput=d.querySelector('[name="jobprefix"]');d.querySelector('[data-auto-code]').placeholder='Enter job prefix first';
-        let previewTimer;prefixInput.oninput=()=>{prefixInput.value=prefixInput.value.toUpperCase().replace(/[^A-Z]/g,'');clearTimeout(previewTimer);d.querySelector('[data-auto-code]').value='';if(prefixInput.value)previewTimer=setTimeout(()=>preview(prefixInput.value).catch(e=>d.querySelector('.live-dialog-notice').textContent=e.message),200);};
+      const preview=async(prefix)=>{const attempt=++codePreviewVersion;d.querySelector("[data-auto-code]").value="";const result=(await request(`/api/next-code/${resource}`+(prefix?`?${automatic.departmentPrefix?"deptcode":"prefix"}=${encodeURIComponent(prefix)}`:""))).data;if(!d.open||resource!==view||attempt!==codePreviewVersion)return;d.querySelector("[data-auto-code]").value=result.code;const select=d.querySelector('[name="_code_prefix"]');if(select){select.innerHTML=result.prefixes.map(p=>`<option value="${h(p)}">${h(p)}</option>`).join("");select.value=result.prefix;select.onchange=()=>preview(select.value).catch(e=>d.querySelector(".live-dialog-notice").textContent=e.message);}};
+      if(automatic.departmentPrefix){
+        const department=d.querySelector('[name="deptcode"]');d.querySelector('[data-auto-code]').placeholder='Choose department first';
+        department.onchange=()=>{d.querySelector('[data-auto-code]').value='';d.querySelector('.live-dialog-notice').textContent='';if(department.value)preview(department.value).catch(e=>d.querySelector('.live-dialog-notice').textContent=e.message);};
       }else try{await preview();}catch(e){d.querySelector(".live-dialog-notice").textContent=e.message;}
     }
     if (!d.open || resource !== view) return;

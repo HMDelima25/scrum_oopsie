@@ -38,10 +38,11 @@ router.get("/next-code/:resource",wrap(async(req,res)=>{
  if(!code||!c)throw new HttpError(400,"This record uses related keys rather than a generated code.");
  if(!allowed(req.user,`${c.module}.${c.actions[0]}`))throw new HttpError(403,"Adding this record is not permitted.");
  let prefixes=[];
- if(code.manualPrefix){
-  if(req.query.prefix===undefined)return res.json({status:'success',data:{field:code.field,code:null,prefix:null,prefixes:[]}});
-  if(typeof req.query.prefix!=='string'||!/^[A-Za-z]{1,3}$/.test(req.query.prefix))throw new HttpError(400,'Job prefix must use 1–3 letters.');
-  const prefix=req.query.prefix.toUpperCase(),value=check(await req.app.locals.db.rpc('hope_next_code',{p_table:c.table,p_prefix:prefix,p_reserve:false}));
+ if(code.departmentPrefix){
+  if(req.query.prefix!==undefined)throw new HttpError(400,'Choose an existing department instead of a job prefix.');
+  if(req.query.deptcode===undefined)return res.json({status:'success',data:{field:code.field,code:null,prefix:null,prefixes:[]}});
+  if(typeof req.query.deptcode!=='string'||req.query.deptcode.length>3)throw new HttpError(400,'Choose an existing department.');
+  const prefix=check(await req.app.locals.db.rpc('hope_department_job_prefix',{p_deptcode:req.query.deptcode})),value=check(await req.app.locals.db.rpc('hope_next_code',{p_table:c.table,p_prefix:prefix,p_reserve:false}));
   return res.json({status:'success',data:{field:code.field,code:value,prefix,prefixes:[]}});
  }
  if(code.choosePrefix){

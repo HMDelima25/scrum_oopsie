@@ -335,12 +335,12 @@ test("HOPE database and backend integration", async (t) => {
           },
         ],
         ["departments", { deptcode: "TST", deptname: "Test" }],
-        ["jobs", { jobcode: "TEST", jobdesc: "Test" }],
+        ["jobs", { jobname: "Test", deptcode: "TST", jobdesc: "Test" }],
         [
           "job-history",
           {
             empno: "T0001",
-            jobcode: "TEST",
+            jobcode: "TST1",
             effdate: "2026-01-01",
             salary: 1000,
             deptcode: "TST",

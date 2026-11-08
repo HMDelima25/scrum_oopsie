@@ -13,3 +13,4 @@ Environment secrets, installed dependencies, private invitation/reset links, run
 Employee job assignment and confirmed firing/archival: [employee workflow](docs/EMPLOYEE-LIFECYCLE.md).
 Employee job/department columns, filtering and grouping: [employee directory](docs/EMPLOYEE-DIRECTORY.md).
 Department and Job popup tabs: [HR record details](docs/HR-RECORD-TABS.md).
+Job department selection and generated codes: [job departments](docs/JOB-DEPARTMENTS.md).

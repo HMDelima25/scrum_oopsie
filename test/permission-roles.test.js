@@ -33,7 +33,7 @@ test('permission catalogue and named roles enforce real requests',async t=>{
  for(const [resource,c] of Object.entries(resources)){
   for(let i=0;i<3;i++)await t.test(`${c.module}.${c.actions[i]} denies then permits ${resource} ${['create','edit','delete'][i]}`,async()=>{
    const permission=c.module+'.'+c.actions[i];exercised.add(permission);let body,key='',method=['POST','PATCH','DELETE'][i];
-   if(i===0){body=await values(resource);if(resource==='sales'){delete body.transno;body.lines=[{prodcode:(await insert('prices')).prodcode,quantity:2}];}}
+   if(i===0){body=await values(resource);if(resource==='jobs'){delete body.jobcode;body.jobname=body.jobdesc;body.deptcode=(await insert('departments')).deptcode;}if(resource==='sales'){delete body.transno;body.lines=[{prodcode:(await insert('prices')).prodcode,quantity:2}];}}
    else {const row=await insert(resource);key='/'+c.pk.map(k=>row[k]).join('~');if(i===1)body=edits[resource];}
    await grant({...all,[permission]:false});assert.equal((await request('member',method,'/api/'+resource+key,body)).status,403);
    await grant(all);const allowed=await request('member',method,'/api/'+resource+key,body);assert.equal(allowed.status,i===0?201:200,JSON.stringify(allowed));

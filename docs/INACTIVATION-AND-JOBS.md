@@ -6,7 +6,7 @@ The preview is checked again during the transaction. Changed rows or new relatio
 
 Endpoints: GET `/api/:resource/:key/inactivation` returns the plan; POST `/api/:resource/:key/inactivate` accepts `{plan}` from the preview. The older single-record DELETE endpoint remains compatible and still refuses active children. Both paths enforce authentication and permissions.
 
-Human Resources > Jobs now has a generated Job code plus manual Job name, Job prefix and Job description. The prefix accepts 1–3 letters, is normalized to uppercase, and can be new rather than selected from existing prefixes. Names allow 80 characters and descriptions 500. Codes keep the existing four-character table format: ACC1, ACC2, VP01, VP02, and so on. A three-letter prefix has nine numeric slots; an exhausted prefix is rejected rather than generating an invalid code. Existing codes are preserved. Once saved, the code and its prefix stay fixed; names and descriptions remain editable. Job lookups display the job name.
+Human Resources > Jobs has a generated Job code plus manual Job name, Department selection and Job description. Select an existing active department; the server derives the code prefix. Existing codes stay fixed. Names allow 80 characters and descriptions 500. Job lookups display the job name. See [the current department-based job workflow](JOB-DEPARTMENTS.md).
 
 Migrations 8 and 9 add the grouped-inactivation functions and job fields. Existing job descriptions are retained and initially also populate job names. Customer codes are unchanged.
 

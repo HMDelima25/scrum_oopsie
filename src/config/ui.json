@@ -221,6 +221,9 @@
     "employees": {
       "jobcode": "jobs",
       "deptcode": "departments"
+    },
+    "jobs": {
+      "deptcode": "departments"
     }
   },
   "listFilters": {
@@ -497,7 +500,7 @@
       "field": "jobcode",
       "table": "job",
       "choosePrefix": false,
-      "manualPrefix": true
+      "departmentPrefix": true
     },
     "sales": {
       "field": "transno",
@@ -603,7 +606,7 @@
         "type": "text"
       },
       {
-        "field": "jobprefix",
+        "field": "deptname",
         "type": "text"
       },
       {

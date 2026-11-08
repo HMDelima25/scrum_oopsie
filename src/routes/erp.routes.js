@@ -143,12 +143,12 @@ for (const [path, c] of Object.entries(resources)) {
         }
         const saved=check(await req.app.locals.db.rpc('hope_create_employee',{p_actor:req.user.id,p_data:employee,p_assignment:job_assignment??null}));if(saved.job_assignment)saved.job_assignment=visible(req,saved.job_assignment);return res.status(201).json({status:'success',data:visible(req,saved)});
       }
-      if(path==='jobs'&&!req.body.jobcode){
+      if(path==='jobs'){
         const {text}=require('../lib/http');
         req.body.jobname=text(req.body.jobname,'Job name',80);
         req.body.jobdesc=text(req.body.jobdesc,'Job description',500);
-        req.body.jobprefix=text(req.body.jobprefix,'Job prefix',3).toUpperCase();
-        if(!/^[A-Z]{1,3}$/.test(req.body.jobprefix))throw new HttpError(400,'Job prefix must use 1–3 letters.');
+        req.body.deptcode=text(req.body.deptcode,'Department',3);
+        const saved=check(await req.app.locals.db.rpc('hope_create_department_job',{p_actor:req.user.id,p_data:object(req.body)}));return res.status(201).json({status:'success',data:visible(req,saved)});
       }
       if (path === "sales") {
         const b = object(req.body);

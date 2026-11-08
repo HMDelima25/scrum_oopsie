@@ -177,11 +177,12 @@ test("Live UI contracts, lookups and external edit conflicts", async (t) => {
     await db.pg.query("INSERT INTO product(prodcode,description,unit) VALUES('AD0004','Existing drive','ea')");
     await db.pg.query("INSERT INTO department(deptcode,deptname) VALUES('BR2','Existing branch')");
     await db.pg.query("INSERT INTO job(jobcode,jobdesc) VALUES('SA2','Existing sales job')");
+    await db.pg.query("INSERT INTO department(deptcode,deptname) VALUES('SA','Sales')");
     assert.equal((await req('/api/next-code/customers')).body.data.code,'C0083');
     assert.equal((await req('/api/next-code/employees')).body.data.code,'00065');
     assert.equal((await req('/api/next-code/products?prefix=AD')).body.data.code,'AD0005');
     assert.equal((await req('/api/next-code/departments?prefix=BR')).body.data.code,'BR3');
-    assert.equal((await req('/api/next-code/jobs?prefix=SA')).body.data.code,'SA3');
+    assert.equal((await req('/api/next-code/jobs?deptcode=SA')).body.data.code,'SA3');
     assert.equal((await req('/api/next-code/products?prefix=BAD!')).status,400);
     const created=await Promise.all([req('/api/customers','POST',{custname:'Automatic one',address:'Test',payterm:'COD'}),req('/api/customers','POST',{custname:'Automatic two',address:'Test',payterm:'COD'})]);
     assert.ok(created.every(r=>r.status===201),JSON.stringify(created));
@@ -190,7 +191,7 @@ test("Live UI contracts, lookups and external edit conflicts", async (t) => {
     const product=await req('/api/products','POST',{description:'Automatic drive',unit:'ea',_code_prefix:'AD'});
     assert.equal(product.body.data.prodcode,'AD0005');
     assert.equal((await req('/api/departments','POST',{deptname:'New branch',_code_prefix:'BR'})).body.data.deptcode,'BR3');
-    assert.equal((await req('/api/jobs','POST',{jobname:'Sales',jobprefix:'SA',jobdesc:'New sales job'})).body.data.jobcode,'SA3');
+    assert.equal((await req('/api/jobs','POST',{jobname:'Sales',deptcode:'SA',jobdesc:'New sales job'})).body.data.jobcode,'SA3');
     await db.pg.query("UPDATE customer SET is_deleted=true WHERE custno='C0084'");
     assert.equal((await req('/api/next-code/customers')).body.data.code,'C0085');
     await db.pg.query("INSERT INTO sales(transno,salesdate,custno,empno) VALUES('TR000124','2026-11-07','C0082','00063')");
