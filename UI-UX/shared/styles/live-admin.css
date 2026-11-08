@@ -395,3 +395,11 @@ select:focus-visible {
 .record-dialog .live-inactivation-note{font-size:.66rem;line-height:1.5;color:var(--muted);margin:12px 0 0}
 .record-dialog .live-price-summary{font-size:.78rem;line-height:1.5;margin:0 0 12px}
 .record-dialog .live-price-note{font-size:.68rem;line-height:1.5;color:var(--muted);margin:10px 0 0}
+/* Record details: icon edit and distinct, themed record actions. */
+.record-dialog .live-edit-icon {display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;padding:7px;color:#075b7b;border:0;border-radius:9px;background:transparent;box-shadow:none;cursor:pointer;transition:background 160ms ease,color 160ms ease;}
+.record-dialog .live-edit-icon svg {width:21px;height:21px;}
+.record-dialog .live-edit-icon:hover {background:rgba(8,125,164,.1);color:#087da4;}
+.record-dialog .live-edit-icon:focus-visible {outline:2px solid #087da4;outline-offset:2px;}
+.record-dialog .dialog-actions .live-inactive-action {color:#fff;border:1px solid transparent;background:linear-gradient(110deg,#8e2638,#ce4657);box-shadow:0 5px 12px rgba(158,39,55,.18);}
+.record-dialog .dialog-actions .live-inactive-action:hover {background:linear-gradient(110deg,#a12c40,#de5062);}
+.record-dialog #live-update-price {color:#fff;background:linear-gradient(110deg,#07465b,#087da4);border:1px solid transparent;}
