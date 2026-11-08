@@ -1,0 +1,31 @@
+name: Deploy Database Migrations
+
+# Trigger this workflow whenever code is pushed to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-migrations:
+    name: Run dbmate migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Check out the code from GitHub
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Install dbmate binary
+      - name: Install dbmate
+        run: |
+          curl -fsSL -o dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+          chmod +x dbmate
+          sudo mv dbmate /usr/local/bin/
+
+      # 3. Run the migrations!
+      - name: Apply migrations to Supabase
+        run: dbmate up
+        env:
+          # GitHub automatically injects the secret we created in Step 2
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
