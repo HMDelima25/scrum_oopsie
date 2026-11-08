@@ -32,7 +32,7 @@ test('Table controls, inactive samples, and every Add endpoint',async t=>{
   const product=await add('products',{description:'Added product',unit:'ea',_code_prefix:'AD'});
   const employee=await add('employees',{firstname:'Added',lastname:'Employee',hiredate:'2026-01-01'});
   const dept=await add('departments',{deptname:'Added department',_code_prefix:'BR'});
-  const job=await add('jobs',{jobdesc:'Added job',_code_prefix:'SA'});
+  const job=await add('jobs',{jobname:'Added job',jobprefix:'SA',jobdesc:'Added job'});
   await add('prices',{prodcode:product.prodcode,effdate:'2026-01-01',unitprice:100});
   await add('job-history',{empno:employee.empno,jobcode:job.jobcode,deptcode:dept.deptcode,effdate:'2026-01-01',salary:20000});
   const sale=await add('sales',{custno:customer.custno,empno:employee.empno,salesdate:'2026-11-08',lines:[{prodcode:product.prodcode,quantity:2}]});

@@ -45,7 +45,7 @@ module.exports = {
   jobs: {
     table: "job",
     pk: ["jobcode"],
-    fields: ["jobcode", "jobdesc"],
+    fields: ["jobcode", "jobname", "jobprefix", "jobdesc"],
     module: "hr",
     actions: ["jobAdd", "jobEdit", "jobDelete"],
   },

@@ -106,7 +106,7 @@
     "jobdesc": [
       "Job description",
       "text",
-      20
+      500
     ],
     "salary": [
       "Salary",
@@ -137,6 +137,16 @@
     "amount": [
       "Amount",
       "number"
+    ],
+    "jobname": [
+      "Job name",
+      "text",
+      80
+    ],
+    "jobprefix": [
+      "Job prefix",
+      "text",
+      3
     ]
   },
   "groups": {
@@ -482,7 +492,8 @@
     "jobs": {
       "field": "jobcode",
       "table": "job",
-      "choosePrefix": true
+      "choosePrefix": false,
+      "manualPrefix": true
     },
     "sales": {
       "field": "transno",
@@ -576,7 +587,11 @@
     ],
     "jobs": [
       {
-        "field": "jobcode",
+        "field": "jobname",
+        "type": "text"
+      },
+      {
+        "field": "jobprefix",
         "type": "text"
       },
       {

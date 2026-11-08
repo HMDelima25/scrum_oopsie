@@ -1,0 +1,16 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),bcrypt=require('bcryptjs');
+const {createDatabase}=require('./helpers/database'),createApp=require('../src/app');
+test('manual job details and automatic prefix-based codes',async t=>{
+ const db=await createDatabase(),hash=await bcrypt.hash('Job-test-password-2026',4);
+ await db.pg.query("INSERT INTO users(email,name,password_hash,role,status) VALUES('root@example.test','Root',$1,'superadmin','approved')",[hash]);
+ const server=createApp({db,sessionSecret:'job-field-test-only-'.repeat(3)}).listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(async()=>{await new Promise(r=>server.close(r));await db.pg.close();});
+ const base='http://127.0.0.1:'+server.address().port;let cookie;
+ async function req(path,method='GET',body){const r=await fetch(base+path,{method,headers:{'content-type':'application/json',...(cookie?{cookie}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return {status:r.status,body:await r.json()};}
+ assert.equal((await req('/api/auth/login','POST',{email:'root@example.test',password:'Job-test-password-2026'})).status,200);
+ let first;
+ await t.test('new manual prefixes preview codes without reserving numbers',async()=>{for(let i=0;i<2;i++)assert.equal((await req('/api/next-code/jobs?prefix=ACC')).body.data.code,'ACC1');assert.equal((await req('/api/next-code/jobs?prefix=vp')).body.data.code,'VP01');for(const prefix of ['ABCD','1A','A!'])assert.equal((await req('/api/next-code/jobs?prefix='+encodeURIComponent(prefix))).status,400);});
+ await t.test('name, prefix and description are mandatory for generated jobs',async()=>{for(const body of [{jobdesc:'Missing name'},{jobname:'Accountant',jobdesc:'Missing prefix'},{jobname:'Accountant',jobprefix:'ACC'}])assert.equal((await req('/api/jobs','POST',body)).status,400);});
+ await t.test('concurrent jobs share a manually entered prefix with unique generated codes',async()=>{const results=await Promise.all([1,2].map(n=>req('/api/jobs','POST',{jobname:'Accountant '+n,jobprefix:'acc',jobdesc:'Prepare accounts and reports. '.repeat(4)})));for(const r of results)assert.equal(r.status,201,JSON.stringify(r));assert.deepEqual(results.map(r=>r.body.data.jobcode).sort(),['ACC1','ACC2']);first=results[0].body.data;assert.equal(first.jobprefix,'ACC');assert.ok(first.jobdesc.length>20);});
+ await t.test('saved fields can be searched, edited and selected in job history',async()=>{const rows=(await req('/api/jobs?q=Accountant')).body.data;assert.equal(rows.length,2);assert.equal((await req('/api/jobs/'+first.jobcode,'PATCH',{jobname:'Senior accountant',jobdesc:'Updated duties'})).status,200);assert.equal((await req('/api/jobs/'+first.jobcode,'PATCH',{jobprefix:'VP'})).status,400);const choices=(await req('/api/lookups/jobs?for=job-history')).body.data;assert.ok(choices.some(r=>r.jobname==='Senior accountant'));});
+ await t.test('existing job rows receive compatible name and prefix without changing codes',async()=>{await db.pg.exec("INSERT INTO job(jobcode,jobdesc) VALUES('MGR','Manager')");const r=(await req('/api/jobs/MGR')).body.data;assert.equal(r.jobcode,'MGR');assert.equal(r.jobprefix,'MGR');assert.equal(r.jobname,'Manager');});
+});

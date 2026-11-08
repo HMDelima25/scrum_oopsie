@@ -190,7 +190,7 @@ test("Live UI contracts, lookups and external edit conflicts", async (t) => {
     const product=await req('/api/products','POST',{description:'Automatic drive',unit:'ea',_code_prefix:'AD'});
     assert.equal(product.body.data.prodcode,'AD0005');
     assert.equal((await req('/api/departments','POST',{deptname:'New branch',_code_prefix:'BR'})).body.data.deptcode,'BR3');
-    assert.equal((await req('/api/jobs','POST',{jobdesc:'New sales job',_code_prefix:'SA'})).body.data.jobcode,'SA3');
+    assert.equal((await req('/api/jobs','POST',{jobname:'Sales',jobprefix:'SA',jobdesc:'New sales job'})).body.data.jobcode,'SA3');
     await db.pg.query("UPDATE customer SET is_deleted=true WHERE custno='C0084'");
     assert.equal((await req('/api/next-code/customers')).body.data.code,'C0085');
     await db.pg.query("INSERT INTO sales(transno,salesdate,custno,empno) VALUES('TR000124','2026-11-07','C0082','00063')");

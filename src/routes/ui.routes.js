@@ -38,6 +38,12 @@ router.get("/next-code/:resource",wrap(async(req,res)=>{
  if(!code||!c)throw new HttpError(400,"This record uses related keys rather than a generated code.");
  if(!allowed(req.user,`${c.module}.${c.actions[0]}`))throw new HttpError(403,"Adding this record is not permitted.");
  let prefixes=[];
+ if(code.manualPrefix){
+  if(req.query.prefix===undefined)return res.json({status:'success',data:{field:code.field,code:null,prefix:null,prefixes:[]}});
+  if(typeof req.query.prefix!=='string'||!/^[A-Za-z]{1,3}$/.test(req.query.prefix))throw new HttpError(400,'Job prefix must use 1–3 letters.');
+  const prefix=req.query.prefix.toUpperCase(),value=check(await req.app.locals.db.rpc('hope_next_code',{p_table:c.table,p_prefix:prefix,p_reserve:false}));
+  return res.json({status:'success',data:{field:code.field,code:value,prefix,prefixes:[]}});
+ }
  if(code.choosePrefix){
    const capacity=ui.fields[code.field][2];let offset=0;
    while(true){const result=await req.app.locals.db.from(c.table).select(code.field,{count:"exact"}).order(code.field).range(offset,offset+499);const rows=check(result);prefixes.push(...rows.map(r=>(r[code.field].match(/^[A-Z]+/)||[""])[0].slice(0,capacity-1)).filter(Boolean));offset+=rows.length;if(offset>=result.count||!rows.length)break;}
@@ -53,7 +59,7 @@ const choices = {
   products: ["prodcode", "description", "unit"],
   employees: ["empno", "firstname", "lastname"],
   departments: ["deptcode", "deptname"],
-  jobs: ["jobcode", "jobdesc"],
+  jobs: ["jobcode", "jobname", "jobdesc"],
   sales: ["transno", "salesdate", "custno"],
 };
 router.get(

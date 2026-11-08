@@ -83,6 +83,15 @@ function visible(req, row) {
   return row;
 }
 for (const [path, c] of Object.entries(resources)) {
+  router.get(`/${path}/:key/inactivation`,checkPermission(c.module,c.actions[2]),wrap(async(req,res)=>{
+    const plan=check(await req.app.locals.db.rpc('hope_inactivation_plan',{p_actor:req.user.id,p_table:c.table,p_key:key(c,req.params.key)}));
+    res.json({status:'success',data:plan});
+  }));
+  router.post(`/${path}/:key/inactivate`,checkPermission(c.module,c.actions[2]),wrap(async(req,res)=>{
+    const plan=object(req.body).plan;if(!Array.isArray(plan))throw new HttpError(400,'Review the affected records first.');
+    const result=check(await req.app.locals.db.rpc('hope_inactivate_together',{p_actor:req.user.id,p_table:c.table,p_key:key(c,req.params.key),p_plan:plan}));
+    res.json({status:'success',data:result});
+  }));
   const read = checkPermission(c.module, c.read || "view");
   router.get(
     `/${path}`,
@@ -116,6 +125,13 @@ for (const [path, c] of Object.entries(resources)) {
     checkPermission(c.module, c.actions[0]),
     wrap(async (req, res) => {
       let result;
+      if(path==='jobs'&&!req.body.jobcode){
+        const {text}=require('../lib/http');
+        req.body.jobname=text(req.body.jobname,'Job name',80);
+        req.body.jobdesc=text(req.body.jobdesc,'Job description',500);
+        req.body.jobprefix=text(req.body.jobprefix,'Job prefix',3).toUpperCase();
+        if(!/^[A-Z]{1,3}$/.test(req.body.jobprefix))throw new HttpError(400,'Job prefix must use 1–3 letters.');
+      }
       if (path === "sales") {
         const b = object(req.body);
         if (!allowed(req.user, "sales.detailAdd"))

@@ -621,35 +621,28 @@
         e.currentTarget.disabled = false;
       }
     });
-    d.querySelector("#live-delete")?.addEventListener("click", () => {
-      const deleted = !row.is_deleted;
-      d.querySelector(".live-dialog-notice").textContent =
-        `${deleted ? "Make" : "Restore"} ${recordDescription(row)} ${deleted ? "inactive? Related active records may prevent this." : "to active records?"}`;
-      const b = d.querySelector("#live-delete");
-      b.textContent = deleted ? "Confirm make inactive" : "Confirm restore";
-      b.onclick = async () => {
-        b.disabled = true;
-        try {
-          await send(
-            urlFor(rowKey(row)) + (deleted ? "" : "/restore"),
-            deleted ? "DELETE" : "POST",
-            undefined,
-            row,
-          );
-          d.close();
-          await load(true);
-        } catch (e) {
-          d.querySelector(".live-dialog-notice").textContent = e.message;
-          b.disabled = false;
-        }
-      };
-    });
+    d.querySelector("#live-delete")?.addEventListener("click",async()=>{
+      if(!row.is_deleted){
+        const trigger=d.querySelector('#live-delete');trigger.disabled=true;
+        try{
+          const plan=(await request(urlFor(rowKey(row))+'/inactivation')).data;
+          const grouped={};for(const item of plan){const resource=Object.entries(schema.resources).find(([,c])=>c.table===item.table)?.[0]||item.table;(grouped[resource]??=[]).push(Object.values(item.key).join(' / '));}
+          const body='<p>Make this record and its active related records inactive together? Saved history will remain available. Nothing is permanently erased.</p><div class="live-inactivation-list">'+Object.entries(grouped).map(([resource,keys])=>'<section><strong>'+h(label(resource))+' ('+keys.length+')</strong><p>'+keys.map(h).join(', ')+'</p></section>').join('')+'</div><p>Already inactive records are left as they are. Restore records separately, starting with their parent records.</p>';
+          const confirmation=showDialog('Make inactive',body,'<button type="submit" class="module-primary" id="live-confirm-inactive">Make '+plan.length+' record'+(plan.length===1?'':'s')+' inactive</button>');
+          confirmation.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=confirmation.querySelector('#live-confirm-inactive');button.disabled=true;try{await send(urlFor(rowKey(row))+'/inactivate','POST',{plan});confirmation.close();await load(true);}catch(error){confirmation.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
+        }catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;trigger.disabled=false;}
+        return;
+      }
+      const button=d.querySelector('#live-delete');button.textContent='Confirm restore';d.querySelector('.live-dialog-notice').textContent='Restore this record to active records? Related records will keep their current status.';
+      button.onclick=async()=>{button.disabled=true;try{await send(urlFor(rowKey(row))+'/restore','POST',undefined,row);d.close();await load(true);}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
+    },{once:true});
   }
+
   function input(field, row, editing) {
     if(!editing && schema.autoCodes?.[view]?.field===field)return `<label class="field"><span>${h(fieldLabel(field))}</span><input name="${field}" value="" placeholder="Generating code…" readonly data-auto-code><small>Assigned automatically when saved.</small></label>`;
     const meta = schema.fields[field],
       foreign = schema.lookups[view]?.[field];
-    const immutable = editing && cfg().pk.includes(field);
+    const immutable = editing && (cfg().pk.includes(field)||(view==='jobs'&&field==='jobprefix'));
     const required =
       cfg().pk.includes(field) ||
       !["birthdate", "gender", "sepdate", "deptcode"].includes(field);
@@ -688,7 +681,7 @@
           : name === "departments"
             ? `${row.deptcode} · ${row.deptname}`
             : name === "jobs"
-              ? `${row.jobcode} · ${row.jobdesc}`
+              ? `${row.jobcode} · ${row.jobname||row.jobdesc}`
               : `${row.transno} · ${String(row.salesdate).slice(0, 10)}`;
   }
   async function refreshChoices(d) {
@@ -782,7 +775,10 @@
     if(automatic){
       let codePreviewVersion=0;
       const preview=async(prefix)=>{const attempt=++codePreviewVersion;d.querySelector("[data-auto-code]").value="";const result=(await request(`/api/next-code/${resource}`+(prefix?`?prefix=${encodeURIComponent(prefix)}`:""))).data;if(!d.open||resource!==view||attempt!==codePreviewVersion)return;d.querySelector("[data-auto-code]").value=result.code;const select=d.querySelector('[name="_code_prefix"]');if(select){select.innerHTML=result.prefixes.map(p=>`<option value="${h(p)}">${h(p)}</option>`).join("");select.value=result.prefix;select.onchange=()=>preview(select.value).catch(e=>d.querySelector(".live-dialog-notice").textContent=e.message);}};
-      try{await preview();}catch(e){d.querySelector(".live-dialog-notice").textContent=e.message;}
+      if(automatic.manualPrefix){
+        const prefixInput=d.querySelector('[name="jobprefix"]');d.querySelector('[data-auto-code]').placeholder='Enter job prefix first';
+        let previewTimer;prefixInput.oninput=()=>{prefixInput.value=prefixInput.value.toUpperCase().replace(/[^A-Z]/g,'');clearTimeout(previewTimer);d.querySelector('[data-auto-code]').value='';if(prefixInput.value)previewTimer=setTimeout(()=>preview(prefixInput.value).catch(e=>d.querySelector('.live-dialog-notice').textContent=e.message),200);};
+      }else try{await preview();}catch(e){d.querySelector(".live-dialog-notice").textContent=e.message;}
     }
     if (!d.open || resource !== view) return;
     d.querySelector("form").onsubmit = async (event) => {
