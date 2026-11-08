@@ -241,18 +241,31 @@
         </section>
 
         <section class="flow-step confirmation-step" id="reset-confirmation-step" hidden>
-          <div class="confirmation-art" aria-hidden="true">
-            <span class="confirmation-envelope"></span>
-            <span class="confirmation-shield">✓</span>
-          </div>
+          <svg class="recovery-code-art" viewBox="0 0 180 130" fill="none" aria-hidden="true">
+            <rect x="57" y="12" width="66" height="104" rx="13" fill="#effafd" stroke="#087b9d" stroke-width="3"/>
+            <path d="M78 21h24M82 106h16" stroke="#087b9d" stroke-width="3" stroke-linecap="round"/>
+            <path d="M33 41l28-9 28 9v22c0 23-28 38-28 38S33 86 33 63V41Z" fill="#fff4ce" stroke="#e6ba49" stroke-width="3"/>
+            <path d="m48 63 9 9 17-20" stroke="#087b9d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="74" y="52" width="82" height="32" rx="9" fill="#075b7b"/>
+            <g fill="#fff"><circle cx="88" cy="68" r="3"/><circle cx="99" cy="68" r="3"/><circle cx="110" cy="68" r="3"/><circle cx="121" cy="68" r="3"/><circle cx="132" cy="68" r="3"/><circle cx="143" cy="68" r="3"/></g>
+          </svg>
           <p class="feature-kicker" id="recovery-confirmation-kicker">Check your inbox</p>
-          <h2 id="recovery-confirmation-title">Enter your code</h2>
-          <p id="recovery-confirmation-copy">If this email matches an account, a six-digit code will arrive shortly. Check your inbox and spam folder.</p>
-          <label class="compact-label" for="recovery-code">Six-digit code</label>
-          <input class="dialog-input" id="recovery-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required />
+          <h2 id="recovery-confirmation-title">Verify your email</h2>
+          <p id="recovery-confirmation-copy">Enter the six-digit code sent to your email. Check your spam folder if you don’t see it.</p>
+          <label class="compact-label" for="code-digit-1">Six-digit code</label>
+          <input id="recovery-code" type="hidden" />
+          <div class="recovery-code-digits" role="group" aria-label="Six-digit verification code">
+            <input class="recovery-digit" id="code-digit-1" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Digit 1" aria-describedby="recovery-code-error" />
+            <input class="recovery-digit" id="code-digit-2" type="text" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Digit 2" aria-describedby="recovery-code-error" />
+            <input class="recovery-digit" id="code-digit-3" type="text" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Digit 3" aria-describedby="recovery-code-error" />
+            <input class="recovery-digit" id="code-digit-4" type="text" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Digit 4" aria-describedby="recovery-code-error" />
+            <input class="recovery-digit" id="code-digit-5" type="text" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Digit 5" aria-describedby="recovery-code-error" />
+            <input class="recovery-digit" id="code-digit-6" type="text" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Digit 6" aria-describedby="recovery-code-error" />
+          </div>
+          <p class="auth-inline-error" id="recovery-code-error" role="status" aria-live="polite"></p>
           <p class="confirmation-note">The code expires in 10 minutes. You have five attempts.</p>
-          <button class="primary-button" id="confirm-recovery-code" type="button">Confirm code</button>
-          <button class="secondary-button" id="resend-recovery" type="button">Resend code</button>
+          <button class="primary-button" id="confirm-recovery-code" type="button">Verify code</button>
+          <button class="secondary-button" id="resend-recovery" type="button">Request another code</button>
           <button class="secondary-button" id="change-recovery-method" type="button">Use a different email</button>
           <p class="dialog-message" id="resend-message" role="status" aria-live="polite"></p>
         </section>
@@ -267,7 +280,7 @@
         </section>
         <section class="flow-step confirmation-step" id="reset-success-step" hidden>
           <div class="confirmation-art" aria-hidden="true"><span class="confirmation-envelope"></span><span class="confirmation-shield">✓</span></div>
-          <p class="feature-kicker">You’re all set</p><h2 id="recovery-success-title">Password changed</h2><p>Sign in with your new password to continue.</p>
+          <p class="feature-kicker">You’re all set</p><h2 id="recovery-success-title">Password changed</h2><p>You have now changed your password. Please return to the login page and sign in with your new password.</p>
           <button class="primary-button" id="recovery-done" type="button">Back to sign in</button>
         </section>
       </div>

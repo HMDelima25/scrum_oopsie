@@ -2061,3 +2061,18 @@ dialog[open] .dialog-field:nth-of-type(4) { animation-delay: 135ms; }
 
 /* Native hidden state applies to all authentication controls. */
 [hidden] { display: none !important; }
+/* Recovery follows the existing ocean blue and gold authentication theme. */
+#reset-confirmation-step {padding-top: 4px;}
+.recovery-code-art {display:block;width:150px;height:108px;margin:0 auto 18px;}
+.recovery-code-digits {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:10px 0 8px;}
+.recovery-digit {width:100%;min-width:0;height:56px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.92);color:var(--ocean-950);font:700 1.5rem 'Manrope',sans-serif;text-align:center;caret-color:var(--ocean-600);transition:border-color 160ms ease,box-shadow 160ms ease;}
+.recovery-digit:focus-visible {outline:0;border-color:#087b9d;box-shadow:0 0 0 3px rgba(8,123,157,.14);}
+#reset-confirmation-step .compact-label {text-align:left;}
+#reset-confirmation-step #recovery-code-error {text-align:left;}
+#reset-confirmation-step .confirmation-note {margin:12px 0 18px;}
+#reset-confirmation-step #resend-recovery {margin-top:10px;}
+#reset-confirmation-step #change-recovery-method {background:transparent;border-color:transparent;box-shadow:none;font-size:.82rem;min-height:36px;}
+.recovery-enter {animation:recovery-pane-in 220ms cubic-bezier(.2,.7,.3,1) both;}
+@keyframes recovery-pane-in {from {opacity:0;transform:translateY(9px) scale(.99);} to {opacity:1;transform:translateY(0) scale(1);}}
+@media(max-width:480px){.recovery-code-digits {gap:6px;}.recovery-digit{height:48px;border-radius:9px;font-size:1.25rem;}.recovery-code-art{width:128px;height:92px;}}
+@media(prefers-reduced-motion:reduce){.recovery-enter{animation:none;}.recovery-digit{transition:none;}}

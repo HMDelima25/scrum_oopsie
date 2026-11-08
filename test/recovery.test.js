@@ -130,13 +130,20 @@ test("Six-digit email recovery lifecycle", async (t) => {
     },
   );
   await t.test(
-    "unknown emails return identical response without sending email",
+    "unknown and misspelled emails are rejected before sending a code",
     async () => {
       cookie = "";
       const r = await post("forgot-password", {
         email: "missing@example.test",
       });
-      assert.equal(r.status, 200);
+      assert.equal(r.status, 404);
+      assert.equal(r.body.field, "email");
+      assert.match(r.body.message, /email does not exist/);
+      assert.equal(messages.length, 1);
+      const typo = await post("forgot-password", {
+        email: "recvoer@example.test",
+      });
+      assert.equal(typo.status, 404);
       assert.equal(messages.length, 1);
       assert.equal(
         (await post("verify-recovery-code", { code: "123456" })).status,
