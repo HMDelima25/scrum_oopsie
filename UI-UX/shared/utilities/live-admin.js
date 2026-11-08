@@ -546,10 +546,9 @@
     const d = document.querySelector("#live-dialog");
     if (!d.open) opener = document.activeElement;
     d.dataset.layout="compact";
-    d.innerHTML = `<form id="live-form"><header class="dialog-header"><div><p class="eyebrow">${h(label(view))}</p><h2 id="live-dialog-title">${h(title)}</h2></div><button type="button" class="dialog-close" aria-label="Close dialog">×</button></header><p class="live-dialog-notice" role="status"></p><div class="live-dialog-body">${body}</div><footer class="dialog-actions"><button type="button" class="dialog-secondary" data-close>Cancel</button>${actions}</footer></form>`;
+    d.innerHTML = `<form id="live-form"><header class="dialog-header"><div><p class="eyebrow">${h(label(view))}</p><h2 id="live-dialog-title">${h(title)}</h2></div><button type="button" class="dialog-close" aria-label="Close dialog">×</button></header><p class="live-dialog-notice" role="status"></p><div class="live-dialog-body">${body}</div><footer class="dialog-actions" ${actions?"":"hidden"}>${actions}</footer></form>`;
     if(d.querySelector(".permission-groups"))d.dataset.layout="rights";
     d.querySelector(".dialog-close").onclick = () => d.close();
-    d.querySelector("[data-close]").onclick = () => d.close();
     d.querySelector("form").onsubmit = event => event.preventDefault();
     if (!d.open) d.showModal();
     return d;

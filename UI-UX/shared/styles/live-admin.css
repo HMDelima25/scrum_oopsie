@@ -354,6 +354,7 @@ select:focus-visible {
 .record-dialog .live-dialog-notice{margin:0 0 10px;font-size:.7rem;line-height:1.45}
 .record-dialog .live-dialog-notice:empty{display:none}
 .record-dialog .dialog-actions{position:static;bottom:auto;margin:14px 0 0;padding:12px 0 0;gap:8px;align-items:center}
+.record-dialog .dialog-actions[hidden]{display:none}
 .record-dialog .dialog-actions .module-primary,.record-dialog .dialog-actions .dialog-secondary{height:36px;min-height:36px;min-width:74px;font-family:"DM Sans",system-ui,sans-serif;font-size:.75rem;font-weight:700;line-height:1.2}
 .record-dialog .module-primary{box-shadow:0 5px 12px rgba(8,125,164,.16)}
 .record-dialog .live-sale-lines{margin-top:16px}
