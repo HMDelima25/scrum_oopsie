@@ -1,28 +1,21 @@
-# HOPE, Inc. Frontend Application
+# HOPE, Inc. frontend
 
-This directory contains the canonical, primary frontend application for the HOPE, Inc. ERP project. The authentication page is the first implemented screen, and the remaining ERP modules will be built into this application.
+This is the current local frontend, with the original HOPE branding, SVG icons, compact/expanded sidebar, responsive layouts and dashboard composition restored. It includes persistent workspace navigation, connected authentication/forms, record links, automatic-code previews and table search/filter/sort controls.
 
-This is production-intent source code, not a disposable mockup or temporary scaffold. Future ERP pages must extend this application and its established patterns unless the team explicitly approves a migration.
+## Backend dependency
 
-## Preview
+This change publishes frontend files only. The matching Express/Supabase backend, routes, migrations, server configuration and credentials are maintained separately and are not included in this PR. The older backend on `main` does not yet provide the full contract required by this frontend. Use the paired, configured backend for a working app; opening these HTML files directly is not an integration test.
 
-Open `index.html` directly or serve this directory with any static web server.
+Serve `UI-UX/` at `/UI-UX/`, serve the password-page assets in `public/` at `/account/`, and expose the password page at `/set-password` and `/reset-password`. The configured local Google origin is `http://localhost:5000`.
 
-For example:
+The frontend uses same-origin `/api/auth/*`, `/api/ui-bootstrap`, `/api/ui-schema`, `/api/ui-dashboard-data`, `/api/next-code/*`, `/api/lookups/*`, `/api/sale-price`, resource CRUD, `/api/reports/*` and `/api/admin/*` endpoints. All account approval, authorization, validation, persistence and code allocation must remain enforced by the backend. No Supabase private key belongs in browser code.
 
-```powershell
-python -m http.server 4173 --directory UI-UX
-```
+## Active entry scripts
 
-Then open `http://127.0.0.1:4173`.
+- Authentication: `shared/utilities/live-auth.js`.
+- Dashboard: `shared/utilities/dashboard-live.js`, then `modules/dashboard/dashboard.js`.
+- Other modules: `shared/utilities/live-admin.js`.
+- Persistent navigation: `shared/utilities/navigation.js`.
+- Password setup/reset: `public/password.js`.
 
-## Application files
-
-- `index.html` - authentication entry point and accessible markup reference
-- `styles.css` - initial tokens, shared controls, page composition, and responsive rules
-- `script.js` - login and registration validation, password visibility, multi-method password recovery, confirmation states, and feature navigation
-- `FOUNDATION.md` - application architecture, extension rules, and migration safeguards
-
-## Current integration status
-
-The frontend interactions are implemented. Authentication and password-reset submission still require backend API contracts. The interface reports that boundary honestly instead of simulating a successful login.
+The older fixture scripts remain as preserved design references; connected entry pages do not load their sample records. Table updates refresh automatically, and transient read failures retry without introducing a Refresh button.

@@ -1,3 +1,4 @@
+(() => {
 const sidebar = document.querySelector("#sidebar");
 const dashboardShell = document.querySelector(".dashboard-shell");
 const sidebarToggle = document.querySelector("#sidebar-toggle");
@@ -6,7 +7,7 @@ const toast = document.querySelector("#toast");
 const searchInput = document.querySelector("#dashboard-search");
 const sidebarPreferenceKey = "hopeSidebarExpanded";
 let toastTimer;
-const databaseData = window.HOPE_DB_DATA;
+let databaseData = window.HOPE_DB_DATA;
 
 function formatMoney(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -14,20 +15,20 @@ function formatMoney(value) {
 
 function renderDatabaseSnapshot() {
   if (!databaseData) {
-    showToast("The SQL seed snapshot could not be loaded.");
+    showToast("The live records could not be loaded.");
     return;
   }
 
   const { metrics } = databaseData;
   const collectionRate = metrics.totalSales ? (metrics.totalPayments / metrics.totalSales) * 100 : 0;
   document.querySelector("#metric-sales").textContent = formatMoney(metrics.totalSales);
-  document.querySelector("#metric-sales-note").textContent = `${metrics.salesTransactions} seeded sales transactions`;
+  document.querySelector("#metric-sales-note").textContent = `${metrics.salesTransactions} saved sales transactions`;
   document.querySelector("#metric-outstanding").textContent = formatMoney(metrics.outstanding);
   document.querySelector("#metric-outstanding-note").textContent = `${metrics.paymentRecords} payment records`;
   document.querySelector("#collection-progress").style.width = `${Math.min(collectionRate, 100)}%`;
-  document.querySelector("#collection-note").textContent = `${collectionRate.toFixed(1)}% of seeded sales collected`;
+  document.querySelector("#collection-note").textContent = `${collectionRate.toFixed(1)}% of sales collected`;
   document.querySelector("#metric-employees").textContent = metrics.activeEmployees;
-  document.querySelector("#metric-employees-note").textContent = `${metrics.employees} total employees in the seed`;
+  document.querySelector("#metric-employees-note").textContent = `${metrics.employees} total employees saved`;
   document.querySelector("#employee-total").textContent = `${metrics.employees} staff`;
   document.querySelector("#department-total").textContent = `${metrics.departments} depts`;
   document.querySelector("#job-total").textContent = `${metrics.jobs} jobs`;
@@ -62,18 +63,18 @@ function renderDistribution(items, listSelector, donutSelector) {
   const colors = ["var(--gold)", "var(--ocean)", "var(--navy)"];
   const stops = items.map((item, index) => {
     const start = cursor;
-    cursor += (item.value / total) * 100;
+    cursor += (item.value / (total || 1)) * 100;
     return `${colors[index]} ${start}% ${cursor}%`;
   });
   document.querySelector(donutSelector).style.background = `conic-gradient(${stops.join(",")})`;
   document.querySelector(listSelector).innerHTML = items.map((item, index) => `
-    <div><i style="--swatch:${colors[index]}"></i><span>${item.label}</span><strong>${item.value}</strong><small>${((item.value / total) * 100).toFixed(0)}%</small></div>`).join("");
+    <div><i style="--swatch:${colors[index]}"></i><span>${item.label}</span><strong>${item.value}</strong><small>${((item.value / (total || 1)) * 100).toFixed(0)}%</small></div>`).join("");
 }
 
 function renderHorizontalBars(items, selector) {
   const maximum = Math.max(...items.map((item) => item.value));
   document.querySelector(selector).innerHTML = items.map((item) => `
-    <div class="horizontal-bar"><span>${item.label}</span><strong>${item.value}</strong><i><b style="width:${(item.value / maximum) * 100}%"></b></i></div>`).join("");
+    <div class="horizontal-bar"><span>${item.label}</span><strong>${item.value}</strong><i><b style="width:${(item.value / (maximum || 1)) * 100}%"></b></i></div>`).join("");
 }
 
 function renderInsightViews(metrics, collectionRate) {
@@ -130,29 +131,6 @@ function setSidebarExpanded(expanded) {
 
 setSidebarExpanded(window.localStorage.getItem(sidebarPreferenceKey) === "true");
 
-sidebarToggle.addEventListener("click", () => {
-  setSidebarExpanded(!sidebar.classList.contains("is-expanded"));
-});
-
-menuButton.addEventListener("click", () => {
-  const opening = !sidebar.classList.contains("is-open");
-  sidebar.classList.toggle("is-open", opening);
-  menuButton.setAttribute("aria-expanded", String(opening));
-});
-
-document.querySelectorAll(".sidebar-nav .nav-icon").forEach((button) => {
-  button.addEventListener("click", (event) => {
-    if (button.getAttribute("href") === "#") event.preventDefault();
-    document.querySelectorAll(".sidebar-nav .nav-icon").forEach((item) => {
-      item.classList.toggle("is-active", item === button);
-      item.removeAttribute("aria-current");
-    });
-    button.setAttribute("aria-current", "page");
-    showToast(`${button.dataset.page} module is ready for its backend screen.`);
-    closeMobileNavigation();
-  });
-});
-
 document.querySelectorAll(".module-tabs button").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".module-tabs button").forEach((item) => {
@@ -164,10 +142,10 @@ document.querySelectorAll(".module-tabs button").forEach((button) => {
   });
 });
 
-document.querySelectorAll(".quick-action").forEach((button) => {
-  button.addEventListener("click", () => showToast(`${button.dataset.action} selected. Form integration is pending.`));
-});
-
+document.querySelectorAll(".quick-action").forEach(button => button.addEventListener("click", () => {
+ const route = {"Add customer":"customers/?action=add","Record sale":"sales/?action=add","Approve users":"user-management/","Open reports":"reports/"}[button.dataset.action];
+ if(route) window.HopeNavigation.go("../"+route.replace('/?', '/index.html?').replace(/\/$/, '/index.html'));
+}));
 document.querySelectorAll(".card-heading button").forEach((button) => {
   button.addEventListener("click", () => showToast(`${button.closest(".metric-card").querySelector(".card-heading > span:nth-child(2)").textContent} options opened.`));
 });
@@ -183,18 +161,18 @@ document.querySelector("#chart-period").addEventListener("change", (event) => {
   showToast(`Sales chart changed to ${event.target.value.toLowerCase()}. Live data integration is pending.`);
 });
 
-document.querySelector("#notifications-button").addEventListener("click", () => showToast("4 user approvals and 12 price reviews need attention."));
-document.querySelector("#settings-button").addEventListener("click", () => showToast("Settings interface is ready for backend integration."));
-document.querySelector("#logout-button").addEventListener("click", () => {
-  if (window.confirm("Log out and return to the HOPE, Inc. sign-in screen?")) window.location.href = "../../index.html";
-});
-document.querySelector("#view-all").addEventListener("click", () => showToast("Full activity and audit views require backend integration."));
-document.querySelector("#profile-button").addEventListener("click", () => {
+document.querySelector("#notifications-button").addEventListener("click", () => window.HopeNavigation.go("../user-management/index.html"));
+document.querySelector("#settings-button").onclick=() => window.HopeNavigation.go("../administrator/index.html");
+document.querySelector("#logout-button").onclick=async () => {
+ await fetch("/api/auth/logout",{method:"POST",headers:{"content-type":"application/json"}}); location.assign("../../index.html");
+};
+document.querySelector("#view-all").addEventListener("click", () => window.HopeNavigation.go("../administrator/index.html"));
+document.querySelector("#profile-button").onclick=() => {
   const popover = document.querySelector("#profile-popover");
   popover.hidden = !popover.hidden;
-});
+};
 
-document.addEventListener("keydown", (event) => {
+document.querySelector(".workspace").addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeMobileNavigation();
 });
 
@@ -202,3 +180,7 @@ renderDatabaseSnapshot();
 
 const requestedView = new URLSearchParams(window.location.search).get("view");
 if (requestedView) showToast(`${requestedView === "user-management" ? "User Management" : "Administrator"} workspace is awaiting backend integration.`);
+
+window.refreshHopeDashboard = data => { databaseData=data; renderDatabaseSnapshot(); };
+
+})();

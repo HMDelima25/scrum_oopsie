@@ -2046,3 +2046,6 @@ dialog[open] .dialog-field:nth-of-type(4) { animation-delay: 135ms; }
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Native hidden state applies to all authentication controls. */
+[hidden] { display: none !important; }

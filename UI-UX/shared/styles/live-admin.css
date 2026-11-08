@@ -1,0 +1,321 @@
+.live-brand {
+  display: block;
+  padding: 24px 16px;
+  color: var(--navy);
+  font:
+    800 1.2rem Manrope,
+    system-ui;
+  text-decoration: none;
+}
+.live-brand small,
+.live-profile small {
+  display: block;
+  margin-top: 6px;
+  font:
+    500 0.7rem "DM Sans",
+    system-ui;
+  color: var(--muted);
+}
+.live-nav-marker {
+  display: grid;
+  flex: 0 0 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-weight: 800;
+}
+.live-profile {
+  padding: 16px;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+.live-filter {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.live-filter select {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  font: inherit;
+}
+.live-welcome {
+  padding: 24px;
+  margin-top: 16px;
+}
+.live-welcome h2 {
+  margin-top: 0;
+}
+#live-status {
+  min-height: 22px;
+  margin: 10px 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.live-error,
+.live-danger {
+  color: #9e2727 !important;
+}
+#live-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+}
+.records-panel {
+  min-height: 240px;
+}
+.records-table th {
+  white-space: nowrap;
+}
+.records-table td {
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}
+.records-table tr[data-row] {
+  cursor: pointer;
+}
+.records-table tr[data-row]:hover {
+  background: #edf7fa;
+}
+.records-table tr[data-row]:focus-visible {
+  outline: 3px solid var(--ocean);
+  outline-offset: -3px;
+}
+.live-record {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.live-record dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.live-record dd {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.live-dialog-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
+}
+.live-dialog-notice {
+  margin: 0 0 12px;
+  color: #904000;
+  font-size: 0.8rem;
+}
+.live-edit-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.live-context {
+  position: fixed;
+  z-index: 100;
+  padding: 6px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #05263722;
+}
+.live-context button {
+  padding: 10px 18px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+}
+.live-context button:hover {
+  background: #edf7fa;
+}
+.record-dialog {
+  max-height: calc(100dvh - 32px);
+  background: #f7fbfa;
+}
+.record-dialog form {
+  padding: 24px;
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+}
+.record-dialog::backdrop {
+  background: #03141e88;
+}
+.dialog-fields select,
+.dialog-fields input {
+  min-height: 44px;
+}
+.live-sale-lines {
+  margin-top: 24px;
+}
+.live-sale-line {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.live-sale-line output {
+  display: block;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.live-rights-tools {
+  display: flex;
+  gap: 8px;
+}
+.permission-groups fieldset > div {
+  grid-template-columns: 1fr;
+}
+.permission-groups legend {
+  width: auto;
+}
+.permission-groups input:disabled + span {
+  opacity: 0.6;
+}
+.field input:disabled,
+.field select:disabled {
+  background: #e8eff2;
+  color: #54656d;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #087da4;
+  outline-offset: 2px;
+}
+.sidebar.is-expanded .nav-icon span {
+  display: initial;
+}
+#live-menu {
+  display: none;
+}
+.entity-tabs {
+  flex-shrink: 0;
+}
+.module-toolbar {
+  gap: 12px;
+}
+.records-scroll {
+  overflow: auto;
+}
+.live-welcome .field {
+  margin-bottom: 12px;
+}
+@media (max-width: 900px) {
+  .live-record {
+    grid-template-columns: 1fr;
+  }
+  .live-sale-line {
+    grid-template-columns: 1fr 1fr;
+  }
+  .live-sale-line > label:first-child {
+    grid-column: 1/-1;
+  }
+  .module-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .record-dialog form {
+    padding: 18px;
+  }
+  .dialog-fields {
+    grid-template-columns: 1fr;
+  }
+  .module-toolbar {
+    flex-wrap: wrap;
+  }
+  .records-panel {
+    min-height: 300px;
+  }
+}
+@media print {
+  .sidebar,
+  .module-topbar-actions,
+  .entity-tabs,
+  #live-toolbar,
+  .dialog-secondary,
+  #live-status {
+    display: none !important;
+  }
+  body,
+  .dashboard-shell,
+  .workspace {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .records-scroll {
+    overflow: visible;
+  }
+  .panel {
+    box-shadow: none;
+    border: 0;
+  }
+}
+
+.live-brand {
+  color: #f7fbfa;
+}
+.live-brand small,
+.live-profile small {
+  color: #b8cbd3;
+}
+.live-profile strong {
+  color: #fff;
+}
+
+/* Keep modal actions in the dialog at phone widths. */
+.record-dialog .module-primary,
+.live-welcome .module-primary {
+  position: static;
+  inset: auto;
+  transform: none;
+}
+.record-dialog form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.record-dialog .dialog-header,
+.record-dialog .dialog-actions,
+.record-dialog .live-dialog-notice {
+  flex: 0 0 auto;
+}
+.record-dialog .live-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.record-dialog .dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f7fbfa;
+}
+/* Table tools use the existing form/button styles. */
+.module-toolbar{align-items:end}
+#live-sort-field{max-width:190px}
+#live-sort-order,#live-filter-toggle{white-space:nowrap;align-self:end}
+.live-table-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.6);flex-shrink:0}
+.live-table-filters[hidden]{display:none}
+.live-table-filters .field{margin:0}
+.live-table-filters>button{align-self:end;justify-self:start}
+.live-filter-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;min-width:0;padding:8px;border:1px solid var(--line);border-radius:10px}
+.live-filter-range legend,.live-filter-range label{font-size:.72rem;color:var(--muted)}
+.live-filter-range input{width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:white}
+@media(max-width:600px){.live-table-filters{grid-template-columns:1fr}.module-toolbar .module-search{flex-basis:100%}#live-sort-field{max-width:150px}}
+/* Keep the requested tools together beside Records, including phone layouts. */
+#live-toolbar{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:flex-end}
+#live-toolbar .module-search{flex:1 1 180px;min-width:0}
+#live-toolbar #live-sort-order,#live-toolbar #live-filter-toggle{align-self:flex-end}
+@media(max-width:600px){#live-toolbar .module-search{flex-basis:100%}#live-toolbar #live-sort-field{max-width:135px}}
