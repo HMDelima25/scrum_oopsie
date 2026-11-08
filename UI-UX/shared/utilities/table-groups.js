@@ -2,7 +2,7 @@
   function valueFor(row,field){
     if(field==='employment')return row.sepdate?'Separated':'Employed';
     const value=row[field];
-    if(value===null||value===undefined||value==='')return 'Not set';
+    if(value===null||value===undefined||value==='')return ['jobname','deptname'].includes(field)?'Unassigned':'Not set';
     if(typeof value==='boolean')return value?'Yes':'No';
     if(typeof value==='object')return JSON.stringify(value);
     const text=String(value);

@@ -4,10 +4,10 @@ const {check,HttpError}=require("./http");
 module.exports=async function listRecords(req,path){
  const c=resources[path];
       let q = req.app.locals.db
-        .from(c.table)
+        .from(c.listView||c.table)
         .select(
           req.user.role === "user"
-            ? [...new Set([...c.pk, ...c.fields, "updated_at"])].join(",")
+            ? [...new Set([...c.pk, ...c.fields, ...(c.readFields||[]), "updated_at"])].join(",")
             : "*",
           {
             count: "exact",
@@ -28,7 +28,7 @@ module.exports=async function listRecords(req,path){
         q = q.eq(field, req.query[field]);
       }
       if(req.query.status!==undefined && !["active","inactive","all"].includes(req.query.status))throw new HttpError(400,"Unknown record status.");
-      q = require("./table-query")(q,req.query,path,[...new Set([...c.pk,...c.fields,"is_deleted","stamp","updated_at"])],c.pk,req.user).range(offset, offset + limit - 1);
+      q = require("./table-query")(q,req.query,path,[...new Set([...c.pk,...c.fields,...(c.readFields||[]),"is_deleted","stamp","updated_at"])],c.pk,req.user).range(offset, offset + limit - 1);
       const result = await q;
       const rows = check(result);
       if (rows.length && ["products", "sales"].includes(path)) {

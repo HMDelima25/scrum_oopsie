@@ -277,7 +277,7 @@
   }
   function filterSpecs(fields=[]){return schema.tableFilters?.[view]||fields.filter(f=>!['new_values','old_values'].includes(f)).map(field=>({field,type:schema.fields[field]?.[1]==="number"||typeof auxiliaryRows.find(r=>r[field]!=null)?.[field]==="number"?"number":schema.fields[field]?.[1]==="date"?"date":"text"}));}
   function configureTools(auxFields){
-    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...cfg().fields])]:[]);
+    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...(cfg().displayFields||cfg().fields),...(cfg().readFields||[])])]:[]);
     if(!fields.includes(sortField))sortField=view==="users"?"name":fields[0];
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
@@ -353,7 +353,7 @@
     return `../${group}/index.html?${params}`;
   }
   function cellMarkup(row, field) {
-    const displayed=field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
+    const displayed=view==='employees'&&['jobname','deptname'].includes(field)&&!row[field]?'Unassigned':field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
     const text=h(field==="is_deleted"?(row[field]?(view==='employees'&&row.archived_at?'Archived':'Inactive'):"Active"):displayed);
     if(row[field]===null||row[field]===undefined)return text;
     const relation=schema.cellLinks?.[view]?.[field];
@@ -388,7 +388,7 @@
         : [
             ...new Set([
               ...cfg().pk,
-              ...cfg().fields,
+              ...(cfg().displayFields||cfg().fields),
               ...(view === "products"
                 ? ["current_price", "price_effective_date"]
                 : view === "sales"
@@ -588,7 +588,7 @@
         : [
             ...new Set([
               ...cfg().pk,
-              ...cfg().fields,
+              ...(cfg().displayFields||cfg().fields),
               ...(view === "products"
                 ? ["current_price", "price_effective_date"]
                 : view === "sales"

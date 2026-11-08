@@ -11,3 +11,4 @@ The application includes the restored HOPE interface and sidebar, persistent nav
 Environment secrets, installed dependencies, private invitation/reset links, runtime sessions and generated verification artifacts stay local and are not published. `.env.example` contains configuration names and placeholders only. Google sign-in requires the operator's OAuth configuration; email delivery defaults to a local outbox unless SMTP is configured. Database content is not exported by Git; the included SQL migrations provide schema and reference/sample data.
 
 Employee job assignment and confirmed firing/archival: [employee workflow](docs/EMPLOYEE-LIFECYCLE.md).
+Employee job/department columns, filtering and grouping: [employee directory](docs/EMPLOYEE-DIRECTORY.md).

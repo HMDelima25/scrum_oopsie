@@ -34,6 +34,7 @@ async function createDatabase() {
   await pg.exec((await fs.readFile(path.join(__dirname,'../../db/migrations/20261108000800_inactivate_together.sql'),'utf8')).split('-- migrate:down')[0]);
   await pg.exec((await fs.readFile(path.join(__dirname,'../../db/migrations/20261108000900_job_fields.sql'),'utf8')).split('-- migrate:down')[0]);
   await pg.exec((await fs.readFile(path.join(__dirname,'../../db/migrations/20261108001000_employee_lifecycle.sql'),'utf8')).split('-- migrate:down')[0]);
+  await pg.exec((await fs.readFile(path.join(__dirname,'../../db/migrations/20261108001200_employee_directory.sql'),'utf8')).split('-- migrate:down')[0]);
   const db = {
     pg,
     from(table) {

@@ -577,6 +577,14 @@
       {
         "field": "birthdate",
         "type": "date"
+      },
+      {
+        "field": "jobname",
+        "type": "text"
+      },
+      {
+        "field": "deptname",
+        "type": "text"
       }
     ],
     "departments": [

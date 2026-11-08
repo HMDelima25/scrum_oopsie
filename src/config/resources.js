@@ -22,6 +22,9 @@ module.exports = {
   },
   employees: {
     table: "employee",
+    listView: "employee_directory",
+    readFields: ["jobcode", "jobname", "deptcode", "deptname"],
+    displayFields: ["empno", "lastname", "firstname", "jobname", "deptname", "gender", "birthdate", "hiredate", "sepdate"],
     pk: ["empno"],
     fields: [
       "empno",

@@ -112,10 +112,10 @@ for (const [path, c] of Object.entries(resources)) {
     wrap(async (req, res) => {
       let q = filtered(
         req.app.locals.db
-          .from(c.table)
+          .from(c.listView||c.table)
           .select(
             req.user.role === "user"
-              ? [...new Set([...c.pk, ...c.fields, "updated_at"])].join(",")
+              ? [...new Set([...c.pk, ...c.fields, ...(c.readFields||[]), "updated_at"])].join(",")
               : "*",
           ),
         key(c, req.params.key),

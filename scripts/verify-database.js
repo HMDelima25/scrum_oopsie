@@ -44,7 +44,11 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 11);
+  assert.equal(result.tables.app_migration, 12);
+  const directory=await db.from('employee_directory').select('empno,jobname,deptname',{count:'exact',head:true});
+  if(directory.error)throw new Error('employee_directory: '+directory.error.code);
+  assert.equal(directory.count,result.tables.employee);
+  result.employeeDirectoryRows=directory.count;
   for (const report of [
     "topCustomers",
     "productMaster",
@@ -71,6 +75,9 @@ async function main() {
     const rolesRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/permission_role?select=id`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
     assert.ok([401,403].includes(rolesRead.status));
     result.anonymousRoleReadDenied=true;
+    const directoryRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/employee_directory?select=empno`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
+    assert.ok([401,403].includes(directoryRead.status));
+    result.anonymousDirectoryReadDenied=true;
     result.anonymousReadDenied = true;
   }
   const url = `http://127.0.0.1:${process.env.PORT || 5000}`;
