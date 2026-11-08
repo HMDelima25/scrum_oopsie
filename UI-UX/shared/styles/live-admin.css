@@ -302,20 +302,33 @@ select:focus-visible {
   gap: 8px;
   background: #f7fbfa;
 }
-/* Table tools use the existing form/button styles. */
-.module-toolbar{align-items:end}
-#live-sort-field{max-width:190px}
-#live-sort-order,#live-filter-toggle{white-space:nowrap;align-self:end}
-.live-table-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.6);flex-shrink:0}
-.live-table-filters[hidden]{display:none}
-.live-table-filters .field{margin:0}
-.live-table-filters>button{align-self:end;justify-self:start}
-.live-filter-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;min-width:0;padding:8px;border:1px solid var(--line);border-radius:10px}
-.live-filter-range legend,.live-filter-range label{font-size:.72rem;color:var(--muted)}
-.live-filter-range input{width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:white}
-@media(max-width:600px){.live-table-filters{grid-template-columns:1fr}.module-toolbar .module-search{flex-basis:100%}#live-sort-field{max-width:150px}}
-/* Keep the requested tools together beside Records, including phone layouts. */
-#live-toolbar{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:flex-end}
+/* Compact table tools share the existing ocean/navy visual language. */
+.live-tools-host{position:relative;z-index:25;flex-shrink:0}
+#live-toolbar{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:flex-end;gap:10px;margin:14px 0 10px}
 #live-toolbar .module-search{flex:1 1 180px;min-width:0}
-#live-toolbar #live-sort-order,#live-toolbar #live-filter-toggle{align-self:flex-end}
-@media(max-width:600px){#live-toolbar .module-search{flex-basis:100%}#live-toolbar #live-sort-field{max-width:135px}}
+#live-toolbar .live-filter{font-size:.68rem;gap:4px}
+#live-toolbar .live-filter select{height:34px;padding:6px 9px;font-size:.75rem}
+.live-tool-icons{display:flex;align-items:center;gap:2px;padding-left:7px;border-left:1px solid var(--line)}
+.live-tool-icon{position:relative;display:inline-grid;place-items:center;width:34px;height:34px;flex:0 0 34px;padding:7px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .18s,color .18s}
+.live-tool-icon svg{width:19px;height:19px;pointer-events:none}
+.live-tool-icon:hover,.live-tool-icon[aria-expanded="true"]{color:var(--ocean);background:rgba(8,125,164,.08)}
+.live-tool-icon.is-active{color:var(--ocean);background:rgba(8,125,164,.1)}
+.live-tool-icon:disabled{opacity:.35;cursor:default}
+.live-tool-count{position:absolute;top:1px;right:0;display:grid;place-items:center;min-width:13px;height:13px;padding:0 2px;border-radius:5px;background:var(--gold);color:var(--navy);font-size:.54rem;font-weight:800}
+.live-tool-panel{position:absolute;top:calc(100% + 2px);left:94px;z-index:40;display:grid;grid-template-columns:1fr;width:220px;max-width:calc(100vw - 105px);max-height:min(55vh,360px);overflow:auto;gap:9px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#f3f8f7);box-shadow:0 14px 30px rgba(3,25,35,.13)}
+.live-tool-panel[hidden]{display:none}
+.live-tool-panel .field{gap:4px;margin:0;min-width:0}
+.live-tool-panel .field>span,.live-tool-panel legend{font-size:.67rem;font-weight:700;color:var(--muted)}
+.live-tool-panel .field input,.live-tool-panel .field select{width:100%;min-width:0;height:32px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:.72rem}
+.live-table-filters{width:310px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.live-table-filters[data-single="true"]{width:230px;grid-template-columns:1fr}
+.live-tool-panel-heading{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.72rem;font-weight:800;color:var(--navy)}
+.live-tool-panel-heading .live-tool-icon{width:25px;height:25px;flex-basis:25px;padding:4px}
+.live-tool-panel-heading .live-tool-icon svg{width:16px;height:16px}
+.live-filter-range{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;margin:0;padding:7px;border:1px solid var(--line);border-radius:8px}
+.live-filter-range label{font-size:.65rem;color:var(--muted)}
+.live-filter-range input{display:block;width:100%;min-width:0;height:30px;padding:5px;border:1px solid var(--line);border-radius:7px;background:#fff;font:inherit;color:var(--ink)}
+.records-table .live-group-heading th{padding:10px 14px;background:rgba(8,125,164,.065);color:var(--navy);font-size:.72rem;letter-spacing:0;text-transform:none;border-top:1px solid var(--line)}
+.live-group-heading small{margin-left:10px;color:var(--muted);font-size:.63rem;font-weight:500}
+.record-pages[hidden]{display:none}
+@media(max-width:600px){#live-toolbar .module-search{flex-basis:100%}.live-tool-panel{left:0}.live-table-filters{width:285px}}

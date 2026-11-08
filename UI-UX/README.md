@@ -1,6 +1,6 @@
 # HOPE, Inc. frontend
 
-This is the current local frontend, with the original HOPE branding, SVG icons, compact/expanded sidebar, responsive layouts and dashboard composition restored. It includes persistent workspace navigation, connected authentication/forms, record links, automatic-code previews and table search/filter/sort controls.
+This is the current local frontend, with the original HOPE branding, SVG icons, compact/expanded sidebar, responsive layouts and dashboard composition restored. It includes persistent workspace navigation, connected authentication/forms, record links, automatic-code previews and compact icon controls for table search, filtering, sorting and grouping.
 
 ## Backend dependency
 
@@ -19,3 +19,7 @@ The frontend uses same-origin `/api/auth/*`, `/api/ui-bootstrap`, `/api/ui-schem
 - Password setup/reset: `public/password.js`.
 
 The older fixture scripts remain as preserved design references; connected entry pages do not load their sample records. Table updates refresh automatically, and transient read failures retry without introducing a Refresh button.
+
+## Frontend grouping checks
+
+Run `node --test UI-UX/tests/table-groups.test.js`. These checks use Node built-ins and verify row-action indexes, null/date/employee group values, numeric ordering, full-page collection and cancellation without requiring the backend.

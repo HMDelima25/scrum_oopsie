@@ -2,11 +2,11 @@
    No Supabase secret or seeded business rows are shipped to the browser. */
 (() => {
   const lifecycle = new AbortController();
-  document.addEventListener("hope:leave",()=>{lifecycle.abort();clearInterval(timer);version++;},{once:true});
+  document.addEventListener("hope:leave",()=>{lifecycle.abort();clearInterval(timer);clearTimeout(searchTimer);version++;},{once:true});
   const app = document.querySelector("#app");
   const module = document.body.dataset.module || "dashboard";
   const rowCache=new Map();
-  let initialRecords, listAbort, searchTimer, sortField=null, descending=false, extraFilters={}, auxiliaryRows=[], auxiliaryTarget=null;
+  let initialRecords, listAbort, searchTimer, sortField=null, descending=false, groupBy="", extraFilters={}, auxiliaryRows=[], auxiliaryTarget=null, auxiliaryColumns="";
   let schema,
     user,
     view,
@@ -128,6 +128,10 @@
     el.textContent = text;
     el.classList.toggle("live-error", error);
   }
+  const toolIcon=(name)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${({filter:'<path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z"/>',sort:'<path d="M4 7h15M4 12h11M4 17h7"/>',asc:'<path d="m7 9 4-4 4 4M11 5v14M17 14h3M17 18h2"/>',desc:'<path d="m7 15 4 4 4-4M11 19V5M17 6h2M17 10h3"/>',group:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/>',reset:'<path d="M4 10a8 8 0 1 1 1 8M4 10V4M4 10h6"/>'})[name]}</svg>`;
+  function updateFilterIcon(){const n=Object.values(extraFilters).filter(Boolean).length;const button=document.querySelector('#live-filter-toggle');button.innerHTML=toolIcon('filter')+(n?`<span class="live-tool-count" aria-hidden="true">${n}</span>`:'');button.setAttribute('aria-label',n?`Filter records (${n} active)`:'Filter records');button.title=n?`Filters: ${n} active`:'Filter records';button.classList.toggle('is-active',n>0);}
+  function toggleTool(id,trigger){const panel=document.querySelector(id),open=panel.hidden;closeTools();panel.hidden=!open;document.querySelector(trigger).setAttribute('aria-expanded',String(open));if(open)panel.querySelector('input,select')?.focus();}
+  function closeTools(returnFocus=false){for(const [panel,trigger]of [['#live-filters','#live-filter-toggle'],['#live-sort-panel','#live-sort-toggle'],['#live-group-panel','#live-group-toggle']]){if(returnFocus&&!document.querySelector(panel).hidden)document.querySelector(trigger).focus();document.querySelector(panel).hidden=true;document.querySelector(trigger).setAttribute('aria-expanded','false');}}
   async function shell() {
     const presentation = ({"customers":{"eyebrow":"Customer management","description":"Manage customer records, addresses, and payment terms."},"products":{"eyebrow":"Product management","description":"Maintain the product catalog and open each product's price history."},"human-resources":{"eyebrow":"People and organization","description":"Review employee records and open job history without exposing it in navigation."},"sales":{"eyebrow":"Sales management","description":"Review transaction headers and open their detail lines and payments."},"user-management":{"eyebrow":"Administration","description":"Review users and arrange permission-based roles."}})[module] || {eyebrow:"Administrator workspace",description:""};
     const links = [
@@ -144,7 +148,7 @@
     window.hopeSidebarTemplate=originalSidebar;
     if(lifecycle.signal.aborted)return;
     const template=document.createElement("template");
-    template.innerHTML = `${originalSidebar}<section class="workspace module-workspace"><header class="topbar module-topbar"><div><p class="eyebrow">${h(presentation.eyebrow)}</p><h1>${h(module === "dashboard" ? "Dashboard" : module === "human-resources" ? "Human Resources" : module === "user-management" ? "User Management" : module === "administrator" ? "Administration" : label(module))}</h1><p class="subtitle">${h(presentation.description)}</p></div><div class="module-topbar-actions"><button id="live-menu" class="icon-button mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button><button id="live-add" class="module-primary" type="button" hidden>Add record</button></div></header><div class="entity-tabs" id="live-tabs" role="tablist" aria-label="Views"></div><div class="module-toolbar" id="live-toolbar"><label class="live-filter">Records<select id="live-filter"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All</option></select></label><button type="button" class="dialog-secondary" id="live-filter-toggle" aria-expanded="false" aria-controls="live-filters">Filter</button><label class="live-filter">Sort by<select id="live-sort-field" aria-label="Sort column"></select></label><button type="button" class="dialog-secondary" id="live-sort-order" aria-label="Sort order: ascending">Asc</button><label class="module-search"><span class="sr-only">Search records</span><input id="live-search" type="search" placeholder="Search records" aria-label="Search records"></label></div><div id="live-filters" class="live-table-filters" hidden aria-label="Table filters"></div><p id="live-status" role="status" aria-live="polite">Loading records…</p><div id="live-content"></div></section><dialog id="live-dialog" class="record-dialog record-dialog--wide" aria-labelledby="live-dialog-title"></dialog><div id="live-context" class="live-context" role="menu" hidden></div>`;
+    template.innerHTML = `${originalSidebar}<section class="workspace module-workspace"><header class="topbar module-topbar"><div><p class="eyebrow">${h(presentation.eyebrow)}</p><h1>${h(module === "dashboard" ? "Dashboard" : module === "human-resources" ? "Human Resources" : module === "user-management" ? "User Management" : module === "administrator" ? "Administration" : label(module))}</h1><p class="subtitle">${h(presentation.description)}</p></div><div class="module-topbar-actions"><button id="live-menu" class="icon-button mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button><button id="live-add" class="module-primary" type="button" hidden>Add record</button></div></header><div class="entity-tabs" id="live-tabs" role="tablist" aria-label="Views"></div><div class="live-tools-host"><div class="module-toolbar" id="live-toolbar"><label class="live-filter">Records<select id="live-filter"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All</option></select></label><div class="live-tool-icons"><button type="button" class="live-tool-icon" id="live-filter-toggle" aria-label="Filter records" title="Filter records" aria-expanded="false" aria-controls="live-filters">${toolIcon('filter')}</button><button type="button" class="live-tool-icon" id="live-sort-toggle" aria-label="Choose sort column" title="Sort by" aria-expanded="false" aria-controls="live-sort-panel">${toolIcon('sort')}</button><button type="button" class="live-tool-icon" id="live-sort-order" aria-label="Sort order: ascending" title="Ascending">${toolIcon('asc')}</button><button type="button" class="live-tool-icon" id="live-group-toggle" aria-label="Group records" title="Group by" aria-expanded="false" aria-controls="live-group-panel">${toolIcon('group')}</button></div><label class="module-search"><span class="sr-only">Search records</span><input id="live-search" type="search" placeholder="Search records" aria-label="Search records"></label></div><div id="live-filters" class="live-table-filters live-tool-panel" hidden aria-label="Table filters"></div><div id="live-sort-panel" class="live-tool-panel live-sort-panel" hidden><label class="field"><span>Sort by</span><select id="live-sort-field" aria-label="Sort column"></select></label></div><div id="live-group-panel" class="live-tool-panel live-group-panel" hidden><label class="field"><span>Group by</span><select id="live-group-field" aria-label="Group by column"><option value="">No grouping</option></select></label></div></div><p id="live-status" role="status" aria-live="polite">Loading records…</p><div id="live-content"></div></section><dialog id="live-dialog" class="record-dialog record-dialog--wide" aria-labelledby="live-dialog-title"></dialog><div id="live-context" class="live-context" role="menu" hidden></div>`;
     const existingSidebar=app.querySelector("#sidebar");
     app.querySelectorAll(":scope > :not(#sidebar)").forEach(el=>el.remove());
     if(existingSidebar)template.content.querySelector("#sidebar").remove();
@@ -184,8 +188,13 @@
     document.querySelector("#live-add").onclick = () => openForm();
     document.querySelector("#live-filter").closest("label").hidden = !admin();
     document.querySelector("#live-filter").onchange = (e) => {filter=e.target.value;refreshTable();};
-    document.querySelector("#live-filter-toggle").onclick=()=>{const panel=document.querySelector("#live-filters");panel.hidden=!panel.hidden;document.querySelector("#live-filter-toggle").setAttribute("aria-expanded",String(!panel.hidden));};
-    document.querySelector("#live-sort-field").onchange=e=>{sortField=e.target.value;refreshTable();};
+    document.querySelector('#live-filter-toggle').onclick=()=>toggleTool('#live-filters','#live-filter-toggle');
+    document.querySelector('#live-sort-toggle').onclick=()=>toggleTool('#live-sort-panel','#live-sort-toggle');
+    document.querySelector('#live-group-toggle').onclick=()=>toggleTool('#live-group-panel','#live-group-toggle');
+    document.querySelector('#live-group-field').onchange=e=>{groupBy=e.target.value;document.querySelector('#live-group-toggle').classList.toggle('is-active',!!groupBy);document.querySelector('#live-group-toggle').title=groupBy?'Grouped by '+fieldLabel(groupBy):'Group by';closeTools(true);if(rows.length&&(rows.length===count))paintRows();refreshTable();};
+    document.addEventListener('click',e=>{if(!e.target.closest('.live-tools-host'))closeTools();},{signal:lifecycle.signal});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTools(true);},{signal:lifecycle.signal});
+    document.querySelector("#live-sort-field").onchange=e=>{sortField=e.target.value;closeTools(true);refreshTable();};
     document.querySelector("#live-sort-order").onclick=()=>{descending=!descending;updateSortButton();refreshTable();};
     document.querySelector("#live-search").oninput = (e) => {
       query = e.target.value;
@@ -207,7 +216,7 @@
       const button = e.target.closest("[data-view]");
       if (!button) return;
       listAbort?.abort();loading=false;queued=false;version++;
-      view = button.dataset.view;sortField=null;descending=false;extraFilters={};auxiliaryRows=[];auxiliaryTarget=null;
+      view = button.dataset.view;sortField=null;descending=false;groupBy="";closeTools();extraFilters={};auxiliaryRows=[];auxiliaryTarget=null;auxiliaryColumns="";
       page = 0;
       query = "";
       document.querySelector("#live-search").value = "";
@@ -244,8 +253,8 @@
       }
     }, {signal:lifecycle.signal});
   }
-  function updateSortButton(){const button=document.querySelector("#live-sort-order");button.textContent=descending?"Desc \u2193":"Asc \u2191";button.setAttribute("aria-label","Sort order: "+(descending?"descending":"ascending"));}
-  function tableParams(){const params=new URLSearchParams({status:filter,limit:"50",offset:String(page*50),sort:sortField||cfg()?.pk[0]||"name",direction:descending?"desc":"asc"});if(query.trim())params.set("q",query.trim());for(const [key,value]of Object.entries(extraFilters))if(value!=="")params.set("f_"+key,value);return params;}
+  function updateSortButton(){const button=document.querySelector('#live-sort-order');button.innerHTML=toolIcon(descending?'desc':'asc');button.setAttribute('aria-label','Sort order: '+(descending?'descending':'ascending'));button.title=descending?'Descending':'Ascending';}
+  function tableParams(){const params=new URLSearchParams({status:filter,limit:groupBy?"200":"50",offset:groupBy?"0":String(page*50),sort:sortField||cfg()?.pk[0]||"name",direction:descending?"desc":"asc"});if(query.trim())params.set("q",query.trim());for(const [key,value]of Object.entries(extraFilters))if(value!=="")params.set("f_"+key,value);return params;}
   function refreshTable(){
     clearTimeout(searchTimer);page=0;initialRecords=null;
     if(view==="reports"||view==="audit-log"){paintAuxRows();return;}
@@ -258,21 +267,25 @@
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
     const specs=filterSpecs(fields),panel=document.querySelector("#live-filters");
-    const toggle=document.querySelector("#live-filter-toggle");const selectedCount=Object.values(extraFilters).filter(Boolean).length;toggle.textContent=selectedCount?`Filter (${selectedCount})`:"Filter";toggle.disabled=!specs.length;
-    select.disabled=!fields.length;document.querySelector("#live-sort-order").disabled=!fields.length;
+    const toggle=document.querySelector("#live-filter-toggle");updateFilterIcon();toggle.disabled=!specs.length;
+    select.disabled=!fields.length;document.querySelector('#live-sort-toggle').disabled=!fields.length;document.querySelector("#live-sort-order").disabled=!fields.length;
+    const groupFields=[...new Set(specs.map(f=>f.field))].filter(f=>fields.includes(f)||f==='employment'&&view==='employees');
+    if(groupBy&&!groupFields.includes(groupBy))groupBy='';
+    const groupSelect=document.querySelector('#live-group-field');groupSelect.innerHTML='<option value="">No grouping</option>'+groupFields.map(f=>`<option value="${h(f)}">${h(f==='employment'?'Employment':fieldLabel(f))}</option>`).join('');groupSelect.value=groupBy;document.querySelector('#live-group-toggle').disabled=!groupFields.length;document.querySelector('#live-group-toggle').classList.toggle('is-active',!!groupBy);
     if(!specs.length){panel.hidden=true;toggle.setAttribute("aria-expanded","false");}
-    panel.innerHTML=specs.map(f=>{
+    panel.dataset.single=String(specs.length===1);
+    panel.innerHTML=`<div class="live-tool-panel-heading"><span>Filters</span><button type="button" class="live-tool-icon" id="live-filter-clear" aria-label="Clear filters" title="Clear filters">${toolIcon("reset")}</button></div>`+specs.map(f=>{
       const name=h(f.field),title=h(f.field==="employment"?"Employment":fieldLabel(f.field));
       if(f.type==="select")return `<label class="field"><span>${title}</span><select data-table-filter="${name}"><option value="">All</option>${f.options.map(v=>`<option value="${h(v)}">${h(v)}</option>`).join("")}</select></label>`;
       if(["date","number"].includes(f.type))return `<fieldset class="live-filter-range"><legend>${title}</legend><label>From<input type="${f.type}" ${f.type==="number"?'step="any"':""} data-table-filter="${name}_from"></label><label>To<input type="${f.type}" ${f.type==="number"?'step="any"':""} data-table-filter="${name}_to"></label></fieldset>`;
       return `<label class="field"><span>${title}</span><input data-table-filter="${name}" placeholder="Contains..."></label>`;
-    }).join("")+`<button type="button" class="dialog-secondary" id="live-filter-clear">Clear filters</button>`;
-    const changed=()=>{extraFilters=Object.fromEntries([...panel.querySelectorAll('[data-table-filter]')].map(el=>[el.dataset.tableFilter,el.value]));const count=Object.values(extraFilters).filter(Boolean).length;document.querySelector('#live-filter-toggle').textContent=count?`Filter (${count})`:"Filter";clearTimeout(searchTimer);searchTimer=setTimeout(refreshTable,250);};
+    }).join("");
+    const changed=()=>{extraFilters=Object.fromEntries([...panel.querySelectorAll('[data-table-filter]')].map(el=>[el.dataset.tableFilter,el.value]));updateFilterIcon();clearTimeout(searchTimer);searchTimer=setTimeout(refreshTable,250);};
     panel.querySelectorAll('[data-table-filter]').forEach(el=>{el.value=extraFilters[el.dataset.tableFilter]||"";el.oninput=changed;el.onchange=changed;});
     panel.querySelector('#live-filter-clear').onclick=()=>{panel.querySelectorAll('[data-table-filter]').forEach(el=>el.value="");changed();};
     document.querySelector('#live-filter').closest('label').hidden=!admin()||view==='reports'||view==='audit-log';
   }
-  function showAuxRows(data,target){auxiliaryRows=data;auxiliaryTarget=target;const fields=Object.keys(data[0]||{}).filter(f=>!['password_hash','rights'].includes(f));configureTools(fields);document.querySelector('#live-toolbar').hidden=false;paintAuxRows();}
+  function showAuxRows(data,target){auxiliaryRows=data;auxiliaryTarget=target;const fields=Object.keys(data[0]||{}).filter(f=>!['password_hash','rights'].includes(f));if(auxiliaryColumns!==JSON.stringify(fields)){auxiliaryColumns=JSON.stringify(fields);configureTools(fields);}document.querySelector('#live-toolbar').hidden=false;paintAuxRows();}
   function paintAuxRows(){
     if(!auxiliaryTarget)return;
     const fields=Object.keys(auxiliaryRows[0]||{}).filter(f=>!['password_hash','rights'].includes(f));
@@ -345,8 +358,11 @@
     });
   }
   function tableRows(data, fields, interactive = false) {
-    return `<div class="records-scroll"><table class="records-table"><thead><tr>${fields.map((f) => `<th scope="col">${h(fieldLabel(f))}</th>`).join("")}</tr></thead><tbody>${data.length ? data.map((row, i) => `<tr ${interactive ? `data-row="${i}" tabindex="0"` : ""} aria-label="Open ${h(row.name || row.custname || row.description || row.transno || row[fields[0]])}">${fields.map((f) => `<td>${cellMarkup(row, f)}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${fields.length}" class="record-empty">${query ? "No matching records on this page." : "No records yet."}</td></tr>`}</tbody></table></div>`;
+    const rowMarkup=({row,index})=>`<tr ${interactive?`data-row="${index}" tabindex="0"`:''} aria-label="Open ${h(row.name||row.custname||row.description||row.transno||row[fields[0]])}">${fields.map(f=>`<td>${cellMarkup(row,f)}</td>`).join('')}</tr>`;
+    const body=groupBy?window.HopeTableGroups.groupRows(data,groupBy,descending).map(group=>`<tr class="live-group-heading"><th scope="rowgroup" colspan="${fields.length}"><span>${h(groupBy==='employment'?'Employment':fieldLabel(groupBy))}: ${h(group.label)}</span><small>${group.entries.length} record${group.entries.length===1?'':'s'}</small></th></tr>${group.entries.map(rowMarkup).join('')}`).join(''):data.map((row,index)=>rowMarkup({row,index})).join('');
+    return `<div class="records-scroll"><table class="records-table"><thead><tr>${fields.map(f=>`<th scope="col">${h(fieldLabel(f))}</th>`).join('')}</tr></thead><tbody>${data.length?body:`<tr><td colspan="${fields.length}" class="record-empty">${query?'No matching records.':'No records yet.'}</td></tr>`}</tbody></table></div>`;
   }
+
   function paintRows() {
     if (!cfg() && view !== "users") return;
     const filtered = rows;
@@ -365,7 +381,7 @@
             ]),
           ].concat(admin() ? ["is_deleted", "stamp"] : []);
     document.querySelector("#live-content").innerHTML =
-      `<article class="panel records-panel"><div class="records-meta"><strong>${h(label(view))}</strong><span>${count} saved record${count === 1 ? "" : "s"}</span></div>${tableRows(filtered, fields, true)}<footer class="records-footer"><span>${rows.length ? `Page ${page + 1} · ${filtered.length} shown` : "No saved records"} · Refreshes automatically</span><div class="record-pages"><button type="button" id="live-prev" aria-label="Previous page" ${page === 0 ? "disabled" : ""}>‹</button><button type="button" class="is-active" aria-current="page">${page + 1}</button><button type="button" id="live-next" aria-label="Next page" ${(page + 1) * 50 >= count ? "disabled" : ""}>›</button></div></footer></article>`;
+      `<article class="panel records-panel"><div class="records-meta"><strong>${h(label(view))}</strong><span>${count} saved record${count === 1 ? "" : "s"}</span></div>${tableRows(filtered, fields, true)}<footer class="records-footer"><span>${rows.length ? groupBy ? `Grouped view - ${filtered.length} matching records` : `Page ${page + 1} · ${filtered.length} shown` : "No saved records"} · Refreshes automatically</span><div class="record-pages" ${groupBy?"hidden":""}><button type="button" id="live-prev" aria-label="Previous page" ${page === 0 ? "disabled" : ""}>‹</button><button type="button" class="is-active" aria-current="page">${page + 1}</button><button type="button" id="live-next" aria-label="Next page" ${(page + 1) * 50 >= count ? "disabled" : ""}>›</button></div></footer></article>`;
     bindRecordLinks(document.querySelector("#live-content"));
     document.querySelector("#live-prev").onclick = () => {
       page--;
@@ -453,7 +469,9 @@
         const cached=rowCache.get(endpoint);
         if(force && cached){rows=cached.data;count=cached.count??rows.length;paintRows();notice("Checking for updates�");}
         listAbort=new AbortController();
-        const result = initialRecords?.view===view ? initialRecords.result : await request(endpoint,{signal:AbortSignal.any([lifecycle.signal,listAbort.signal])});
+        const signal=AbortSignal.any([lifecycle.signal,listAbort.signal]);
+        let result = initialRecords?.view===view ? initialRecords.result : await request(endpoint,{signal});
+        if(groupBy)result=await window.HopeTableGroups.collectPages(result,offset=>{const url=new URL(endpoint,location.origin);url.searchParams.set('offset',String(offset));return request(url.pathname+url.search,{signal});},signal);
         initialRecords=null;
         rowCache.set(endpoint,result);
         if (requestVersion !== version || requestedView !== view) return;
