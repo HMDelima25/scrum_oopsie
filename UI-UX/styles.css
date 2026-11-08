@@ -262,7 +262,7 @@ h1 {
   padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: rgba(255, 255, 255, 0.72);
+  background: #fff;
   align-items: center;
   gap: 12px;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
@@ -270,7 +270,7 @@ h1 {
 
 .field-shell:focus-within {
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.72);
+  background: #fff;
   box-shadow: none;
 }
 
@@ -288,7 +288,23 @@ h1 {
   color: var(--ink);
   border: 0;
   outline: 0;
-  background: transparent;
+  background: #fff;
+}
+
+.field-shell input:autofill {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1000px #fff;
+}
+
+.field-shell input:-webkit-autofill,
+.field-shell input:-webkit-autofill:hover,
+.field-shell input:-webkit-autofill:focus,
+.field-shell input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  -webkit-box-shadow: inset 0 0 0 1000px #fff;
+  box-shadow: inset 0 0 0 1000px #fff;
 }
 
 .field-shell input::placeholder,
