@@ -1,67 +1,45 @@
-const requireAdmin = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ status: 'error', message: 'Unauthorized. Please log in first.' });
+const { wrap, check, HttpError } = require("../lib/http");
+const { allowed } = require("../lib/permissions");
+const requireUser = wrap(async (req, res, next) => {
+  if (!req.session.userId) throw new HttpError(401, "Please sign in.");
+  const user = check(
+    await req.app.locals.db
+      .from("users")
+      .select("id,username,email,name,role,status,rights,auth_version,is_deleted")
+      .eq("id", req.session.userId)
+      .maybeSingle(),
+  );
+  if (
+    !user ||
+    user.status !== "approved" ||
+    user.is_deleted ||
+    user.auth_version !== req.session.authVersion
+  ) {
+    req.session.destroy(() => {});
+    throw new HttpError(401, "Your session has ended. Please sign in again.");
   }
-
-  if (req.session.userRole !== 'admin' && req.session.userRole !== 'superadmin') {
-    return res.status(403).json({ status: 'error', message: 'Access denied. Administrator privileges required.' });
-  }
-
+  req.user = user;
   next();
-};
-
-// @desc    Check if logged-in user has specific module rights (Superadmins bypass automatically)
-const checkPermission = (moduleName, action) => {
-  return async (req, res, next) => {
-    try {
-      if (!req.session.userId) {
-        return res.status(401).json({ status: 'error', message: 'Unauthorized. Please log in.' });
-      }
-
-      // Superadmins have full universal access
-      if (req.session.userRole === 'superadmin') {
-        return next();
-      }
-
-      // Fetch fresh rights from DB or use session
-      const supabase = require('../config/supabase');
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('role, rights')
-        .eq('id', req.session.userId)
-        .single();
-
-      if (error || !user) {
-        return res.status(403).json({ status: 'error', message: 'Access verification failed.' });
-      }
-
-      // Admins usually have management access, but can also be restricted if needed. 
-      // Let's allow admins full module access or check their rights object:
-      if (user.role === 'admin') {
-        return next();
-      }
-
-      // Check granular rights for regular users
-      const userRights = user.rights || {};
-      const moduleRights = userRights[moduleName];
-
-      if (moduleRights && moduleRights[action] === true) {
-        return next(); // Permission granted!
-      }
-
-      return res.status(403).json({
-        status: 'error',
-        message: `Access denied. You do not have '${action}' permission for the '${moduleName}' module.`,
-      });
-
-    } catch (err) {
-      console.error('Permission Middleware Error:', err.message);
-      return res.status(500).json({ status: 'error', message: 'Internal server error during permission check.' });
-    }
-  };
-};
-
+});
+function requireAdmin(req, res, next) {
+  if (!["admin", "superadmin"].includes(req.user?.role))
+    return next(new HttpError(403, "Administrator access required."));
+  next();
+}
+function requireSuperadmin(req, res, next) {
+  if (req.user?.role !== "superadmin")
+    return next(new HttpError(403, "Superadmin access required."));
+  next();
+}
+function checkPermission(module, action = "view") {
+  return (req, res, next) =>
+    allowed(req.user, `${module}.${action}`)
+      ? next()
+      : next(new HttpError(403, "This action is not permitted."));
+}
 module.exports = {
+  requireUser,
   requireAdmin,
-  checkPermission, // <-- Export this
+  requireSuperadmin,
+  checkPermission,
 };

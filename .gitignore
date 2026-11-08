@@ -1,3 +1,8 @@
 node_modules/
 .env
-.DS_Store   
+.env.*
+!.env.example
+var/
+docs/evidence/
+*.log
+.DS_Store

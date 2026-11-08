@@ -1,30 +1,54 @@
-const express = require('express');
-const router = express.Router();
-const {
-  registerUser,
-  loginUser,
-  logoutUser,
-  requestPasswordReset,
-  resetPassword,
-  getMe,
-} = require('../controllers/auth.controller');
-
-// POST /api/auth/register
-router.post('/register', registerUser);
-
-// POST /api/auth/login
-router.post('/login', loginUser);
-
-// POST /api/auth/logout
-router.post('/logout', logoutUser);
-
-// POST /api/auth/forgot-password
-router.post('/forgot-password', requestPasswordReset);
-
-// POST /api/auth/reset-password
-router.post('/reset-password', resetPassword);
-
-// GET /api/auth/me - Fetch current user session details & rights
-router.get('/me', getMe);
-
+const router = require("express").Router();
+const c = require("../controllers/auth.controller");
+const { wrap } = require("../lib/http");
+const { requireUser } = require("../middleware/auth.middleware");
+// Bound memory and time window for login/reset abuse; session data lives in Postgres.
+const buckets = new Map();
+function limit(req, res, next) {
+  const now = Date.now();
+  if (buckets.size > 10000) {
+    for (const [k, v] of buckets) if (v.until < now) buckets.delete(k);
+  }
+  if (buckets.size > 10000)
+    return res
+      .status(429)
+      .json({ status: "error", message: "Try again later." });
+  const key = req.ip;
+  let bucket = buckets.get(key);
+  if (!bucket || bucket.until < now) {
+    bucket = { count: 0, until: now + 900000 };
+    buckets.set(key, bucket);
+  }
+  if (++bucket.count > 30) {
+    res.set("Retry-After", String(Math.ceil((bucket.until - now) / 1000)));
+    return res.status(429).json({
+      status: "error",
+      message: "Too many requests. Try again later.",
+    });
+  }
+  next();
+}
+router.post("/register", limit, wrap(c.registerUser));
+router.post("/login", limit, wrap(c.loginUser));
+router.post("/logout", wrap(c.logoutUser));
+router.post("/forgot-password", limit, wrap(c.requestPasswordReset));
+router.post("/reset-password", limit, wrap(c.resetPassword));
+router.post("/set-password", limit, wrap(c.resetPassword));
+router.get("/methods", (req, res) =>
+  res.json({
+    status: "success",
+    data: {
+      email: true,
+      username: true,
+      google: process.env.GOOGLE_OAUTH_ENABLED === "true",
+    },
+  }),
+);
+router.get("/google", limit, wrap(require("../lib/oauth").googleStart));
+router.get(
+  "/google/callback",
+  limit,
+  wrap(require("../lib/oauth").googleCallback),
+);
+router.get("/me", requireUser, wrap(c.getMe));
 module.exports = router;

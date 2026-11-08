@@ -1,262 +1,149 @@
-const supabase = require('../config/supabase');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-
-// @desc    Register a new user with password (status defaults to 'pending')
-const registerUser = async (req, res) => {
-  try {
-    const { email, name, password } = req.body;
-
-    if (!email || !name || !password) {
-      return res.status(400).json({ status: 'error', message: 'Please provide email, name, and password.' });
-    }
-
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      return res.status(400).json({ status: 'error', message: 'A user with this email already exists.' });
-    }
-
-    // Hash the password right away
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Insert user with password_hash and 'pending' status
-    const { data: newUser, error: insertError } = await supabase
-      .from('users')
-      .insert([{
-        email,
-        name,
-        password_hash: hashedPassword,
-        status: 'pending',
-        role: 'user'
-      }])
-      .select('id, email, name, status, role, created_at')
-      .single();
-
-    if (insertError) throw insertError;
-
-    return res.status(201).json({
-      status: 'success',
-      message: 'Registration successful! Your account has been created and is pending Superadmin approval.',
-      data: newUser,
-    });
-  } catch (err) {
-    console.error('Registration Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error.', error: err.message });
-  }
-};
-
-// @desc    Login user (standard login with password comparison)
-const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ status: 'error', message: 'Please provide email and password.' });
-    }
-
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (fetchError || !user) {
-      return res.status(404).json({ status: 'error', message: 'Invalid email or user not found.' });
-    }
-
-    if (user.status === 'blocked') {
-      return res.status(403).json({ status: 'error', message: 'Access denied. Your account has been blocked.' });
-    }
-
-    if (user.status === 'pending') {
-      return res.status(403).json({ status: 'error', message: 'Account is pending Superadmin approval.' });
-    }
-
-    if (!user.password_hash) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ password_hash: hashedPassword })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      user.password_hash = hashedPassword;
-    } else {
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-      if (!isMatch) {
-        return res.status(401).json({ status: 'error', message: 'Invalid email or password.' });
-      }
-    }
-
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-    req.session.userEmail = user.email;
-    req.session.rights = user.rights || {};
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Login successful!',
-      data: { id: user.id, email: user.email, name: user.name, role: user.role, status: user.status },
-    });
-
-  } catch (err) {
-    console.error('Login Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error during login.', error: err.message });
-  }
-};
-
-// @desc    Logout user and destroy session
-const logoutUser = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ status: 'error', message: 'Could not log out, please try again.' });
-    }
-    res.clearCookie('connect.sid');
-    return res.status(200).json({ status: 'success', message: 'Logged out successfully.' });
+const bcrypt = require("bcryptjs");
+const {
+  check,
+  HttpError,
+  text,
+  email,
+  password,
+  object,
+} = require("../lib/http");
+const { hash, issueToken } = require("../lib/tokens");
+const safe = "id,username,email,name,role,status,rights,created_at";
+function username(value) {
+  const u = text(value, "Username", 32).toLowerCase();
+  if (!/^[a-z][a-z0-9._-]{2,31}$/.test(u))
+    throw new HttpError(
+      400,
+      "Use a username of 3�32 letters, numbers, dots, underscores or hyphens, starting with a letter.",
+    );
+  return u;
+}
+async function registerUser(req, res) {
+  const b = object(req.body);
+  const name = text(
+    b.name || [b.firstName, b.lastName].filter(Boolean).join(" "),
+    "Name",
+  );
+  const row = { name, email: email(b.email), role: "user", status: "pending" };
+  if (b.username !== undefined) row.username = username(b.username);
+  if (b.password !== undefined)
+    row.password_hash = await bcrypt.hash(password(b.password), 12);
+  const data = check(
+    await req.app.locals.db.from("users").insert(row).select(safe).single(),
+  );
+  res.status(201).json({
+    status: "success",
+    message: "Your account is awaiting Superadmin approval.",
+    data,
   });
-};
-
-// @desc    Request password reset token
-const requestPasswordReset = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ status: 'error', message: 'Please provide your email address.' });
-    }
-
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', email)
-      .single();
-
-    // To prevent user enumeration attacks, we can return a generic success message even if email is not found,
-    // but for internal testing convenience, let's return a clear message or handle it gracefully.
-    if (fetchError || !user) {
-      return res.status(404).json({ status: 'error', message: 'User with this email does not exist.' });
-    }
-
-    // Generate secure random reset token (expires in 1 hour)
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour from now
-
-    // Save token to database
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        reset_token: resetToken,
-        reset_token_expires: expiresAt,
-      })
-      .eq('id', user.id);
-
-    if (updateError) throw updateError;
-
-    // Log token to console for easy testing (in production, send via email service like Nodemailer/Resend)
-    console.log(`\n🔑 [PASSWORD RESET TOKEN FOR ${email}]: ${resetToken}\n`);
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Password reset token generated. Check your server console for the token (simulated email delivery).',
-      // Included in response for easy local testing:
-      debugToken: resetToken, 
-    });
-
-  } catch (err) {
-    console.error('Password Reset Request Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error.', error: err.message });
-  }
-};
-
-// @desc    Reset password using token
-const resetPassword = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-
-    if (!token || !newPassword) {
-      return res.status(400).json({ status: 'error', message: 'Please provide both token and new password.' });
-    }
-
-    // Find user with matching token and valid expiration time
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('reset_token', token)
-      .single();
-
-    if (fetchError || !user) {
-      return res.status(400).json({ status: 'error', message: 'Invalid or expired password reset token.' });
-    }
-
-    // Check if token has expired
-    if (new Date() > new Date(user.reset_token_expires)) {
-      return res.status(400).json({ status: 'error', message: 'Password reset token has expired.' });
-    }
-
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    // Update password and clear reset token fields
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        password_hash: hashedPassword,
-        reset_token: null,
-        reset_token_expires: null,
-      })
-      .eq('id', user.id);
-
-    if (updateError) throw updateError;
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Password has been successfully reset. You can now log in with your new password.',
-    });
-
-  } catch (err) {
-    console.error('Reset Password Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error during password reset.', error: err.message });
-  }
-};
-
-// @desc    Get currently logged-in user session profile and rights
-const getMe = async (req, res) => {
-  try {
-    if (!req.session.userId) {
-      return res.status(401).json({ status: 'error', message: 'Not authenticated.' });
-    }
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email, name, role, status, rights')
-      .eq('id', req.session.userId)
-      .single();
-
-    if (error || !user) {
-      return res.status(404).json({ status: 'error', message: 'User not found.' });
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      data: user,
-    });
-  } catch (err) {
-    console.error('Get Me Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error.' });
-  }
-};
-
+}
+async function loginUser(req, res) {
+  const b = object(req.body);
+  const identifier = text(
+    b.identifier || b.email || b.username,
+    "Email or username",
+    254,
+  ).toLowerCase();
+  const field = identifier.includes("@") ? "email" : "username";
+  const address = field === "email" ? email(identifier) : username(identifier);
+  if (
+    typeof b.password !== "string" ||
+    !b.password ||
+    Buffer.byteLength(b.password) > 72
+  )
+    throw new HttpError(400, "Enter your password.");
+  const user = check(
+    await req.app.locals.db
+      .from("users")
+      .select("*")
+      .eq(field, address)
+      .maybeSingle(),
+  );
+  if (
+    !user ||
+    user.is_deleted ||
+    !user.password_hash ||
+    !(await bcrypt.compare(b.password, user.password_hash))
+  )
+    throw new HttpError(401, "Email or password is incorrect.");
+  if (user.status !== "approved")
+    throw new HttpError(
+      403,
+      user.status === "pending"
+        ? "Your account is awaiting approval."
+        : "Your account is blocked.",
+    );
+  await new Promise((resolve, reject) =>
+    req.session.regenerate((e) => (e ? reject(e) : resolve())),
+  );
+  req.session.userId = user.id;
+  req.session.authVersion = user.auth_version;
+  await new Promise((resolve, reject) =>
+    req.session.save((e) => (e ? reject(e) : resolve())),
+  );
+  res.json({
+    status: "success",
+    data: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      rights: user.rights,
+    },
+  });
+}
+async function logoutUser(req, res) {
+  await new Promise((resolve, reject) =>
+    req.session.destroy((e) => (e ? reject(e) : resolve())),
+  );
+  res.clearCookie("hope.sid");
+  res.json({ status: "success" });
+}
+async function requestPasswordReset(req, res) {
+  const address = email(object(req.body).email);
+  if (!process.env.SMTP_HOST && process.env.MAIL_DELIVERY !== "local")
+    throw new HttpError(503, "Account email delivery is not configured.");
+  const user = check(
+    await req.app.locals.db
+      .from("users")
+      .select("id,email")
+      .eq("email", address)
+      .eq("is_deleted", false)
+      .maybeSingle(),
+  );
+  if (user) await issueToken(req.app.locals.db, user, "reset");
+  res.json({
+    status: "success",
+    message:
+      process.env.MAIL_DELIVERY === "local"
+        ? "Local development delivery: check the private server outbox. No email was sent."
+        : "If the account is eligible, check your email.",
+  });
+}
+async function resetPassword(req, res) {
+  const b = object(req.body);
+  const token = text(b.token, "Token", 256);
+  const password_hash = await bcrypt.hash(password(b.newPassword), 12);
+  check(
+    await req.app.locals.db.rpc("hope_consume_token", {
+      p_hash: hash(token),
+      p_password_hash: password_hash,
+    }),
+  );
+  res.json({
+    status: "success",
+    message: "Password updated. Sign in to continue.",
+  });
+}
+function getMe(req, res) {
+  const { id, username, email, name, role, status, rights } = req.user;
+  res.json({
+    status: "success",
+    data: { id, username, email, name, role, status, rights },
+  });
+}
 module.exports = {
   registerUser,
   loginUser,
