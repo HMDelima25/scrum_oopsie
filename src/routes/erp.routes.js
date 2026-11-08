@@ -14,6 +14,15 @@ const {
 const { wrap, check, HttpError, object } = require("../lib/http");
 const { allowed } = require("../lib/permissions");
 router.use(requireUser);
+router.get('/products/:key/price-history',checkPermission('products','view'),wrap(async(req,res)=>{
+  const result=check(await req.app.locals.db.rpc('hope_product_price_history',{p_actor:req.user.id,p_code:req.params.key}));res.json({status:'success',data:result});
+}));
+router.post('/products/:key/price',checkPermission('products','priceAdd'),checkPermission('products','priceEdit'),wrap(async(req,res)=>{
+  const body=object(req.body);if(Object.keys(body).some(k=>!['unitprice','version'].includes(k))||!Object.hasOwn(body,'version'))throw new HttpError(400,'Reopen the product price form before saving.');
+  if(typeof body.unitprice!=='number'||!Number.isFinite(body.unitprice)||body.unitprice<=0)throw new HttpError(400,'Enter a positive price.');
+  if(body.version!==null&&(typeof body.version!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.version)))throw new HttpError(400,'Invalid price version.');
+  const result=check(await req.app.locals.db.rpc('hope_update_product_price',{p_actor:req.user.id,p_code:req.params.key,p_price:body.unitprice,p_expected:body.version}));res.json({status:'success',data:result});
+}));
 for(const kind of ['departments','jobs'])router.get(`/${kind}/:key/members`,checkPermission('hr','view'),wrap(async(req,res)=>{
   const result=check(await req.app.locals.db.rpc('hope_hr_record_members',{p_actor:req.user.id,p_kind:kind,p_code:req.params.key}));
   res.json({status:'success',data:result});
@@ -127,6 +136,7 @@ for (const [path, c] of Object.entries(resources)) {
       if (req.user.role === "user") q = q.eq("is_deleted", false);
       const row = check(await q.maybeSingle());
       if (!row) throw new HttpError(404, "Record not found.");
+      if(path==='products'){const current=check(await req.app.locals.db.from('product_current_price').select('unitprice,effdate').eq('prodcode',row.prodcode).maybeSingle());row.current_price=current?.unitprice??null;row.price_effective_date=current?.effdate??null;}
       res.json({ status: "success", data: row });
     }),
   );

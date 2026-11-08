@@ -25,6 +25,7 @@ const tables = [
   "record_code_counter",
   "auth_identity",
   "permission_role",
+  "price_change",
 ];
 async function main() {
   const db = require("../src/config/supabase")();
@@ -44,7 +45,7 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 14);
+  assert.equal(result.tables.app_migration, 15);
   const directory=await db.from('employee_directory').select('empno,jobname,deptname',{count:'exact',head:true});
   if(directory.error)throw new Error('employee_directory: '+directory.error.code);
   assert.equal(directory.count,result.tables.employee);
@@ -85,6 +86,9 @@ async function main() {
     const jobDirectoryRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/job_directory?select=jobcode`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
     assert.ok([401,403].includes(jobDirectoryRead.status));
     result.anonymousJobDirectoryReadDenied=true;
+    const priceHistoryRead=await fetch(`${process.env.SUPABASE_URL}/rest/v1/price_change?select=id`,{headers:{apikey:process.env.SUPABASE_PUBLISHABLE_KEY}});
+    assert.ok([401,403].includes(priceHistoryRead.status));
+    result.anonymousPriceHistoryReadDenied=true;
     result.anonymousReadDenied = true;
   }
   const url = `http://127.0.0.1:${process.env.PORT || 5000}`;

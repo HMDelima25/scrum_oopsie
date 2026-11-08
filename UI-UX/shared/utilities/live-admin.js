@@ -66,6 +66,8 @@
       permission_count: "Permissions",
       members: "Members",
       archived_at: "Archived at",
+      changed_at: "Changed on",
+      change_kind: "Change",
       status: view==="roles"?"Status":"Account status",
     }[key] ||
     key.replaceAll("_", " ");
@@ -142,6 +144,7 @@
     renderTabs();
     const save=document.querySelector('#live-save');if(save&&!permitted(document.querySelector('[data-record-key]')?.dataset.recordKey?1:0)){save.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your permissions changed. This action is no longer available.';}
     const fire=document.querySelector('#live-confirm-fire');if(fire&&(!admin()||!can('hr.empEdit')||!can('hr.empDelete'))){fire.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your permissions changed. Firing this employee is no longer available.';}
+    const priceSave=document.querySelector('#live-price-save');if(priceSave&&(!can('products.priceAdd')||!can('products.priceEdit'))){priceSave.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your price permissions changed. Reopen this product before continuing.';}
     return true;
   }
   function renderTabs(){
@@ -566,25 +569,40 @@
           rowKey(row);
   }
   function hrRecordMarkup(resource,overview){
-    const tabs=resource==='departments'?['overview','jobs','employees']:['overview','employees'];
-    return `<div class="entity-tabs hr-record-tabs" role="tablist" aria-label="Record details">${tabs.map((tab,i)=>`<button type="button" role="tab" id="hr-tab-${tab}" aria-controls="hr-pane-${tab}" aria-selected="${i===0}" tabindex="${i===0?'0':'-1'}" class="${i===0?'is-active':''}" data-hr-tab="${tab}">${h(tab[0].toUpperCase()+tab.slice(1))}</button>`).join('')}</div>${tabs.map((tab,i)=>`<div class="hr-record-pane" role="tabpanel" id="hr-pane-${tab}" aria-labelledby="hr-tab-${tab}" tabindex="0" ${i===0?'':'hidden'}>${tab==='overview'?overview:`<p>Loading active ${tab}…</p>`}</div>`).join('')}`;
+    const tabs=resource==='products'?['overview','price-history']:resource==='departments'?['overview','jobs','employees']:['overview','employees'];
+    return `<div class="entity-tabs hr-record-tabs" role="tablist" aria-label="Record details">${tabs.map((tab,i)=>`<button type="button" role="tab" id="hr-tab-${tab}" aria-controls="hr-pane-${tab}" aria-selected="${i===0}" tabindex="${i===0?'0':'-1'}" class="${i===0?'is-active':''}" data-hr-tab="${tab}">${h(tab==='price-history'?'Price history':tab[0].toUpperCase()+tab.slice(1))}</button>`).join('')}</div>${tabs.map((tab,i)=>`<div class="hr-record-pane" role="tabpanel" id="hr-pane-${tab}" aria-labelledby="hr-tab-${tab}" tabindex="0" ${i===0?'':'hidden'}>${tab==='overview'?overview:`<p>Loading ${tab==='price-history'?'price history':'active '+tab}…</p>`}</div>`).join('')}`;
   }
-  function hrMemberTable(rows,fields,kind){
-    return `<div class="records-scroll"><table class="records-table hr-record-table"><thead><tr>${fields.map(field=>`<th scope="col">${h(fieldLabel(field))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${fields.map(field=>`<td>${h(cell(row[field],field))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${fields.length}" class="record-empty">No active ${h(kind)}.</td></tr>`}</tbody></table></div>`;
+  function hrMemberTable(rows,fields,kind,emptyMessage){
+    return `<div class="records-scroll"><table class="records-table hr-record-table"><thead><tr>${fields.map(field=>`<th scope="col">${h(fieldLabel(field))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${fields.map(field=>`<td>${h(cell(row[field],field))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${fields.length}" class="record-empty">${h(emptyMessage||'No active '+kind+'.')}</td></tr>`}</tbody></table></div>`;
   }
-  async function wireHrRecordTabs(d,resource,key){
+  async function wireHrRecordTabs(d,resource,key,initialTab='overview'){
     const tabs=d.querySelector('.hr-record-tabs'),buttons=[...tabs.querySelectorAll('[data-hr-tab]')];
     const select=button=>{for(const tab of buttons){const active=tab===button;tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;d.querySelector('#hr-pane-'+tab.dataset.hrTab).hidden=!active;}};
     for(const button of buttons){button.onclick=()=>select(button);button.onkeydown=event=>{const index=buttons.indexOf(button);let next;if(event.key==='ArrowRight')next=(index+1)%buttons.length;else if(event.key==='ArrowLeft')next=(index+buttons.length-1)%buttons.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=buttons.length-1;else return;event.preventDefault();select(buttons[next]);buttons[next].focus();};}
+    const initial=buttons.find(button=>button.dataset.hrTab===initialTab);if(initial)select(initial);
     try{
-      const result=(await request(`/api/${resource}/${encodeURIComponent(key)}/members`)).data;
+      const result=(await request(`/api/${resource}/${encodeURIComponent(key)}/${resource==='products'?'price-history':'members'}`)).data;
       if(!d.open||d.querySelector('.hr-record-tabs')!==tabs)return;
+      if(resource==='products'){
+        const history=result.history.map(row=>({...row,changed_at:row.changed_at?new Date(row.changed_at).toLocaleString('en-PH',{timeZone:'Asia/Manila'}):'Existing record',change_kind:({initial:'Initial price',change:'Updated',inactive:'Made inactive',restore:'Restored'})[row.change_kind]||row.change_kind}));
+        d.querySelector('#hr-pane-price-history').innerHTML=hrMemberTable(history,['effdate','unitprice','changed_at','change_kind'],'prices','No saved prices yet.');
+        const price=d.querySelector('[data-record-field="current_price"] dd'),date=d.querySelector('[data-record-field="price_effective_date"] dd');if(price)price.textContent=money(result.current_price);if(date)date.textContent=result.price_effective_date||'—';return;
+      }
       if(resource==='departments')d.querySelector('#hr-pane-jobs').innerHTML=hrMemberTable(result.jobs,['jobcode','jobname'],'jobs');
       d.querySelector('#hr-pane-employees').innerHTML=hrMemberTable(result.employees,['empno','lastname','firstname','gender'],'employees');
       const departments=d.querySelector('[data-hr-departments]');if(departments)departments.textContent=result.departments.length?result.departments.map(item=>`${item.deptname} (${item.deptcode})`).join(', '):'No current department assignments.';
     }catch(error){if(!d.open||d.querySelector('.hr-record-tabs')!==tabs)return;for(const pane of d.querySelectorAll('.hr-record-pane:not(#hr-pane-overview)'))pane.textContent=error.message;const departments=d.querySelector('[data-hr-departments]');if(departments)departments.textContent=error.message;}
   }
-  async function openRecord(row) {
+  async function openPriceUpdate(row){
+    const parent=document.querySelector('#live-dialog'),title=parent.querySelector('#live-dialog-title');
+    try{
+      const snapshot=(await request('/api/products/'+encodeURIComponent(row.prodcode)+'/price-history')).data;
+      if(!parent.open||parent.querySelector('#live-dialog-title')!==title)return;
+      const d=showDialog('Update price - '+row.description,`<p class="live-price-summary">Current price: <strong>${h(money(snapshot.current_price))}</strong></p><label class="field"><span>New price</span><input name="unitprice" type="number" min="0.01" step="0.01" required value="${h(snapshot.current_price??'')}"></label><p class="live-price-note">Effective today in the Philippines. Earlier prices remain available in Price history.</p>`,'<button type="submit" class="module-primary" id="live-price-save">Save price</button>');
+      d.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=d.querySelector('#live-price-save');button.disabled=true;try{await send('/api/products/'+encodeURIComponent(row.prodcode)+'/price','POST',{unitprice:Number(d.querySelector('[name="unitprice"]').value),version:snapshot.version});d.close();await load(true);await openRecord(row,'price-history');}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
+    }catch(error){if(parent.open&&parent.querySelector('#live-dialog-title')===title)parent.querySelector('.live-dialog-notice').textContent=error.message;}
+  }
+  async function openRecord(row,initialTab='overview') {
     if(view==="roles")return openRoleProfile(row);
     restoreKey = rowKey(row);
     const resource = view;
@@ -620,18 +638,20 @@
     const editable = permitted(1) && !(view === "users" && (row.id === user.id || row.is_deleted));
     let actions = `${editable ? '<button type="button" class="module-primary" id="live-edit">Edit</button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="dialog-secondary live-danger" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
     if(view==='employees'&&admin()&&can('hr.empEdit')&&can('hr.empDelete')&&!row.is_deleted&&!row.sepdate)actions+='<button type="button" class="dialog-secondary live-danger" id="live-fire">Fire employee</button>';
-    const hrRecord=['departments','jobs'].includes(view);
-    const overview=`<dl class="live-record">${fields.map((f) => `<div><dt>${h(fieldLabel(f))}</dt><dd>${cellMarkup(row, f)}</dd></div>`).join("")}${view==='jobs'?'<div><dt>Departments</dt><dd data-hr-departments>Loading current departments…</dd></div>':''}</dl>`;
+    if(view==='products'&&!row.is_deleted&&can('products.priceAdd')&&can('products.priceEdit'))actions+='<button type="button" class="module-primary" id="live-update-price">Update price</button>';
+    const hrRecord=['departments','jobs','products'].includes(view);
+    const overview=`<dl class="live-record">${fields.map((f) => `<div data-record-field="${h(f)}"><dt>${h(fieldLabel(f))}</dt><dd>${cellMarkup(row, f)}</dd></div>`).join("")}${view==='jobs'?'<div><dt>Departments</dt><dd data-hr-departments>Loading current departments…</dd></div>':''}</dl>`;
     const d = showDialog(
       recordDescription(row),
       hrRecord?hrRecordMarkup(view,overview):overview,
       actions,
     );
-    if(hrRecord){d.dataset.layout='standard';wireHrRecordTabs(d,view,rowKey(row));}
+    if(hrRecord){d.dataset.layout='standard';wireHrRecordTabs(d,view,rowKey(row),initialTab);}
     const related=(hrRecord?[]:schema.related?.[view]||[]).map(link=>{const href=recordLink(link,row);return href?`<a class="record-action" data-record-link href="${h(href)}">${h(label(link.resource))}</a>`:"";}).filter(Boolean);
     if(related.length){const links=document.createElement("p");links.innerHTML=related.join(" · ");d.querySelector(".live-dialog-body").append(links);}
     bindRecordLinks(d);
     d.querySelector("form").onsubmit = (e) => e.preventDefault();
+    d.querySelector('#live-update-price')?.addEventListener('click',()=>openPriceUpdate(row));
     d.querySelector('#live-fire')?.addEventListener('click',()=>{
       const confirmation=showDialog('Fire employee','<p>Fire <strong>'+h(recordDescription(row))+'</strong> ('+h(row.empno)+')?</p><p>This will archive the employee, mark them inactive, and set the separation date to today in the Philippines. Past jobs, sales and payments will remain saved.</p>','<button type="submit" class="module-primary" id="live-confirm-fire">Confirm fire employee</button>');
       confirmation.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=confirmation.querySelector('#live-confirm-fire');button.disabled=true;try{await send('/api/employees/'+encodeURIComponent(row.empno)+'/fire','POST',{confirm:true},row);confirmation.close();await load(true);}catch(error){confirmation.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
@@ -658,9 +678,11 @@
         const trigger=d.querySelector('#live-delete');trigger.disabled=true;
         try{
           const plan=(await request(urlFor(rowKey(row))+'/inactivation')).data;
-          const grouped={};for(const item of plan){const resource=Object.entries(schema.resources).find(([,c])=>c.table===item.table)?.[0]||item.table;(grouped[resource]??=[]).push(Object.values(item.key).join(' / '));}
-          const body='<p>Make this record and its active related records inactive together? Saved history will remain available. Nothing is permanently erased.</p><div class="live-inactivation-list">'+Object.entries(grouped).map(([resource,keys])=>'<section><strong>'+h(label(resource))+' ('+keys.length+')</strong><p>'+keys.map(h).join(', ')+'</p></section>').join('')+'</div><p>Already inactive records are left as they are. Restore records separately, starting with their parent records.</p>';
+          const grouped={};for(const item of plan){const resource=Object.entries(schema.resources).find(([,c])=>c.table===item.table)?.[0]||item.table;(grouped[resource]??=[]).push(item.key);}
+          const order=Object.keys(schema.resources),sections=Object.entries(grouped).sort(([a],[b])=>(a===view?-1:order.indexOf(a))-(b===view?-1:order.indexOf(b)));
+          const body='<p class="live-inactivation-intro">Make this record and the related records below inactive together? Their saved history will remain available.</p><div class="live-inactivation-list">'+sections.map(([resource,keys])=>'<section class="live-inactivation-group"><header><h3>'+h(label(resource))+'</h3><span>'+keys.length+' record'+(keys.length===1?'':'s')+'</span></header>'+hrMemberTable(keys,schema.resources[resource]?.pk||Object.keys(keys[0]),resource)+'</section>').join('')+'</div><p class="live-inactivation-note">Nothing is permanently erased. Already inactive records stay unchanged. Restore parent records before related records.</p>';
           const confirmation=showDialog('Make inactive',body,'<button type="submit" class="module-primary" id="live-confirm-inactive">Make '+plan.length+' record'+(plan.length===1?'':'s')+' inactive</button>');
+          confirmation.dataset.layout='standard';
           confirmation.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=confirmation.querySelector('#live-confirm-inactive');button.disabled=true;try{await send(urlFor(rowKey(row))+'/inactivate','POST',{plan});confirmation.close();await load(true);}catch(error){confirmation.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
         }catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;trigger.disabled=false;}
         return;

@@ -14,3 +14,4 @@ Employee job assignment and confirmed firing/archival: [employee workflow](docs/
 Employee job/department columns, filtering and grouping: [employee directory](docs/EMPLOYEE-DIRECTORY.md).
 Department and Job popup tabs: [HR record details](docs/HR-RECORD-TABS.md).
 Job department selection and generated codes: [job departments](docs/JOB-DEPARTMENTS.md).
+Product popup price updates and immutable revision history: [product prices](docs/PRODUCT-PRICE-HISTORY.md).
