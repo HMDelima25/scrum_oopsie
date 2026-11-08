@@ -555,6 +555,8 @@
   }
   function recordDescription(row) {
     if(view==='employees')return [row.firstname,row.lastname].filter(Boolean).join(' ')||rowKey(row);
+    if(view==='departments')return row.deptname||row.deptcode;
+    if(view==='jobs')return row.jobname||row.jobcode;
     return view === "users"
       ? row.name
       : row.custname ||
@@ -562,6 +564,25 @@
           row.firstname ||
           row.transno ||
           rowKey(row);
+  }
+  function hrRecordMarkup(resource,overview){
+    const tabs=resource==='departments'?['overview','jobs','employees']:['overview','employees'];
+    return `<div class="entity-tabs hr-record-tabs" role="tablist" aria-label="Record details">${tabs.map((tab,i)=>`<button type="button" role="tab" id="hr-tab-${tab}" aria-controls="hr-pane-${tab}" aria-selected="${i===0}" tabindex="${i===0?'0':'-1'}" class="${i===0?'is-active':''}" data-hr-tab="${tab}">${h(tab[0].toUpperCase()+tab.slice(1))}</button>`).join('')}</div>${tabs.map((tab,i)=>`<div class="hr-record-pane" role="tabpanel" id="hr-pane-${tab}" aria-labelledby="hr-tab-${tab}" tabindex="0" ${i===0?'':'hidden'}>${tab==='overview'?overview:`<p>Loading active ${tab}…</p>`}</div>`).join('')}`;
+  }
+  function hrMemberTable(rows,fields,kind){
+    return `<div class="records-scroll"><table class="records-table hr-record-table"><thead><tr>${fields.map(field=>`<th scope="col">${h(fieldLabel(field))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${fields.map(field=>`<td>${h(cell(row[field],field))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${fields.length}" class="record-empty">No active ${h(kind)}.</td></tr>`}</tbody></table></div>`;
+  }
+  async function wireHrRecordTabs(d,resource,key){
+    const tabs=d.querySelector('.hr-record-tabs'),buttons=[...tabs.querySelectorAll('[data-hr-tab]')];
+    const select=button=>{for(const tab of buttons){const active=tab===button;tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;d.querySelector('#hr-pane-'+tab.dataset.hrTab).hidden=!active;}};
+    for(const button of buttons){button.onclick=()=>select(button);button.onkeydown=event=>{const index=buttons.indexOf(button);let next;if(event.key==='ArrowRight')next=(index+1)%buttons.length;else if(event.key==='ArrowLeft')next=(index+buttons.length-1)%buttons.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=buttons.length-1;else return;event.preventDefault();select(buttons[next]);buttons[next].focus();};}
+    try{
+      const result=(await request(`/api/${resource}/${encodeURIComponent(key)}/members`)).data;
+      if(!d.open||d.querySelector('.hr-record-tabs')!==tabs)return;
+      if(resource==='departments')d.querySelector('#hr-pane-jobs').innerHTML=hrMemberTable(result.jobs,['jobcode','jobname'],'jobs');
+      d.querySelector('#hr-pane-employees').innerHTML=hrMemberTable(result.employees,['empno','lastname','firstname','gender'],'employees');
+      const departments=d.querySelector('[data-hr-departments]');if(departments)departments.textContent=result.departments.length?result.departments.map(item=>`${item.deptname} (${item.deptcode})`).join(', '):'No current department assignments.';
+    }catch(error){if(!d.open||d.querySelector('.hr-record-tabs')!==tabs)return;for(const pane of d.querySelectorAll('.hr-record-pane:not(#hr-pane-overview)'))pane.textContent=error.message;const departments=d.querySelector('[data-hr-departments]');if(departments)departments.textContent=error.message;}
   }
   async function openRecord(row) {
     if(view==="roles")return openRoleProfile(row);
@@ -599,12 +620,15 @@
     const editable = permitted(1) && !(view === "users" && (row.id === user.id || row.is_deleted));
     let actions = `${editable ? '<button type="button" class="module-primary" id="live-edit">Edit</button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="dialog-secondary live-danger" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
     if(view==='employees'&&admin()&&can('hr.empEdit')&&can('hr.empDelete')&&!row.is_deleted&&!row.sepdate)actions+='<button type="button" class="dialog-secondary live-danger" id="live-fire">Fire employee</button>';
+    const hrRecord=['departments','jobs'].includes(view);
+    const overview=`<dl class="live-record">${fields.map((f) => `<div><dt>${h(fieldLabel(f))}</dt><dd>${cellMarkup(row, f)}</dd></div>`).join("")}${view==='jobs'?'<div><dt>Departments</dt><dd data-hr-departments>Loading current departments…</dd></div>':''}</dl>`;
     const d = showDialog(
       recordDescription(row),
-      `<dl class="live-record">${fields.map((f) => `<div><dt>${h(fieldLabel(f))}</dt><dd>${cellMarkup(row, f)}</dd></div>`).join("")}</dl>`,
+      hrRecord?hrRecordMarkup(view,overview):overview,
       actions,
     );
-    const related=(schema.related?.[view]||[]).map(link=>{const href=recordLink(link,row);return href?`<a class="record-action" data-record-link href="${h(href)}">${h(label(link.resource))}</a>`:"";}).filter(Boolean);
+    if(hrRecord){d.dataset.layout='standard';wireHrRecordTabs(d,view,rowKey(row));}
+    const related=(hrRecord?[]:schema.related?.[view]||[]).map(link=>{const href=recordLink(link,row);return href?`<a class="record-action" data-record-link href="${h(href)}">${h(label(link.resource))}</a>`:"";}).filter(Boolean);
     if(related.length){const links=document.createElement("p");links.innerHTML=related.join(" · ");d.querySelector(".live-dialog-body").append(links);}
     bindRecordLinks(d);
     d.querySelector("form").onsubmit = (e) => e.preventDefault();

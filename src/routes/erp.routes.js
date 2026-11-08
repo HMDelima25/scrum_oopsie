@@ -14,6 +14,10 @@ const {
 const { wrap, check, HttpError, object } = require("../lib/http");
 const { allowed } = require("../lib/permissions");
 router.use(requireUser);
+for(const kind of ['departments','jobs'])router.get(`/${kind}/:key/members`,checkPermission('hr','view'),wrap(async(req,res)=>{
+  const result=check(await req.app.locals.db.rpc('hope_hr_record_members',{p_actor:req.user.id,p_kind:kind,p_code:req.params.key}));
+  res.json({status:'success',data:result});
+}));
 router.post('/employees/:key/fire',require('../middleware/auth.middleware').requireAdmin,checkPermission('hr','empEdit'),checkPermission('hr','empDelete'),wrap(async(req,res)=>{
   if(object(req.body).confirm!==true||Object.keys(req.body).some(k=>k!=='confirm'))throw new HttpError(400,'Confirm firing this employee first.');
   let expected;try{expected=JSON.parse(req.get('if-match')||'null');}catch{throw new HttpError(400,'Invalid employee version.');}
