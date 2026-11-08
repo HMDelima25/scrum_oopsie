@@ -9,7 +9,10 @@
     "dev": "nodemon src/server.js",
     "bootstrap": "node scripts/bootstrap.js",
     "verify": "node scripts/verify-database.js",
-    "doctor": "node scripts/doctor.js"
+    "doctor": "node scripts/doctor.js",
+    "test:browser": "node scripts/run-browser-tests.js",
+    "test:browser:report": "playwright show-report",
+    "test:browser:serve": "node test/browser/server.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +31,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",
+    "@playwright/test": "^1.65.0",
     "nodemon": "^3.1.14"
   },
   "engines": {

@@ -13,14 +13,14 @@ test('permission catalogue and named roles enforce real requests',async t=>{
  async function request(who,method,path,body,headers={}){const response=await fetch(base+path,{method,headers:{'content-type':'application/json',...(cookies[who]?{cookie:cookies[who]}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];return {status:response.status,body:await response.json()};}
  for(const who of ['root','manager','member'])assert.equal((await request(who,'POST','/api/auth/login',{email:who+'@example.test',password})).status,200);
  const all=Object.fromEntries(Object.keys(catalogue).map(k=>[k,true]));
- const grant=async rights=>{const r=await request('root','PUT',`/api/admin/users/${ids.member}/rights`,{rights});assert.equal(r.status,200,JSON.stringify(r));};
+ const grant=async (rights,who="member")=>{const r=await request('root','PUT',`/api/admin/users/${ids[who]}/rights`,{rights});assert.equal(r.status,200,JSON.stringify(r));};
  let seq=0;
  async function insert(resource){const c=resources[resource],payload=await values(resource),cols=Object.keys(payload);await db.pg.query(`INSERT INTO ${c.table}(${cols.join(',')}) VALUES(${cols.map((_,i)=>'$'+(i+1)).join(',')})`,Object.values(payload));return payload;}
  async function values(resource){const n=String(++seq).padStart(4,'0');switch(resource){
  case 'customers':return {custno:'M'+n,custname:'Matrix '+n,address:'Test',payterm:'COD'};
  case 'products':return {prodcode:'MX'+n,description:'Matrix '+n,unit:'pc'};
  case 'employees':return {empno:'M'+n,firstname:'Test',lastname:'Member',hiredate:'2026-01-01'};
- case 'departments':return {deptcode:'D'+n.slice(-2),deptname:'Matrix '+n};
+ case 'departments':return {deptcode:'D'+Number(n).toString(36).toUpperCase().padStart(2,'0'),deptname:'Matrix '+n};
  case 'jobs':return {jobcode:'J'+n.slice(-3),jobdesc:'Matrix '+n};
  case 'prices':return {prodcode:(await insert('products')).prodcode,effdate:'2026-01-01',unitprice:10};
  case 'job-history':return {empno:(await insert('employees')).empno,jobcode:(await insert('jobs')).jobcode,deptcode:(await insert('departments')).deptcode,effdate:'2026-01-01',salary:1000};
@@ -32,15 +32,17 @@ test('permission catalogue and named roles enforce real requests',async t=>{
  const exercised=new Set();
  for(const [resource,c] of Object.entries(resources)){
   for(let i=0;i<3;i++)await t.test(`${c.module}.${c.actions[i]} denies then permits ${resource} ${['create','edit','delete'][i]}`,async()=>{
+   for(const who of ['member','manager','root']){
    const permission=c.module+'.'+c.actions[i];exercised.add(permission);let body,key='',method=['POST','PATCH','DELETE'][i];
    if(i===0){body=await values(resource);if(resource==='jobs'){delete body.jobcode;body.jobname=body.jobdesc;body.deptcode=(await insert('departments')).deptcode;}if(resource==='sales'){delete body.transno;body.lines=[{prodcode:(await insert('prices')).prodcode,quantity:2}];}}
    else {const row=await insert(resource);key='/'+c.pk.map(k=>row[k]).join('~');if(i===1)body=edits[resource];}
-   await grant({...all,[permission]:false});assert.equal((await request('member',method,'/api/'+resource+key,body)).status,403);
-   await grant(all);const allowed=await request('member',method,'/api/'+resource+key,body);assert.equal(allowed.status,i===0?201:200,JSON.stringify(allowed));
+   if(who!=='root'){await grant({...all,[permission]:false},who);assert.equal((await request(who,method,'/api/'+resource+key,body)).status,403);await grant(all,who);}
+   const allowed=await request(who,method,'/api/'+resource+key,body);assert.equal(allowed.status,i===0?201:200,JSON.stringify(allowed));
+   }
   });
  }
- for(const [permission,path] of Object.entries({'customers.view':'customers','products.view':'products','hr.view':'employees','sales.view':'sales','hr.jhView':'job-history','sales.detailView':'sale-details','reports.view':'reports/top-sales',...Object.fromEntries(Object.entries({'topCustomers':'top-customers','productMaster':'product-master-list','topProducts':'top-products','activeEmployees':'active-employees','allEmployees':'all-employees','empJobHistory':'employee-job-history?employee=M0001','topSales':'top-sales'}).map(([k,v])=>['reports.'+k,'reports/'+v]))}))await t.test(permission+' denies then permits reading',async()=>{exercised.add(permission);await grant({...all,[permission]:false});assert.equal((await request('member','GET','/api/'+path)).status,403);await grant(all);const r=await request('member','GET','/api/'+path);assert.equal(r.status,200,JSON.stringify(r));});
- await t.test('all 41 catalogue entries exercised on real protected endpoints',()=>assert.deepEqual([...exercised].sort(),Object.keys(catalogue).sort()));
+ for(const [permission,path] of Object.entries({'customers.view':'customers','products.view':'products','hr.view':'employees','sales.view':'sales','hr.jhView':'job-history','sales.detailView':'sale-details','reports.view':'reports/top-sales',...Object.fromEntries(Object.entries({'topCustomers':'top-customers','productMaster':'product-master-list','topProducts':'top-products','activeEmployees':'active-employees','allEmployees':'all-employees','empJobHistory':'employee-job-history?employee=M0001','topSales':'top-sales'}).map(([k,v])=>['reports.'+k,'reports/'+v]))}))await t.test(permission+' denies then permits reading',async()=>{exercised.add(permission);for(const who of ['member','manager','root']){if(who!=='root'){await grant({...all,[permission]:false},who);assert.equal((await request(who,'GET','/api/'+path)).status,403);await grant(all,who);}const r=await request(who,'GET','/api/'+path);assert.equal(r.status,200,JSON.stringify(r));}});
+ await t.test('all 41 catalogue entries exercised across User, Admin and Superadmin endpoints',()=>assert.deepEqual([...exercised].sort(),Object.keys(catalogue).sort()));
  let role;
  await t.test('create, assign and edit a role updates existing signed-in members',async()=>{
   const r=await request('root','POST','/api/admin/roles',{name:'Customer clerk',description:'Isolated test',rights:{'customers.view':true,'customers.add':true}});assert.equal(r.status,201,JSON.stringify(r));role=r.body.data;

@@ -1,0 +1,127 @@
+{
+  "applicationBaseline": "319a751",
+  "executionWindow": "2026-11-08 to 2026-11-09 Asia/Manila",
+  "environment": {
+    "platform": "win32",
+    "node": "24.17.0",
+    "playwright": "1.65.0",
+    "data": "disposable PGlite; no production connection"
+  },
+  "api": {
+    "command": "npm test",
+    "passed": 168,
+    "failed": 0,
+    "permissionCatalogueEntries": 41,
+    "roles": 3
+  },
+  "browser": {
+    "command": "npm run test:browser",
+    "startedAt": "2026-11-08T16:07:39.298Z",
+    "durationMs": 67038.188,
+    "passed": 9,
+    "knownExpectedFailures": 4,
+    "unexpected": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "S1-SMOKE-01 invalid password stays out; Superadmin reaches dashboard and logout revokes session",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-AUTH qa-pending cannot enter a workspace",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-AUTH qa-blocked cannot enter a workspace",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-UM-01 Admin sees Users only and cannot retrieve or promote privileged accounts",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-UM-02 Superadmin approves and designates Admin through the actual record form",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-RIGHTS-01 permission checklist gates children and saves an audited change",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-USER-01 temporary User login confirmation and server-side restrictions",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "S1-SMOKE-02 mobile login keeps the collapsible sidebar and opens Customers",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "KNOWN BUG-SP1-001 Admin must be able to unblock an existing User",
+        "actual": "failed",
+        "expected": "failed",
+        "outcome": "knownExpectedFailures"
+      },
+      {
+        "name": "KNOWN GAP-SP1-002 User workspace is not implemented yet",
+        "actual": "failed",
+        "expected": "failed",
+        "outcome": "knownExpectedFailures"
+      },
+      {
+        "name": "S1-UM-03 Admin edits an approved User without a fresh approval",
+        "actual": "passed",
+        "expected": "passed",
+        "outcome": "passed"
+      },
+      {
+        "name": "KNOWN BUG-SP1-007 ordinary User must not see the system Settings shortcut",
+        "actual": "failed",
+        "expected": "failed",
+        "outcome": "knownExpectedFailures"
+      },
+      {
+        "name": "KNOWN BUG-SP1-008 denied module URL should show a friendly authorization notice",
+        "actual": "failed",
+        "expected": "failed",
+        "outcome": "knownExpectedFailures"
+      }
+    ]
+  },
+  "manual": {
+    "executor": "Codex browser automation acting for Natalia; not a human tester sign-off",
+    "roles": [
+      "Superadmin",
+      "Admin",
+      "User"
+    ],
+    "evidence": "evidence/",
+    "confirmedFailures": [
+      "BUG-SP1-001",
+      "BUG-SP1-007",
+      "BUG-SP1-008"
+    ],
+    "deferredGap": "GAP-SP1-002"
+  },
+  "review": {
+    "assignedTester": "Christian Ramos",
+    "humanSignoff": "pending",
+    "upstreamTaskPRs": "pending",
+    "mergedToOriginalMain": false
+  }
+}

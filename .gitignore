@@ -6,3 +6,5 @@ var/
 docs/evidence/
 *.log
 .DS_Store
+playwright-report/
+test-results/
