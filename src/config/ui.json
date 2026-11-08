@@ -217,6 +217,10 @@
     },
     "payments": {
       "transno": "sales"
+    },
+    "employees": {
+      "jobcode": "jobs",
+      "deptcode": "departments"
     }
   },
   "listFilters": {

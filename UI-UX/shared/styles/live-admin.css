@@ -377,3 +377,5 @@ select:focus-visible {
 .record-dialog .permission-groups legend label{display:flex;align-items:center;gap:6px;font-size:.72rem}
 .record-dialog .permission-groups fieldset>div label{display:flex;align-items:flex-start;gap:6px;font-size:.69rem;line-height:1.4}
 .record-dialog .permission-groups{gap:12px}
+.record-dialog .live-employee-job{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.record-dialog .live-employee-job h3{font-size:.8rem;margin:0 0 10px}

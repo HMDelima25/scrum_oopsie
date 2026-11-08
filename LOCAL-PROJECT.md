@@ -9,3 +9,5 @@ Start with `npm start`, then open `http://localhost:5000`. Static HTML alone can
 The application includes the restored HOPE interface and sidebar, persistent navigation, Google/email authentication flows, account approval, record CRUD, automatic codes, table search/filter/sort/group controls, reports, and named permission roles. See [backend setup](docs/BACKEND-SETUP.md), [API](docs/API.md), [Admin](docs/LIVE-ADMIN.md), and [roles and permissions](docs/PERMISSION-ROLES.md).
 
 Environment secrets, installed dependencies, private invitation/reset links, runtime sessions and generated verification artifacts stay local and are not published. `.env.example` contains configuration names and placeholders only. Google sign-in requires the operator's OAuth configuration; email delivery defaults to a local outbox unless SMTP is configured. Database content is not exported by Git; the included SQL migrations provide schema and reference/sample data.
+
+Employee job assignment and confirmed firing/archival: [employee workflow](docs/EMPLOYEE-LIFECYCLE.md).

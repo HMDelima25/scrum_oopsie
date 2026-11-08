@@ -44,7 +44,7 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 9);
+  assert.equal(result.tables.app_migration, 10);
   for (const report of [
     "topCustomers",
     "productMaster",

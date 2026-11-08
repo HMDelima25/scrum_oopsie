@@ -14,6 +14,12 @@ const {
 const { wrap, check, HttpError, object } = require("../lib/http");
 const { allowed } = require("../lib/permissions");
 router.use(requireUser);
+router.post('/employees/:key/fire',require('../middleware/auth.middleware').requireAdmin,checkPermission('hr','empEdit'),checkPermission('hr','empDelete'),wrap(async(req,res)=>{
+  if(object(req.body).confirm!==true||Object.keys(req.body).some(k=>k!=='confirm'))throw new HttpError(400,'Confirm firing this employee first.');
+  let expected;try{expected=JSON.parse(req.get('if-match')||'null');}catch{throw new HttpError(400,'Invalid employee version.');}
+  if(typeof expected!=='string'||!Number.isFinite(Date.parse(expected)))throw new HttpError(400,'Reopen the employee before confirming.');
+  const result=check(await req.app.locals.db.rpc('hope_fire_employee',{p_actor:req.user.id,p_empno:req.params.key,p_expected:expected}));res.json({status:'success',data:result});
+}));
 router.get(
   "/dashboard",
   wrap(async (req, res) => {
@@ -125,6 +131,14 @@ for (const [path, c] of Object.entries(resources)) {
     checkPermission(c.module, c.actions[0]),
     wrap(async (req, res) => {
       let result;
+      if(path==='employees'){
+        const {job_assignment,...employee}=object(req.body);data(c,employee);
+        if(job_assignment!==undefined){object(job_assignment);if(!allowed(req.user,'hr.jhAdd'))throw new HttpError(403,'Add Job History permission required to assign a job.');
+          for(const field of Object.keys(job_assignment))if(!['jobcode','deptcode','effdate','salary'].includes(field))throw new HttpError(400,'Unsupported assignment field.');
+          if(typeof job_assignment.jobcode!=='string'||!job_assignment.jobcode.trim()||typeof job_assignment.salary!=='number'||!Number.isFinite(job_assignment.salary)||job_assignment.salary<0)throw new HttpError(400,'Choose a job and enter a nonnegative salary.');
+        }
+        const saved=check(await req.app.locals.db.rpc('hope_create_employee',{p_actor:req.user.id,p_data:employee,p_assignment:job_assignment??null}));if(saved.job_assignment)saved.job_assignment=visible(req,saved.job_assignment);return res.status(201).json({status:'success',data:visible(req,saved)});
+      }
       if(path==='jobs'&&!req.body.jobcode){
         const {text}=require('../lib/http');
         req.body.jobname=text(req.body.jobname,'Job name',80);

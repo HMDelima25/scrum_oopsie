@@ -65,6 +65,7 @@
       permission_role: "Permission role",
       permission_count: "Permissions",
       members: "Members",
+      archived_at: "Archived at",
       status: view==="roles"?"Status":"Account status",
     }[key] ||
     key.replaceAll("_", " ");
@@ -140,6 +141,7 @@
     nav.querySelectorAll('a').forEach(a=>{const item=routes[a.getAttribute('aria-label')];if(!item?.[1]){a.remove();return;}a.href='../'+item[0]+'/index.html';a.classList.toggle('is-active',item[0]===module);a.removeAttribute('aria-current');if(item[0]===module)a.setAttribute('aria-current','page');});
     renderTabs();
     const save=document.querySelector('#live-save');if(save&&!permitted(document.querySelector('[data-record-key]')?.dataset.recordKey?1:0)){save.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your permissions changed. This action is no longer available.';}
+    const fire=document.querySelector('#live-confirm-fire');if(fire&&(!admin()||!can('hr.empEdit')||!can('hr.empDelete'))){fire.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your permissions changed. Firing this employee is no longer available.';}
     return true;
   }
   function renderTabs(){
@@ -351,7 +353,8 @@
     return `../${group}/index.html?${params}`;
   }
   function cellMarkup(row, field) {
-    const text=h(field==="is_deleted"?(row[field]?"Inactive":"Active"):cell(row[field],field));
+    const displayed=field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
+    const text=h(field==="is_deleted"?(row[field]?(view==='employees'&&row.archived_at?'Archived':'Inactive'):"Active"):displayed);
     if(row[field]===null||row[field]===undefined)return text;
     const relation=schema.cellLinks?.[view]?.[field];
     const href=relation&&recordLink(relation,row);
@@ -552,6 +555,7 @@
     return d;
   }
   function recordDescription(row) {
+    if(view==='employees')return [row.firstname,row.lastname].filter(Boolean).join(' ')||rowKey(row);
     return view === "users"
       ? row.name
       : row.custname ||
@@ -594,7 +598,8 @@
             ]),
           ].concat(admin() ? ["is_deleted", "stamp"] : []);
     const editable = permitted(1) && !(view === "users" && (row.id === user.id || row.is_deleted));
-    const actions = `${editable ? '<button type="button" class="module-primary" id="live-edit">Edit</button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="dialog-secondary live-danger" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
+    let actions = `${editable ? '<button type="button" class="module-primary" id="live-edit">Edit</button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="dialog-secondary live-danger" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
+    if(view==='employees'&&admin()&&can('hr.empEdit')&&can('hr.empDelete')&&!row.is_deleted&&!row.sepdate)actions+='<button type="button" class="dialog-secondary live-danger" id="live-fire">Fire employee</button>';
     const d = showDialog(
       recordDescription(row),
       `<dl class="live-record">${fields.map((f) => `<div><dt>${h(fieldLabel(f))}</dt><dd>${cellMarkup(row, f)}</dd></div>`).join("")}</dl>`,
@@ -604,6 +609,10 @@
     if(related.length){const links=document.createElement("p");links.innerHTML=related.join(" · ");d.querySelector(".live-dialog-body").append(links);}
     bindRecordLinks(d);
     d.querySelector("form").onsubmit = (e) => e.preventDefault();
+    d.querySelector('#live-fire')?.addEventListener('click',()=>{
+      const confirmation=showDialog('Fire employee','<p>Fire <strong>'+h(recordDescription(row))+'</strong> ('+h(row.empno)+')?</p><p>This will archive the employee, mark them inactive, and set the separation date to today in the Philippines. Past jobs, sales and payments will remain saved.</p>','<button type="submit" class="module-primary" id="live-confirm-fire">Confirm fire employee</button>');
+      confirmation.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=confirmation.querySelector('#live-confirm-fire');button.disabled=true;try{await send('/api/employees/'+encodeURIComponent(row.empno)+'/fire','POST',{confirm:true},row);confirmation.close();await load(true);}catch(error){confirmation.querySelector('.live-dialog-notice').textContent=error.message;button.disabled=false;}};
+    });
     d.querySelector("#live-edit")?.addEventListener("click", () =>
       openForm(row),
     );
@@ -734,10 +743,11 @@
     const editing = !!row;
     const c = cfg();
     const automatic=!editing&&schema.autoCodes?.[view];
-    const fields = isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields;
+    const fields = (isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields).filter(field=>!(view==='employees'&&!editing&&field==='sepdate'));
     let body = isUser
       ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
       : `<div class="dialog-fields">${fields.map((f) => input(f, row, editing)).join("")}</div>`;
+    if(view==='employees'&&!editing&&can('hr.jhAdd'))body+='<section class="live-employee-job"><h3>Job assignment (optional)</h3><div class="dialog-fields"><label class="field"><span>Job</span><select data-assignment="jobcode" data-lookup="jobs" data-purpose="employees"><option value="">Select a job</option></select></label><label class="field"><span>Department (optional)</span><select data-assignment="deptcode" data-lookup="departments" data-purpose="employees"><option value="">Select a department</option></select></label><label class="field"><span>Salary</span><input data-assignment="salary" type="number" min="0" step="0.01" disabled></label><label class="field"><span>Effective date</span><input data-assignment="effdate" type="date" disabled></label></div></section>';
     if(automatic?.choosePrefix)body+=`<label class="field"><span>Code prefix</span><select name="_code_prefix" required><option value="">Loading prefixes…</option></select></label>`;
     if (view === "sales" && !editing)
       body +=
@@ -758,6 +768,11 @@
       await openRecord(row);
     };
     d.querySelector(".dialog-actions").prepend(reload);
+    if(view==='employees'&&!editing&&d.querySelector('[data-assignment="jobcode"]')){
+      const job=d.querySelector('[data-assignment="jobcode"]'),salary=d.querySelector('[data-assignment="salary"]'),effective=d.querySelector('[data-assignment="effdate"]'),hire=d.querySelector('[name="hiredate"]');
+      job.onchange=()=>{const selected=!!job.value;for(const el of [salary,effective]){el.disabled=!selected;el.required=selected;}if(selected&&!effective.value)effective.value=hire.value;};
+      hire.onchange=()=>{if(!effective.dataset.manual)effective.value=hire.value;};effective.onchange=()=>{effective.dataset.manual='true';};
+    }
     if (view === "sales" && !editing) {
       d.querySelector("#live-line-add").onclick = () => addSaleLine(d);
       await addSaleLine(d);
@@ -799,6 +814,10 @@
             value = value === "" ? null : Number(value);
           else if (value === "") value = null;
           if (!editing || value !== row[key]) payload[key] = value;
+        }
+        if(resource==='employees'&&!editing&&d.querySelector('[data-assignment="jobcode"]')?.value){
+          const value=field=>d.querySelector('[data-assignment="'+field+'"]').value;
+          payload.job_assignment={jobcode:value('jobcode'),deptcode:value('deptcode')||null,effdate:value('effdate'),salary:Number(value('salary'))};
         }
         if (resource === "sales" && !editing) {
           payload.lines = [...d.querySelectorAll(".live-sale-line")].map(
