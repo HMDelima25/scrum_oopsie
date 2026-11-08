@@ -1,37 +1,33 @@
 const express = require('express');
 const router = express.Router();
+const { loadCurrentUser, requireAdministrator } = require('../middleware/require-user.middleware');
+const roles = require('../controllers/roles.controller');
 const {
   getUsersList,
   addUser,
   updateUser,
   toggleUserStatus,
   getUserRights,
-  updateUserRights,
 } = require('../controllers/admin.controller');
 
-// EXISTING ROUTES
+router.use(loadCurrentUser, requireAdministrator);
 
-// GET /api/admin/users/:id/rights - Get user rights
-router.get('/users/:id/rights', getUserRights);
-
-// PUT /api/admin/users/:id/rights - Update user rights & audit log
-router.put('/users/:id/rights', updateUserRights);
-
-const { requireAdmin } = require('../middleware/auth.middleware');
-
-// Protect all admin routes
-router.use(requireAdmin);
-
-// GET /api/admin/users - List users (filtered by role)
 router.get('/users', getUsersList);
-
-// POST /api/admin/users - Add new user
 router.post('/users', addUser);
-
-// PUT /api/admin/users/:id - Edit user details
 router.put('/users/:id', updateUser);
-
-// PATCH /api/admin/users/:id/status - Block/Unblock user
 router.patch('/users/:id/status', toggleUserStatus);
+router.post('/users/:id/invite', require('../controllers/admin.controller').sendSetupLink);
+router.get('/users/:id/rights', getUserRights);
+router.put('/users/:id/rights', roles.setUserRights);
+router.put('/users/:id/permission-role', roles.assignRole);
+
+router.get('/rights-catalogue', roles.catalogue);
+router.get('/roles', roles.listRoles);
+router.post('/roles', roles.saveRole);
+router.get('/roles/:id', roles.getRole);
+router.put('/roles/:id', roles.saveRole);
+router.get('/audit-log', require('../controllers/admin.controller').getAuditLog);
+router.get('/settings', require('../controllers/admin.controller').getSettings);
+router.put('/settings/:key', require('../controllers/admin.controller').updateSetting);
 
 module.exports = router;

@@ -39,3 +39,11 @@ This project relies on the following primary packages to run the backend engine:
 Please do note that all of these dependencies are not included in the repository, but must be installed locally to run. To install all these dependencies, open your terminal, copy and paste:
 
 npm install express dotenv cors helmet morgan @supabase/supabase-js bcryptjs express-session nodemailer
+
+## Running the connected application
+
+The Express backend serves the frontend and API together. Copy `.env.example` to `.env`, configure a server-only Supabase service-role key and a long random `SESSION_SECRET`, apply the SQL migrations in `db/migrations/` to the Supabase project, and run `npm start`. For local Live Server use, keep its origin in `FRONTEND_ORIGINS`; production should serve the UI and API on the same origin. Configure SMTP before production use so account setup and password reset messages can be delivered.
+
+For the first administrator, register the intended operator through the sign-up page, then promote that account once in the Supabase SQL editor: `UPDATE public.users SET role = 'superadmin', status = 'approved', updated_at = NOW() WHERE email = lower('operator@example.com');`. Replace the address with the registered operator’s email. Do not expose a public administrator-registration endpoint.
+
+Run `npm test` for the frontend table tests and backend API-schema contract tests. `GET /api/health` checks both the server and database connection.

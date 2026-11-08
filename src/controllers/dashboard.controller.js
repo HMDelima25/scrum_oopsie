@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { enrichSales } = require('./ui.controller');
 
 // Candidate Supabase table names for each dashboard resource.
 // The first name that exists in your database is used. A resource whose table
@@ -19,24 +20,7 @@ const warned = new Set();
 // @desc    Dashboard bundle: signed-in user + business records the user may view
 const getDashboardData = async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ status: 'error', message: 'Sign in required.' });
-    }
-
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, name, role, status, rights')
-      .eq('id', req.session.userId)
-      .single();
-
-    if (userError || !user) {
-      return res.status(401).json({ status: 'error', message: 'Sign in required.' });
-    }
-
-    if (user.status !== 'approved') {
-      return res.status(403).json({ status: 'error', message: 'Your account is not active.' });
-    }
-
+    const user = req.user;
     const rights = user.rights || {};
     const isAdmin = user.role === 'admin' || user.role === 'superadmin';
     const canView = (right) => isAdmin || rights[right] === true;
@@ -45,25 +29,30 @@ const getDashboardData = async (req, res) => {
       Object.entries(RESOURCES).map(async ([key, config]) => {
         if (!canView(config.right)) return [key, []];
 
+        let lastError;
         for (const table of config.tables) {
-          const { data, error } = await supabase.from(table).select('*').limit(5000);
+          const { data, error } = await supabase.from(table).select('*').eq('is_deleted', false).limit(5000);
           if (!error) return [key, data || []];
+          lastError = error;
+          if (error.code !== '42P01' && error.code !== 'PGRST205' && !/does not exist|not find the table/i.test(error.message)) throw error;
         }
-
         if (!warned.has(key)) {
           warned.add(key);
-          console.warn(`[dashboard] No table found for "${key}" (tried: ${config.tables.join(', ')}). Returning an empty list.`);
+          console.warn(`[dashboard] Missing table for "${key}": ${lastError?.message || 'none found'}`);
         }
-        return [key, []];
+        throw lastError || new Error(`No table configured for dashboard resource "${key}".`);
       })
     );
+    const records = Object.fromEntries(entries);
+    if (records.sales?.length) records.sales = await enrichSales(records.sales);
 
     return res.status(200).json({
       status: 'success',
       data: {
         user: { id: user.id, email: user.email, name: user.name, role: user.role, rights },
-        records: Object.fromEntries(entries),
+        records,
       },
+      access: { role: user.role, rights },
     });
   } catch (err) {
     console.error('Dashboard Data Error:', err.message);

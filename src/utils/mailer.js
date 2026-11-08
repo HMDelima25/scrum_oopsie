@@ -25,6 +25,9 @@ async function sendPasswordResetEmail(to, token) {
   const link = `${base}/reset-password.html?token=${encodeURIComponent(token)}`;
 
   if (!transporter) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SMTP is required to send account setup and password recovery email in production.');
+    }
     // Development fallback only: the link stays in the server console, never in an HTTP response.
     console.log(`\n🔑 Password reset link for ${to}:\n${link}\n`);
     return false;

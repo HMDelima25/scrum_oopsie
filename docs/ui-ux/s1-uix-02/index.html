@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authentication wireframes | HOPE, Inc.</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f1f5f7;color:#07131a;font:16px/1.55 system-ui,sans-serif}header,main,footer{max-width:1200px;margin:auto;padding:24px}h1{font-size:clamp(28px,4vw,44px);line-height:1.15}h2{font-size:24px}h3{font-size:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px}.card{background:white;border:1px solid #9aa8af;border-radius:14px;padding:24px;min-width:0}label{display:block;margin:12px 0}input:not([type=checkbox]),select{display:block;width:100%;padding:12px;border:1px solid #697a83;border-radius:8px;font:inherit}button,.button{display:inline-block;padding:12px 18px;border:1px solid #697a83;border-radius:10px;background:#e7edf0;color:#07131a;font:inherit;text-decoration:none;margin:4px 4px 4px 0}button:disabled{cursor:not-allowed}a{color:#075b7b}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #075b7b;outline-offset:3px}.note{padding:12px;border-left:4px solid #075b7b;background:#e4f2f7}.error{color:#982c2c}.badge{display:inline-block;padding:4px 8px;border:1px solid;border-radius:6px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:12px;text-align:left;border-bottom:1px solid #bac8d0}fieldset{min-width:0;margin:12px 0;border:1px solid #9aa8af;border-radius:10px}nav{display:flex;gap:16px;flex-wrap:wrap}code{overflow-wrap:anywhere}.muted{color:#54656d}details{margin:12px 0}summary{cursor:pointer}@media(max-width:600px){header,main,footer{padding:16px}.card{padding:16px}}@media print{body{background:white}.card{break-inside:avoid}nav{display:none}}</style>
+</head>
+<body>
+<header>
+<a href="#content">Skip to content</a>
+<p>HOPE, Inc. · Sprint 1 · Natalia Ortiz</p>
+<h1>Authentication wireframes</h1>
+<p class="note">Design review artifact. Sample data only. Form actions are disabled; no accounts, sessions or records are created.</p>
+</header>
+<main id="content">
+<p>Flow: Register → pending approval → invitation → set password → Login. Forgot password → email link → reset password → Login.</p>
+<div class="grid">
+<section class="card">
+<h2>Login</h2>
+<label>Email<input type="email" disabled>
+</label>
+<label>Password<input type="password" disabled>
+</label>
+<button disabled>Sign in</button>
+<p>Forgot password · Create account</p>
+<p class="note">Invalid credentials: “Email or password is incorrect.” Pending: “Your account is awaiting approval.” Blocked: “Your account is blocked. Contact an administrator.” Never enter the workspace until the server confirms a session.</p>
+</section>
+<section class="card">
+<h2>Register</h2>
+<label>First name<input type="text" disabled>
+</label>
+<label>Last name<input type="text" disabled>
+</label>
+<label>Email<input type="email" disabled>
+</label>
+<button disabled>Request account</button>
+<p class="note">Required fields and duplicate email have inline errors. Successful server response: account created as User, pending approval. First-password setup uses the approved one-time link; current backend instead requires name + password, so the Developer must resolve this contract gap.</p>
+</section>
+<section class="card">
+<h2>Forgot password</h2>
+<label>Email<input type="email" disabled>
+</label>
+<button disabled>Send reset link</button>
+<p class="note">After server confirmation use neutral copy: “If this account is eligible, check your email.” Include submitting, network failure and retry. Do not claim email delivery while the backend only logs tokens.</p>
+</section>
+<section class="card">
+<h2>Set first password</h2>
+<label>New password<input type="password" disabled>
+</label>
+<label>Confirm password<input type="password" disabled>
+</label>
+<button disabled>Set password</button>
+<p class="note">One-time token from an approved invitation; expired/reused token offers a new link. On confirmed success return to login. Dedicated set-password endpoint is missing in current main.</p>
+</section>
+<section class="card">
+<h2>Reset password</h2>
+<label>New password<input type="password" disabled>
+</label>
+<label>Confirm password<input type="password" disabled>
+</label>
+<button disabled>Reset password</button>
+<p class="note">Token read from the reset link, never manually typed. Show mismatch and invalid/expired/reused token; request a fresh link. On server success return to login; do not create a session implicitly.</p>
+</section>
+</div>
+</main>
+<footer>Review at desktop and mobile widths. Backend enforcement remains the Developer’s responsibility.</footer>
+</body>
+</html>

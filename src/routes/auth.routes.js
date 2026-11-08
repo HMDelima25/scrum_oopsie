@@ -7,8 +7,10 @@ const {
   requestPasswordReset,
   resetPassword,
   getMe,
+  getAuthMethods,
 } = require('../controllers/auth.controller');
 
+router.get('/methods', getAuthMethods);
 // POST /api/auth/register
 router.post('/register', registerUser);
 
