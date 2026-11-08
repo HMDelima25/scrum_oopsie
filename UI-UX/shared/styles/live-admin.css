@@ -1,0 +1,379 @@
+.live-brand {
+  display: block;
+  padding: 24px 16px;
+  color: var(--navy);
+  font:
+    800 1.2rem Manrope,
+    system-ui;
+  text-decoration: none;
+}
+.live-brand small,
+.live-profile small {
+  display: block;
+  margin-top: 6px;
+  font:
+    500 0.7rem "DM Sans",
+    system-ui;
+  color: var(--muted);
+}
+.live-nav-marker {
+  display: grid;
+  flex: 0 0 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-weight: 800;
+}
+.live-profile {
+  padding: 16px;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+.live-filter {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.live-filter select {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  font: inherit;
+}
+.live-welcome {
+  padding: 24px;
+  margin-top: 16px;
+}
+.live-welcome h2 {
+  margin-top: 0;
+}
+#live-status {
+  min-height: 22px;
+  margin: 10px 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.live-error,
+.live-danger {
+  color: #9e2727 !important;
+}
+#live-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+}
+.records-panel {
+  min-height: 240px;
+}
+.records-table th {
+  white-space: nowrap;
+}
+.records-table td {
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}
+.records-table tr[data-row] {
+  cursor: pointer;
+}
+.records-table tr[data-row]:hover {
+  background: #edf7fa;
+}
+.records-table tr[data-row]:focus-visible {
+  outline: 3px solid var(--ocean);
+  outline-offset: -3px;
+}
+.live-record {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.live-record dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.live-record dd {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.live-dialog-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
+}
+.live-dialog-notice {
+  margin: 0 0 12px;
+  color: #904000;
+  font-size: 0.8rem;
+}
+.live-edit-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.live-context {
+  position: fixed;
+  z-index: 100;
+  padding: 6px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #05263722;
+}
+.live-context button {
+  padding: 10px 18px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+}
+.live-context button:hover {
+  background: #edf7fa;
+}
+.record-dialog {
+  max-height: calc(100dvh - 32px);
+  background: #f7fbfa;
+}
+.record-dialog form {
+  padding: 24px;
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+}
+.record-dialog::backdrop {
+  background: #03141e88;
+}
+.dialog-fields select,
+.dialog-fields input {
+  min-height: 44px;
+}
+.live-sale-lines {
+  margin-top: 24px;
+}
+.live-sale-line {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.live-sale-line output {
+  display: block;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.live-rights-tools {
+  display: flex;
+  gap: 8px;
+}
+.permission-groups fieldset > div {
+  grid-template-columns: 1fr;
+}
+.permission-groups legend {
+  width: auto;
+}
+.permission-groups input:disabled + span {
+  opacity: 0.6;
+}
+.field input:disabled,
+.field select:disabled {
+  background: #e8eff2;
+  color: #54656d;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #087da4;
+  outline-offset: 2px;
+}
+.sidebar.is-expanded .nav-icon span {
+  display: initial;
+}
+#live-menu {
+  display: none;
+}
+.entity-tabs {
+  flex-shrink: 0;
+}
+.module-toolbar {
+  gap: 12px;
+}
+.records-scroll {
+  overflow: auto;
+}
+.live-welcome .field {
+  margin-bottom: 12px;
+}
+@media (max-width: 900px) {
+  .live-record {
+    grid-template-columns: 1fr;
+  }
+  .live-sale-line {
+    grid-template-columns: 1fr 1fr;
+  }
+  .live-sale-line > label:first-child {
+    grid-column: 1/-1;
+  }
+  .module-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .record-dialog form {
+    padding: 18px;
+  }
+  .dialog-fields {
+    grid-template-columns: 1fr;
+  }
+  .module-toolbar {
+    flex-wrap: wrap;
+  }
+  .records-panel {
+    min-height: 300px;
+  }
+}
+@media print {
+  .sidebar,
+  .module-topbar-actions,
+  .entity-tabs,
+  #live-toolbar,
+  .dialog-secondary,
+  #live-status {
+    display: none !important;
+  }
+  body,
+  .dashboard-shell,
+  .workspace {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .records-scroll {
+    overflow: visible;
+  }
+  .panel {
+    box-shadow: none;
+    border: 0;
+  }
+}
+
+.live-brand {
+  color: #f7fbfa;
+}
+.live-brand small,
+.live-profile small {
+  color: #b8cbd3;
+}
+.live-profile strong {
+  color: #fff;
+}
+
+/* Keep modal actions in the dialog at phone widths. */
+.record-dialog .module-primary,
+.live-welcome .module-primary {
+  position: static;
+  inset: auto;
+  transform: none;
+}
+.record-dialog form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.record-dialog .dialog-header,
+.record-dialog .dialog-actions,
+.record-dialog .live-dialog-notice {
+  flex: 0 0 auto;
+}
+.record-dialog .live-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.record-dialog .dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f7fbfa;
+}
+/* Compact table tools share the existing ocean/navy visual language. */
+.live-tools-host{position:relative;z-index:25;flex-shrink:0}
+#live-toolbar{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:flex-end;gap:10px;margin:14px 0 10px}
+#live-toolbar .module-search{flex:1 1 180px;min-width:0}
+#live-toolbar .live-filter{font-size:.68rem;gap:4px}
+#live-toolbar .live-filter select{height:34px;padding:6px 9px;font-size:.75rem}
+.live-tool-icons{display:flex;align-items:center;gap:2px;padding-left:7px;border-left:1px solid var(--line)}
+.live-tool-icon{position:relative;display:inline-grid;place-items:center;width:34px;height:34px;flex:0 0 34px;padding:7px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .18s,color .18s}
+.live-tool-icon svg{width:19px;height:19px;pointer-events:none}
+.live-tool-icon:hover,.live-tool-icon[aria-expanded="true"]{color:var(--ocean);background:rgba(8,125,164,.08)}
+.live-tool-icon.is-active{color:var(--ocean);background:rgba(8,125,164,.1)}
+.live-tool-icon:disabled{opacity:.35;cursor:default}
+.live-tool-count{position:absolute;top:1px;right:0;display:grid;place-items:center;min-width:13px;height:13px;padding:0 2px;border-radius:5px;background:var(--gold);color:var(--navy);font-size:.54rem;font-weight:800}
+.live-tool-panel{position:absolute;top:calc(100% + 2px);left:94px;z-index:40;display:grid;grid-template-columns:1fr;width:220px;max-width:calc(100vw - 105px);max-height:min(55vh,360px);overflow:auto;gap:9px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#f3f8f7);box-shadow:0 14px 30px rgba(3,25,35,.13)}
+.live-tool-panel[hidden]{display:none}
+.live-tool-panel .field{gap:4px;margin:0;min-width:0}
+.live-tool-panel .field>span,.live-tool-panel legend{font-size:.67rem;font-weight:700;color:var(--muted)}
+.live-tool-panel .field input,.live-tool-panel .field select{width:100%;min-width:0;height:32px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:.72rem}
+.live-table-filters{width:310px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.live-table-filters[data-single="true"]{width:230px;grid-template-columns:1fr}
+.live-tool-panel-heading{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.72rem;font-weight:800;color:var(--navy)}
+.live-tool-panel-heading .live-tool-icon{width:25px;height:25px;flex-basis:25px;padding:4px}
+.live-tool-panel-heading .live-tool-icon svg{width:16px;height:16px}
+.live-filter-range{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;margin:0;padding:7px;border:1px solid var(--line);border-radius:8px}
+.live-filter-range label{font-size:.65rem;color:var(--muted)}
+.live-filter-range input{display:block;width:100%;min-width:0;height:30px;padding:5px;border:1px solid var(--line);border-radius:7px;background:#fff;font:inherit;color:var(--ink)}
+.records-table .live-group-heading th{padding:10px 14px;background:rgba(8,125,164,.065);color:var(--navy);font-size:.72rem;letter-spacing:0;text-transform:none;border-top:1px solid var(--line)}
+.live-group-heading small{margin-left:10px;color:var(--muted);font-size:.63rem;font-weight:500}
+.record-pages[hidden]{display:none}
+@media(max-width:600px){#live-toolbar .module-search{flex-basis:100%}.live-tool-panel{left:0}.live-table-filters{width:285px}}
+/* Shared Add/Edit dialog scale and action typography. */
+.module-primary,.dialog-secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:10px;font-family:"DM Sans",system-ui,sans-serif;font-size:.75rem;font-weight:700;line-height:1.2;white-space:nowrap}
+.record-dialog,.record-dialog.record-dialog--wide{width:min(540px,calc(100vw - 32px));max-height:calc(100dvh - 32px);border-radius:18px}
+.record-dialog[data-layout="standard"]{width:min(620px,calc(100vw - 32px))}
+.record-dialog[data-layout="sale"],.record-dialog[data-layout="rights"]{width:min(720px,calc(100vw - 32px))}
+.record-dialog form{max-height:calc(100dvh - 32px);padding:20px;gap:0}
+.record-dialog .dialog-header{margin:0 0 14px;align-items:flex-start;gap:12px}
+.record-dialog .dialog-header .eyebrow{margin:0 0 5px;font-size:.58rem;line-height:1.3}
+.record-dialog .dialog-header h2{margin:0;font:800 1.18rem/1.3 "Manrope",system-ui,sans-serif}
+.record-dialog .dialog-header p:not(.eyebrow){margin:5px 0 0;font-size:.7rem;line-height:1.45}
+.record-dialog .dialog-close{display:inline-grid;place-items:center;flex:0 0 28px;width:28px;height:28px;min-height:28px;padding:0;border-radius:8px;font:500 1.05rem/1 "DM Sans",system-ui,sans-serif}
+.record-dialog .live-edit-fields{margin:0;padding:0;border:0;min-width:0}
+.record-dialog .dialog-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.record-dialog .field{min-width:0;gap:5px;align-content:start}
+.record-dialog .field>span{font-size:.68rem;font-weight:700;line-height:1.3}
+.record-dialog .field input,.record-dialog .field select{height:36px;min-height:36px;padding:7px 9px;border-radius:9px;font:400 .75rem/1.35 "DM Sans",system-ui,sans-serif}
+.record-dialog .field textarea{min-height:68px;padding:8px 9px;border-radius:9px;font:400 .75rem/1.4 "DM Sans",system-ui,sans-serif}
+.record-dialog .field small{font-size:.61rem;line-height:1.4}
+.record-dialog .live-edit-fields>.field{margin-top:12px}
+.record-dialog .live-dialog-notice{margin:0 0 10px;font-size:.7rem;line-height:1.45}
+.record-dialog .live-dialog-notice:empty{display:none}
+.record-dialog .dialog-actions{position:static;bottom:auto;margin:14px 0 0;padding:12px 0 0;gap:8px;align-items:center}
+.record-dialog .dialog-actions .module-primary,.record-dialog .dialog-actions .dialog-secondary{height:36px;min-height:36px;min-width:74px;font-family:"DM Sans",system-ui,sans-serif;font-size:.75rem;font-weight:700;line-height:1.2}
+.record-dialog .module-primary{box-shadow:0 5px 12px rgba(8,125,164,.16)}
+.record-dialog .live-sale-lines{margin-top:16px}
+.record-dialog .live-sale-lines h3{margin:0 0 5px;font-size:.8rem}
+.record-dialog .live-sale-lines>p{margin:5px 0 10px;font-size:.68rem;line-height:1.45}
+.record-dialog .live-sale-line{gap:8px;padding:10px 0;grid-template-columns:minmax(140px,2fr) minmax(65px,.8fr) minmax(65px,.8fr) minmax(65px,.8fr) auto}
+.record-dialog .live-sale-line output{display:flex;align-items:center;min-height:36px;padding:6px 0;font-size:.75rem}
+.record-dialog .live-rights-tools{gap:8px;margin:0 0 12px}
+@media(max-width:560px){
+ .record-dialog form{padding:16px}
+ .record-dialog .dialog-fields{grid-template-columns:1fr;gap:10px}
+ .record-dialog .live-sale-line{grid-template-columns:1fr 1fr}
+ .record-dialog .live-sale-line>.field:first-child{grid-column:1/-1}
+ .record-dialog .dialog-actions{flex-wrap:wrap}
+}
+.module-primary[hidden],.dialog-secondary[hidden]{display:none!important}
+.live-rights-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-rights-tools [data-rights-count]{margin-right:auto;color:var(--muted);font-size:.68rem}
+.live-role-note{font-size:.68rem;line-height:1.45;color:var(--muted);margin:10px 0 14px}
+.record-dialog .permission-groups input[type="checkbox"]{accent-color:var(--ocean);width:14px;height:14px;flex:0 0 14px}
+.record-dialog .permission-groups legend label{display:flex;align-items:center;gap:6px;font-size:.72rem}
+.record-dialog .permission-groups fieldset>div label{display:flex;align-items:flex-start;gap:6px;font-size:.69rem;line-height:1.4}
+.record-dialog .permission-groups{gap:12px}
