@@ -187,8 +187,12 @@
     button.hidden = !["Google", "Email"].includes(provider);
     button.onclick = () => {
       if (provider === "Email") {
-        email.focus();
-        fieldError(email, "Enter your registered email or username.");
+        const dialog = $("#quick-email-dialog");
+        $("#quick-email").value = email.value.includes("@") ? email.value : "";
+        $("#quick-email-password").value = "";
+        fieldError($("#quick-email"), "");
+        fieldError($("#quick-email-password"), "");
+        dialog.showModal();
       } else if (googleEnabled) location.assign("/api/auth/google");
       else
         fieldError(email, "Google sign-in is awaiting provider configuration.");
@@ -197,6 +201,51 @@
   const create = $("#create-dialog");
   $("#create-account").onclick = () => create.showModal();
   $("#create-close").onclick = () => create.close();
+  const quickEmailDialog = $("#quick-email-dialog");
+  $("#quick-email-close").onclick = () => quickEmailDialog.close();
+  quickEmailDialog.addEventListener(
+    "close",
+    () => ($("#quick-email-password").value = ""),
+  );
+  quickEmailDialog.addEventListener("click", (e) => {
+    if (e.target === quickEmailDialog) quickEmailDialog.close();
+  });
+  $("#quick-email-create").onclick = () => {
+    const address = $("#quick-email").value;
+    quickEmailDialog.close();
+    $("#create-email").value = address;
+    create.showModal();
+  };
+  $("#quick-email-forgot").onclick = () => {
+    email.value = $("#quick-email").value;
+    quickEmailDialog.close();
+    $("#forgot-password").click();
+  };
+  $("#quick-email-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const address = $("#quick-email"),
+      secret = $("#quick-email-password");
+    if (!validateInputs([address, secret])) return;
+    const button = e.currentTarget.querySelector('[type="submit"]');
+    button.disabled = true;
+    button.textContent = "Signing in…";
+    try {
+      const result = await send("login", {
+        identifier: address.value,
+        password: secret.value,
+      });
+      quickEmailDialog.close();
+      signedIn(result.data);
+    } catch (error) {
+      fieldError(
+        error.field === "identifier" ? address : secret,
+        error.message,
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = "Sign in";
+    }
+  };
   const birthdate = $("#birthdate");
   birthdate.disabled = true;
   birthdate.required = false;

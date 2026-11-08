@@ -337,6 +337,21 @@
       </form>
     </dialog>
 
+    <dialog class="flow-dialog" id="quick-email-dialog" aria-labelledby="quick-email-title">
+      <form class="flow-dialog__surface" id="quick-email-form" novalidate>
+        <button class="dialog-close" id="quick-email-close" type="button" aria-label="Close email sign-in">×</button>
+        <div class="dialog-heading"><p class="feature-kicker">HOPE, Inc.</p><h2 id="quick-email-title">Continue with email</h2><p>Sign in with your registered email and password.</p></div>
+        <label class="compact-label" for="quick-email">Email address</label>
+        <input class="dialog-input" id="quick-email" type="email" autocomplete="username" placeholder="name@example.com" required />
+        <p class="auth-inline-error" id="quick-email-error" role="status"></p>
+        <label class="compact-label" for="quick-email-password">Password</label>
+        <input class="dialog-input" id="quick-email-password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+        <p class="auth-inline-error" id="quick-email-password-error" role="status"></p>
+        <button class="text-button" id="quick-email-forgot" type="button">Forgot password?</button>
+        <button class="primary-button" type="submit">Sign in</button>
+        <p class="quick-email-create">New to HOPE, Inc.? <button class="inline-action" id="quick-email-create" type="button">Create an account</button></p>
+      </form>
+    </dialog>
     <dialog class="flow-dialog" id="login-success-dialog" aria-labelledby="login-success-title">
       <div class="flow-dialog__surface">
         <button class="dialog-close" id="login-success-close" type="button" aria-label="Close sign-in confirmation">×</button>

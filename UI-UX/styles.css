@@ -2092,3 +2092,10 @@ dialog[open] .dialog-field:nth-of-type(4) { animation-delay: 135ms; }
 @keyframes recovery-pane-in {from {opacity:0;transform:translateY(9px) scale(.99);} to {opacity:1;transform:translateY(0) scale(1);}}
 @media(max-width:480px){.recovery-code-digits {gap:6px;}.recovery-digit{height:48px;border-radius:9px;font-size:1.25rem;}.recovery-code-art{width:128px;height:92px;}}
 @media(prefers-reduced-motion:reduce){.recovery-enter{animation:none;}.recovery-digit{transition:none;}}
+.social-login {width:100%;justify-content:center;}
+.social-login > [hidden] {display:none !important;}
+#quick-email-dialog {width:min(440px,calc(100% - 28px));}
+#quick-email-form .dialog-input {background:#fff;margin-bottom:14px;}
+#quick-email-forgot {display:block;margin:0 0 18px auto;}
+.quick-email-create {margin:20px 0 0;text-align:center;color:var(--muted);font-size:.82rem;}
+#quick-email-form .dialog-input:-webkit-autofill {-webkit-box-shadow:inset 0 0 0 1000px #fff;-webkit-text-fill-color:var(--ink);}
