@@ -94,6 +94,35 @@ router.get("/roles/:id", wrap(roleController.get));
 router.put("/roles/:id", wrap(roleController.save));
 router.put("/users/:id/permission-role", wrap(roleController.assign));
 router.get("/users", wrap(c.getUsersList));
+router.post(
+  "/users/:id/review",
+  requireSuperadmin,
+  wrap(async (req, res) => {
+    const body = object(req.body);
+    if (
+      Object.keys(body).some((key) => key !== "decision") ||
+      !["approved", "disapproved"].includes(body.decision)
+    )
+      throw new HttpError(400, "Choose Approved or Disapproved.");
+    let expected;
+    try {
+      expected = JSON.parse(req.get("if-match") || "null");
+    } catch {
+      throw new HttpError(400, "Invalid account version.");
+    }
+    if (typeof expected !== "string" || !Number.isFinite(Date.parse(expected)))
+      throw new HttpError(400, "Reload the account before reviewing it.");
+    const data = check(
+      await req.app.locals.db.rpc("hope_review_registration", {
+        p_actor: req.user.id,
+        p_user: req.params.id,
+        p_decision: body.decision,
+        p_expected: expected,
+      }),
+    );
+    res.json({ status: "success", data });
+  }),
+);
 router.post("/users", wrap(c.addUser));
 router.get("/users/:id/rights", wrap(c.getUserRights));
 router.put("/users/:id/rights", wrap(c.updateUserRights));

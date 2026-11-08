@@ -403,3 +403,17 @@ select:focus-visible {
 .record-dialog .dialog-actions .live-inactive-action {color:#fff;border:1px solid transparent;background:linear-gradient(110deg,#8e2638,#ce4657);box-shadow:0 5px 12px rgba(158,39,55,.18);}
 .record-dialog .dialog-actions .live-inactive-action:hover {background:linear-gradient(110deg,#a12c40,#de5062);}
 .record-dialog #live-update-price {color:#fff;background:linear-gradient(110deg,#07465b,#087da4);border:1px solid transparent;}
+.registration-decisions {display:inline-flex;align-items:center;gap:8px;}
+.registration-decision {display:inline-grid;place-items:center;width:30px;height:30px;min-width:30px;padding:6px;border:1px solid currentColor;border-radius:50%;background:transparent;cursor:pointer;box-shadow:none;transition:background 140ms ease,transform 140ms ease;}
+.registration-decision svg {width:16px;height:16px;}
+.registration-decision--approve {color:#24845f;}
+.registration-decision--disapprove {color:#be4050;}
+.registration-decision--approve:hover {background:rgba(36,132,95,.08);}
+.registration-decision--disapprove:hover {background:rgba(190,64,80,.08);}
+.registration-decision:focus-visible {outline:2px solid currentColor;outline-offset:3px;}
+.registration-decision:disabled {opacity:.45;cursor:wait;}
+.registration-state {font-size:inherit;font-weight:600;}
+.registration-state--approved {color:#24845f;}
+.registration-state--disapproved,.registration-state--blocked {color:#be4050;}
+.registration-state--pending {color:var(--muted);}
+@media(prefers-reduced-motion:reduce){.registration-decision{transition:none;}}

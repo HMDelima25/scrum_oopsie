@@ -708,6 +708,7 @@
         "options": [
           "pending",
           "approved",
+          "disapproved",
           "blocked"
         ]
       }

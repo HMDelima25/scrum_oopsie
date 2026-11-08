@@ -32,14 +32,16 @@ async function establishSession(req, user) {
       403,
       user.status === "pending"
         ? "Your account is awaiting Superadmin approval."
-        : "Your account is blocked.",
+        : user.status === "disapproved"
+          ? "Your registration was disapproved. Contact a Superadmin."
+          : "Your account is blocked.",
     );
   await new Promise((resolve, reject) =>
     req.session.regenerate((e) => (e ? reject(e) : resolve())),
   );
   req.session.userId = user.id;
   req.session.authVersion = user.auth_version;
-  await require('./login-activity')(req,user,'google');
+  await require("./login-activity")(req, user, "google");
   await new Promise((resolve, reject) =>
     req.session.save((e) => (e ? reject(e) : resolve())),
   );

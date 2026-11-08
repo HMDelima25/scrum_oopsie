@@ -83,10 +83,12 @@ async function updateUser(req, res) {
     if(b.role!=="user")update.permission_role_id=null;
   }
   if (b.status !== undefined) {
-    if (!["pending", "approved", "blocked"].includes(b.status))
+    if (!["pending", "approved", "disapproved", "blocked"].includes(b.status))
       throw new HttpError(400, "Invalid status.");
     if (b.status === "approved" && req.user.role !== "superadmin")
       throw new HttpError(403, "Superadmin approval required.");
+    if (b.status === "disapproved" && req.user.role !== "superadmin")
+      throw new HttpError(403, "Only Superadmin reviews registrations.");
     update.status = b.status;
   }
   const data = await mutate(req, "update", update, { id: req.params.id });

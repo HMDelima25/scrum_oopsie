@@ -253,3 +253,41 @@ test("KNOWN BUG-SP1-008 denied module URL should show a friendly authorization n
     { timeout: 3000 },
   );
 });
+
+test("S1-REG-01 inline review icons approve/disapprove without opening the row and support filters", async ({
+  page,
+}) => {
+  await login(page, "qa-root");
+  await page
+    .getByRole("link", { name: "User Management", exact: true })
+    .click();
+  const approve = page.getByRole("button", {
+    name: "Approve QA Pending User",
+    exact: true,
+  });
+  await expect(approve).toHaveCSS("border-radius", "50%");
+  await expect(approve).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await approve.focus();
+  await approve.press("Enter");
+  await expect(
+    page.getByRole("row", { name: "Open QA Pending User", exact: true }),
+  ).toContainText("Approved");
+  await expect(page.locator("#live-dialog")).not.toBeVisible();
+  await page
+    .getByRole("button", { name: "Disapprove QA Reject User", exact: true })
+    .click();
+  await expect(
+    page.getByRole("row", { name: "Open QA Reject User", exact: true }),
+  ).toContainText("Disapproved");
+  await expect(page.locator("#live-dialog")).not.toBeVisible();
+  await page.locator("#live-filter-toggle").click();
+  await page
+    .locator('[data-table-filter="status"]')
+    .selectOption("disapproved");
+  await expect(
+    page.getByRole("row", { name: "Open QA Reject User", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "Open QA Pending User", exact: true }),
+  ).toHaveCount(0);
+});

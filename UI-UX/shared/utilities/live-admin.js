@@ -295,7 +295,7 @@
     panel.dataset.single=String(specs.length===1);
     panel.innerHTML=`<div class="live-tool-panel-heading"><span>Filters</span><button type="button" class="live-tool-icon" id="live-filter-clear" aria-label="Clear filters" title="Clear filters">${toolIcon("reset")}</button></div>`+specs.map(f=>{
       const name=h(f.field),title=h(f.field==="employment"?"Employment":fieldLabel(f.field));
-      if(f.type==="select")return `<label class="field"><span>${title}</span><select data-table-filter="${name}"><option value="">All</option>${f.options.map(v=>`<option value="${h(v)}">${h(v)}</option>`).join("")}</select></label>`;
+      if(f.type==="select")return `<label class="field"><span>${title}</span><select data-table-filter="${name}"><option value="">All</option>${f.options.map(v=>`<option value="${h(v)}">${h(view==="users"&&f.field==="status"?v[0].toUpperCase()+v.slice(1):v)}</option>`).join("")}</select></label>`;
       if(["date","number"].includes(f.type))return `<fieldset class="live-filter-range"><legend>${title}</legend><label>From<input type="${f.type}" ${f.type==="number"?'step="any"':""} data-table-filter="${name}_from"></label><label>To<input type="${f.type}" ${f.type==="number"?'step="any"':""} data-table-filter="${name}_to"></label></fieldset>`;
       return `<label class="field"><span>${title}</span><input data-table-filter="${name}" placeholder="Contains..."></label>`;
     }).join("");
@@ -356,7 +356,14 @@
     else for(const field of link.filter||[]){if(row[field]===null||row[field]===undefined)return null;params.set(field,row[field]);}
     return `../${group}/index.html?${params}`;
   }
-  function cellMarkup(row, field) {
+  function cellMarkup(row, field, inlineActions = false) {
+    if(view==='users'&&field==='status'){
+      if(inlineActions&&row.status==='pending'&&!row.is_deleted&&user.role==='superadmin'&&row.id!==user.id){
+        return '<span class="registration-decisions" role="group" aria-label="Pending registration"><button type="button" class="registration-decision registration-decision--approve" data-registration-decision="approved" data-user-id="'+h(row.id)+'" aria-label="Approve '+h(row.name)+'" title="Approve registration"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button><button type="button" class="registration-decision registration-decision--disapprove" data-registration-decision="disapproved" data-user-id="'+h(row.id)+'" aria-label="Disapprove '+h(row.name)+'" title="Disapprove registration"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></span>';
+      }
+      return '<span class="registration-state registration-state--'+h(row.status)+'">'+h({pending:'Pending',approved:'Approved',disapproved:'Disapproved',blocked:'Blocked'}[row.status]||row.status)+'</span>';
+    }
+
     const displayed=field==='permission_role'&&row.role==='superadmin'?'All permissions':view==='employees'&&['jobname','deptname'].includes(field)&&!row[field]?'Unassigned':field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
     const text=h(field==="is_deleted"?(row[field]?(view==='employees'&&row.archived_at?'Archived':'Inactive'):"Active"):displayed);
     if(row[field]===null||row[field]===undefined)return text;
@@ -378,7 +385,7 @@
     });
   }
   function tableRows(data, fields, interactive = false) {
-    const rowMarkup=({row,index})=>`<tr ${interactive?`data-row="${index}" tabindex="0"`:''} aria-label="Open ${h(row.name||row.custname||row.description||row.transno||row[fields[0]])}">${fields.map(f=>`<td>${cellMarkup(row,f)}</td>`).join('')}</tr>`;
+    const rowMarkup=({row,index})=>`<tr ${interactive?`data-row="${index}" tabindex="0"`:''} aria-label="Open ${h(row.name||row.custname||row.description||row.transno||row[fields[0]])}">${fields.map(f=>`<td>${cellMarkup(row,f,interactive)}</td>`).join('')}</tr>`;
     const body=groupBy?window.HopeTableGroups.groupRows(data,groupBy,descending).map(group=>`<tr class="live-group-heading"><th scope="rowgroup" colspan="${fields.length}"><span>${h(groupBy==='employment'?'Employment':fieldLabel(groupBy))}: ${h(group.label)}</span><small>${group.entries.length} record${group.entries.length===1?'':'s'}</small></th></tr>${group.entries.map(rowMarkup).join('')}`).join(''):data.map((row,index)=>rowMarkup({row,index})).join('');
     return `<div class="records-scroll"><table class="records-table"><thead><tr>${fields.map(f=>`<th scope="col">${h(fieldLabel(f))}</th>`).join('')}</tr></thead><tbody>${data.length?body:`<tr><td colspan="${fields.length}" class="record-empty">${query?'No matching records.':'No records yet.'}</td></tr>`}</tbody></table></div>`;
   }
@@ -432,6 +439,16 @@
       tr.oncontextmenu = (e) => {
         e.preventDefault();
         context(row, e.clientX, e.clientY);
+      };
+    });
+    document.querySelectorAll('[data-registration-decision]').forEach(button=>{
+      button.onkeydown=event=>event.stopPropagation();
+      button.onclick=async event=>{
+        event.preventDefault();event.stopPropagation();
+        const row=rows.find(row=>row.id===button.dataset.userId);if(!row)return;
+        const controls=button.closest('.registration-decisions').querySelectorAll('button');controls.forEach(control=>control.disabled=true);
+        try{await send('/api/admin/users/'+encodeURIComponent(row.id)+'/review','POST',{decision:button.dataset.registrationDecision},row);await load(true);}
+        catch(error){notice(error.message,true);controls.forEach(control=>control.disabled=false);}
       };
     });
     const add = document.querySelector("#live-add");
@@ -796,7 +813,7 @@
     const automatic=!editing&&schema.autoCodes?.[view];
     const fields = (isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields).filter(field=>!(view==='employees'&&!editing&&field==='sepdate')&&!(view==='jobs'&&field==='jobprefix'));
     let body = isUser
-      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
+      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="disapproved" ${row.status === "disapproved" ? "selected" : ""}>Disapproved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
       : `<div class="dialog-fields">${fields.map((f) => input(f, row, editing)).join("")}</div>`;
     if(view==='employees'&&!editing&&can('hr.jhAdd'))body+='<section class="live-employee-job"><h3>Job assignment (optional)</h3><div class="dialog-fields"><label class="field"><span>Job</span><select data-assignment="jobcode" data-lookup="jobs" data-purpose="employees"><option value="">Select a job</option></select></label><label class="field"><span>Department (optional)</span><select data-assignment="deptcode" data-lookup="departments" data-purpose="employees"><option value="">Select a department</option></select></label><label class="field"><span>Salary</span><input data-assignment="salary" type="number" min="0" step="0.01" disabled></label><label class="field"><span>Effective date</span><input data-assignment="effdate" type="date" disabled></label></div></section>';
     if(automatic?.choosePrefix)body+=`<label class="field"><span>Code prefix</span><select name="_code_prefix" required><option value="">Loading prefixes…</option></select></label>`;

@@ -83,7 +83,9 @@ async function loginUser(req, res) {
       403,
       user.status === "pending"
         ? "Your account is awaiting approval."
-        : "Your account is blocked.",
+        : user.status === "disapproved"
+          ? "Your registration was disapproved. Contact a Superadmin."
+          : "Your account is blocked.",
       "identifier",
     );
   await new Promise((resolve, reject) =>
@@ -91,7 +93,7 @@ async function loginUser(req, res) {
   );
   req.session.userId = user.id;
   req.session.authVersion = user.auth_version;
-  await require('../lib/login-activity')(req,user,'password');
+  await require("../lib/login-activity")(req, user, "password");
   await new Promise((resolve, reject) =>
     req.session.save((e) => (e ? reject(e) : resolve())),
   );

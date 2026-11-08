@@ -13,6 +13,7 @@ async function buildFixtures(origin) {
     ["qa-user", "QA User", "user", "approved"],
     ["qa-managed", "QA Managed User", "user", "approved"],
     ["qa-pending", "QA Pending User", "user", "pending"],
+    ["qa-reject", "QA Reject User", "user", "pending"],
     ["qa-blocked", "QA Blocked User", "user", "blocked"],
   ];
   for (const [username, name, role, status] of users) {
