@@ -38,4 +38,4 @@ This project relies on the following primary packages to run the backend engine:
 
 Please do note that all of these dependencies are not included in the repository, but must be installed locally to run. To install all these dependencies, open your terminal, copy and paste:
 
-npm install express dotenv cors helmet morgan @supabase/supabase-js bcryptjs express-session
+npm install express dotenv cors helmet morgan @supabase/supabase-js bcryptjs express-session nodemailer
