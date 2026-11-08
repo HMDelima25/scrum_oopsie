@@ -61,8 +61,11 @@
       balance: "Balance",
       name: "Name",
       email: "Email",
-      role: "Role",
-      status: "Account status",
+      role: "System role",
+      permission_role: "Permission role",
+      permission_count: "Permissions",
+      members: "Members",
+      status: view==="roles"?"Status":"Account status",
     }[key] ||
     key.replaceAll("_", " ");
   const label = (key) => schema?.labels[key] || key;
@@ -73,11 +76,11 @@
   const admin = () => ["admin", "superadmin"].includes(user?.role);
   const cfg = () => schema.resources[view];
   const permitted = (operation) =>
-    view === "users"
+    ["users","roles"].includes(view)
       ? admin()
-      : cfg() && can(`${cfg().module}.${cfg().actions[operation]}`);
+      : cfg() && can(`${cfg().module}.${cfg().actions[operation]}`) && !(view==="sales"&&operation===0&&!can("sales.detailAdd"));
   const rowKey = (row) =>
-    view === "users"
+    ["users","roles"].includes(view)
       ? row.id
       : cfg()
           .pk.map((k) =>
@@ -87,8 +90,8 @@
           )
           .join("~");
   const urlFor = (key) =>
-    view === "users"
-      ? `/api/admin/users/${encodeURIComponent(key)}`
+    ["users","roles"].includes(view)
+      ? `/api/admin/${view}/${encodeURIComponent(key)}`
       : `/api/${view}/${encodeURIComponent(key)}`;
   const money = (value) =>
     value === null || value === undefined
@@ -127,6 +130,21 @@
     if (!el) return;
     el.textContent = text;
     el.classList.toggle("live-error", error);
+  }
+  function syncAccess(access){
+    if(!access||JSON.stringify([user.role,user.rights])===JSON.stringify([access.role,access.rights]))return false;
+    user.role=access.role;user.rights=access.rights;rowCache.clear();
+    const template=document.createElement('template');template.innerHTML=window.hopeSidebarTemplate;
+    const nav=document.querySelector('.sidebar-nav');nav.innerHTML=template.content.querySelector('.sidebar-nav').innerHTML;
+    const routes={Dashboard:['dashboard',true],Customers:['customers',can('customers.view')],Products:['products',can('products.view')],'Human Resources':['human-resources',can('hr.view')],Sales:['sales',can('sales.view')],'User Management':['user-management',admin()]};
+    nav.querySelectorAll('a').forEach(a=>{const item=routes[a.getAttribute('aria-label')];if(!item?.[1]){a.remove();return;}a.href='../'+item[0]+'/index.html';a.classList.toggle('is-active',item[0]===module);a.removeAttribute('aria-current');if(item[0]===module)a.setAttribute('aria-current','page');});
+    renderTabs();
+    const save=document.querySelector('#live-save');if(save&&!permitted(document.querySelector('[data-record-key]')?.dataset.recordKey?1:0)){save.disabled=true;document.querySelector('.live-dialog-notice').textContent='Your permissions changed. This action is no longer available.';}
+    return true;
+  }
+  function renderTabs(){
+    const views=(schema.groups[module]||[]).filter(key=>{const r=schema.resources[key];return !r||can(`${r.module}.${r.read||'view'}`);});
+    document.querySelector('#live-tabs').innerHTML=views.map(key=>`<button type="button" role="tab" data-view="${key}" aria-selected="${key===view}" class="${key===view?'is-active':''}">${h(label(key))}</button>`).join('');
   }
   const toolIcon=(name)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${({filter:'<path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z"/>',sort:'<path d="M4 7h15M4 12h11M4 17h7"/>',asc:'<path d="m7 9 4-4 4 4M11 5v14M17 14h3M17 18h2"/>',desc:'<path d="m7 15 4 4 4-4M11 19V5M17 6h2M17 10h3"/>',group:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/>',reset:'<path d="M4 10a8 8 0 1 1 1 8M4 10V4M4 10h6"/>'})[name]}</svg>`;
   function updateFilterIcon(){const n=Object.values(extraFilters).filter(Boolean).length;const button=document.querySelector('#live-filter-toggle');button.innerHTML=toolIcon('filter')+(n?`<span class="live-tool-count" aria-hidden="true">${n}</span>`:'');button.setAttribute('aria-label',n?`Filter records (${n} active)`:'Filter records');button.title=n?`Filters: ${n} active`:'Filter records';button.classList.toggle('is-active',n>0);}
@@ -185,7 +203,7 @@
         notice(e.message, true);
       }
     };
-    document.querySelector("#live-add").onclick = () => openForm();
+    document.querySelector("#live-add").onclick = () => view==="roles"?openRoleProfile():openForm();
     document.querySelector("#live-filter").closest("label").hidden = !admin();
     document.querySelector("#live-filter").onchange = (e) => {filter=e.target.value;refreshTable();};
     document.querySelector('#live-filter-toggle').onclick=()=>toggleTool('#live-filters','#live-filter-toggle');
@@ -206,12 +224,7 @@
     });
     const requestedView=new URLSearchParams(location.search).get("view");
     view = views.includes(requestedView)?requestedView:views[0];
-    document.querySelector("#live-tabs").innerHTML = views
-      .map(
-        (key) =>
-          `<button type="button" role="tab" data-view="${key}" aria-selected="${key === view}" class="${key === view ? "is-active" : ""}">${h(label(key))}</button>`,
-      )
-      .join("");
+    renderTabs();
     document.querySelector("#live-tabs").onclick = (e) => {
       const button = e.target.closest("[data-view]");
       if (!button) return;
@@ -262,7 +275,7 @@
   }
   function filterSpecs(fields=[]){return schema.tableFilters?.[view]||fields.filter(f=>!['new_values','old_values'].includes(f)).map(field=>({field,type:schema.fields[field]?.[1]==="number"||typeof auxiliaryRows.find(r=>r[field]!=null)?.[field]==="number"?"number":schema.fields[field]?.[1]==="date"?"date":"text"}));}
   function configureTools(auxFields){
-    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:cfg()?[...new Set([...cfg().pk,...cfg().fields])]:[]);
+    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...cfg().fields])]:[]);
     if(!fields.includes(sortField))sortField=view==="users"?"name":fields[0];
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
@@ -364,11 +377,11 @@
   }
 
   function paintRows() {
-    if (!cfg() && view !== "users") return;
+    if (!cfg() && !["users","roles"].includes(view)) return;
     const filtered = rows;
     const fields =
-      view === "users"
-        ? ["name", "email", "role", "status"]
+      view === "roles" ? ["name","description","members","permission_count","status"] : view === "users"
+        ? ["name", "email", "role", "permission_role", "status"]
         : [
             ...new Set([
               ...cfg().pk,
@@ -416,7 +429,7 @@
     });
     const add = document.querySelector("#live-add");
     add.hidden = !permitted(0);
-    add.textContent = `+ Add ${singular(view)}`;
+    add.textContent = view==="roles"?"+ Add role":`+ Add ${singular(view)}`;
   }
   function context(row, x, y) {
     const menu = document.querySelector("#live-context");
@@ -456,6 +469,8 @@
         if (force) renderReports();
         else if (lastReportUrl) {
           const result = await request(lastReportUrl);
+          if(syncAccess(result.access)){lastReportUrl=null;renderReports();}
+          if(!lastReportUrl)return;
           showAuxRows(result.data,"#report-result");
         }
       } else if (view === "settings" || view === "audit-log") {
@@ -463,16 +478,17 @@
       } else {
         document.querySelector("#live-toolbar").hidden = false;
         const endpoint =
-          view === "users"
-            ? "/api/admin/users?"+tableParams()
+          ["users","roles"].includes(view)
+            ? "/api/admin/"+view+"?"+tableParams()
             : (()=>{const params=tableParams();const route=new URLSearchParams(location.search);for(const field of schema.listFilters?.[view]||[]){if(route.has(field))params.set(field,route.get(field));}return `/api/${view}?${params}`;})();
         const cached=rowCache.get(endpoint);
-        if(force && cached){rows=cached.data;count=cached.count??rows.length;paintRows();notice("Checking for updates�");}
+        if(force && cached){rows=cached.data;count=cached.count??rows.length;paintRows();notice("Checking for updates…");}
         listAbort=new AbortController();
         const signal=AbortSignal.any([lifecycle.signal,listAbort.signal]);
         let result = initialRecords?.view===view ? initialRecords.result : await request(endpoint,{signal});
         if(groupBy)result=await window.HopeTableGroups.collectPages(result,offset=>{const url=new URL(endpoint,location.origin);url.searchParams.set('offset',String(offset));return request(url.pathname+url.search,{signal});},signal);
         initialRecords=null;
+        if(syncAccess(result.access))lastRows="";
         rowCache.set(endpoint,result);
         if (requestVersion !== version || requestedView !== view) return;
         const next = JSON.stringify(result.data);
@@ -509,7 +525,7 @@
       }
     } catch (error) {
       if(lifecycle.signal.aborted||error.name==="AbortError")return;
-      if(error.status===401||error.status===403){rowCache.clear();rows=[];document.querySelector("#live-content").replaceChildren();}
+      if(error.status===401||error.status===403){rowCache.clear();rows=[];document.querySelector("#live-content").replaceChildren();if(error.status===403)try{const latest=(await request('/api/auth/me')).data;syncAccess(latest);document.querySelector('#live-add').hidden=!permitted(0);}catch{}}
       notice(error.message, true);
       if (!rows.length && !document.querySelector("#live-dialog").open)
         document.querySelector("#live-content").innerHTML =
@@ -545,6 +561,7 @@
           rowKey(row);
   }
   async function openRecord(row) {
+    if(view==="roles")return openRoleProfile(row);
     restoreKey = rowKey(row);
     const resource = view;
     try {
@@ -563,8 +580,8 @@
     }
     if (resource !== view) return;
     const fields =
-      view === "users"
-        ? ["name", "email", "role", "status"]
+      view === "roles" ? ["name","description","members","permission_count","status"] : view === "users"
+        ? ["name", "email", "role", "permission_role", "status"]
         : [
             ...new Set([
               ...cfg().pk,
@@ -584,7 +601,7 @@
       actions,
     );
     const related=(schema.related?.[view]||[]).map(link=>{const href=recordLink(link,row);return href?`<a class="record-action" data-record-link href="${h(href)}">${h(label(link.resource))}</a>`:"";}).filter(Boolean);
-    if(related.length){const links=document.createElement("p");links.innerHTML=related.join(" � ");d.querySelector(".live-dialog-body").append(links);}
+    if(related.length){const links=document.createElement("p");links.innerHTML=related.join(" · ");d.querySelector(".live-dialog-body").append(links);}
     bindRecordLinks(d);
     d.querySelector("form").onsubmit = (e) => e.preventDefault();
     d.querySelector("#live-edit")?.addEventListener("click", () =>
@@ -629,7 +646,7 @@
     });
   }
   function input(field, row, editing) {
-    if(!editing && schema.autoCodes?.[view]?.field===field)return `<label class="field"><span>${h(fieldLabel(field))}</span><input name="${field}" value="" placeholder="Generating code�" readonly data-auto-code><small>Assigned automatically when saved.</small></label>`;
+    if(!editing && schema.autoCodes?.[view]?.field===field)return `<label class="field"><span>${h(fieldLabel(field))}</span><input name="${field}" value="" placeholder="Generating code…" readonly data-auto-code><small>Assigned automatically when saved.</small></label>`;
     const meta = schema.fields[field],
       foreign = schema.lookups[view]?.[field];
     const immutable = editing && cfg().pk.includes(field);
@@ -726,9 +743,9 @@
     const automatic=!editing&&schema.autoCodes?.[view];
     const fields = isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields;
     let body = isUser
-      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${row.status === "pending" && user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
+      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
       : `<div class="dialog-fields">${fields.map((f) => input(f, row, editing)).join("")}</div>`;
-    if(automatic?.choosePrefix)body+=`<label class="field"><span>Code prefix</span><select name="_code_prefix" required><option value="">Loading prefixes�</option></select></label>`;
+    if(automatic?.choosePrefix)body+=`<label class="field"><span>Code prefix</span><select name="_code_prefix" required><option value="">Loading prefixes…</option></select></label>`;
     if (view === "sales" && !editing)
       body +=
         '<section class="live-sale-lines"><h3>Sale items</h3><p>Unit prices come from the selected product’s price history for the sale date.</p><div id="live-lines"></div><button type="button" class="dialog-secondary" id="live-line-add">Add item</button><p id="live-sale-total">Total: —</p></section>';
@@ -882,73 +899,43 @@
     d.querySelector("#live-sale-total").textContent =
       "Total: " + (complete ? money(total) : "—");
   }
+  function permissionsMarkup(catalogue,rights){
+    const groups={};for(const [key,label]of Object.entries(catalogue))(groups[key.split('.')[0]]??=[]).push([key,label]);
+    return `<div class="live-rights-tools"><span data-rights-count></span><button type="button" class="dialog-secondary" data-all>Select all</button><button type="button" class="dialog-secondary" data-none>Clear</button></div><div class="permission-groups">${Object.entries(groups).map(([mod,items])=>`<fieldset><legend><label><input type="checkbox" data-gate="${mod}" ${rights[mod+'.view']?'checked':''}> ${h(catalogue[mod+'.view'])}</label></legend><div>${items.filter(([key])=>!key.endsWith('.view')).map(([key,text])=>`<label><input type="checkbox" data-right="${key}" ${rights[key]?'checked':''}> ${h(text)}</label>`).join('')}</div></fieldset>`).join('')}</div>`;
+  }
+  function bindPermissions(d){
+    let locked=false;
+    const read=()=>{const value={};d.querySelectorAll('[data-gate]').forEach(b=>value[b.dataset.gate+'.view']=b.checked);d.querySelectorAll('[data-right]').forEach(b=>value[b.dataset.right]=b.checked&&value[b.dataset.right.split('.')[0]+'.view']===true);return value;};
+    const refresh=()=>{d.querySelectorAll('[data-gate]').forEach(g=>{g.disabled=locked;g.closest('fieldset').querySelectorAll('[data-right]').forEach(b=>{b.disabled=locked||!g.checked;if(!g.checked)b.checked=false;});});d.querySelector('[data-rights-count]').textContent=Object.values(read()).filter(Boolean).length+' of '+Object.keys(read()).length+' permissions selected';d.querySelector('[data-all]').disabled=locked;d.querySelector('[data-none]').disabled=locked;};
+    d.querySelectorAll('[data-gate],[data-right]').forEach(b=>b.onchange=refresh);
+    for(const [attr,value]of [['data-all',true],['data-none',false]])d.querySelector('['+attr+']').onclick=()=>{d.querySelectorAll('[data-gate],[data-right]').forEach(b=>b.checked=value);refresh();};
+    const write=rights=>{d.querySelectorAll('[data-gate]').forEach(b=>b.checked=rights[b.dataset.gate+'.view']===true);d.querySelectorAll('[data-right]').forEach(b=>b.checked=rights[b.dataset.right]===true);refresh();};
+    refresh();return {read,write,lock:value=>{locked=value;refresh();}};
+  }
+  async function openRoleProfile(row=null){
+    if(!admin())return;
+    try{
+      const [catalogueResponse,latest]=await Promise.all([request('/api/admin/rights-catalogue'),row?request('/api/admin/roles/'+row.id):Promise.resolve({data:null})]);row=latest.data;
+      const body=`<div class="dialog-fields"><label class="field"><span>Role name</span><input name="name" maxlength="80" value="${h(row?.name||'')}" required></label><label class="field"><span>Status</span><select name="status"><option value="active" ${row?.status!=='inactive'?'selected':''}>Active</option><option value="inactive" ${row?.status==='inactive'?'selected':''}>Inactive</option></select></label><label class="field field--full"><span>Description</span><textarea name="description" rows="2" maxlength="500">${h(row?.description||'')}</textarea></label></div><p class="live-role-note">Named roles apply permissions to Users. Admin and Superadmin authority is assigned separately.</p>`+permissionsMarkup(catalogueResponse.data,row?.rights||{});
+      const d=showDialog(row?'Edit role':'Add role',body,'<button type="submit" class="module-primary" id="role-save">Save role</button>');
+      const editor=bindPermissions(d);
+      d.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=d.querySelector('#role-save');button.disabled=true;try{await send('/api/admin/roles'+(row?'/'+row.id:''),row?'PUT':'POST',{name:d.querySelector('[name="name"]').value,description:d.querySelector('[name="description"]').value,status:d.querySelector('[name="status"]').value,rights:editor.read()},row);d.close();await load(true);}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;}finally{if(button.isConnected)button.disabled=false;}};
+    }catch(error){notice(error.message,true);}
+  }
   async function openRights(row) {
-    const catalogue = (await request("/api/admin/rights-catalogue")).data;
-    const rights = (await request(urlFor(row.id) + "/rights")).data;
-    const groups = {};
-    for (const [key, text] of Object.entries(catalogue)) {
-      const module = key.split(".")[0];
-      (groups[module] ??= []).push([key, text]);
-    }
-    const d = showDialog(
-      "Assign rights · " + row.name,
-      `<div class="live-rights-tools"><button type="button" class="dialog-secondary" data-all>All</button><button type="button" class="dialog-secondary" data-none>None</button></div><div class="permission-groups">${Object.entries(
-        groups,
-      )
-        .map(
-          ([mod, items]) =>
-            `<fieldset><legend><label><input type="checkbox" data-gate="${mod}" ${rights[mod + ".view"] ? "checked" : ""}> ${h(mod === "hr" ? "Human Resources" : mod)}</label></legend><div>${items
-              .filter(([key]) => !key.endsWith(".view"))
-              .map(
-                ([key, text]) =>
-                  `<label><input type="checkbox" data-right="${key}" ${rights[key] ? "checked" : ""}> ${h(text)}</label>`,
-              )
-              .join("")}</div></fieldset>`,
-        )
-        .join("")}</div>`,
-      '<button type="submit" class="module-primary" id="rights-save">Save rights</button>',
-    );
-    function gates() {
-      d.querySelectorAll("[data-gate]").forEach((g) =>
-        g
-          .closest("fieldset")
-          .querySelectorAll("[data-right]")
-          .forEach((b) => (b.disabled = !g.checked)),
-      );
-    }
-    gates();
-    d.querySelectorAll("[data-gate]").forEach((b) => (b.onchange = gates));
-    for (const [attr, value] of [
-      ["data-all", true],
-      ["data-none", false],
-    ])
-      d.querySelector("[" + attr + "]").onclick = () => {
-        d.querySelectorAll('input[type="checkbox"]').forEach(
-          (b) => (b.checked = value),
-        );
-        gates();
-      };
-    d.querySelector("form").onsubmit = async (e) => {
-      e.preventDefault();
-      const button = d.querySelector("#rights-save");
-      button.disabled = true;
-      try {
-        const value = {};
-        d.querySelectorAll("[data-gate]").forEach(
-          (b) => (value[b.dataset.gate + ".view"] = b.checked),
-        );
-        d.querySelectorAll("[data-right]").forEach(
-          (b) => (value[b.dataset.right] = b.checked && !b.disabled),
-        );
-        await send(urlFor(row.id) + "/rights", "PUT", { rights: value }, row);
-        d.close();
-        await load(true);
-      } catch (error) {
-        d.querySelector(".live-dialog-notice").textContent = error.message;
-      } finally {
-        if (button.isConnected) button.disabled = false;
-      }
-    };
+    try{
+      const [catalogueResponse,rightsResponse,rolesResponse]=await Promise.all([request('/api/admin/rights-catalogue'),request('/api/admin/users/'+row.id+'/rights'),row.role==='user'?request('/api/admin/roles?status=all&limit=200'):Promise.resolve({data:[]})]);
+      const fixed=row.role==='superadmin',profiles=rolesResponse.data;
+      const selector=row.role==='user'?`<label class="field"><span>Permission role</span><select id="live-permission-role"><option value="">Custom permissions</option>${profiles.filter(p=>p.status==='active'||p.id===row.permission_role_id).map(p=>`<option value="${p.id}" ${p.id===row.permission_role_id?'selected':''} ${p.status==='inactive'?'disabled':''}>${h(p.name)}${p.status==='inactive'?' (inactive)':''}</option>`).join('')}</select></label><p class="live-role-note">Choose a named role to follow its permissions, or Custom permissions to edit this user only.</p>`:fixed?'<p class="live-role-note">Superadmin has fixed full access. Its permissions cannot be customized.</p>':'';
+      const rights=fixed?Object.fromEntries(Object.keys(catalogueResponse.data).map(k=>[k,true])):rightsResponse.data;
+      const d=showDialog('Assign rights - '+row.name,selector+permissionsMarkup(catalogueResponse.data,rights),fixed?'':'<button type="submit" class="module-primary" id="rights-save">Save rights</button>');
+      const editor=bindPermissions(d),select=d.querySelector('#live-permission-role');
+      editor.lock(fixed||!!select?.value);
+      const updateRoleSelection=()=>{const profile=profiles.find(p=>p.id===select?.value);if(profile)editor.write(profile.status==='active'?profile.rights:{});editor.lock(fixed||!!select?.value);const save=d.querySelector('#rights-save');if(save)save.disabled=profile?.status==='inactive';if(profile?.status==='inactive')d.querySelector('.live-dialog-notice').textContent='This role is inactive. Choose an active role or Custom permissions.';else d.querySelector('.live-dialog-notice').textContent='';};
+      updateRoleSelection();
+      if(select)select.onchange=updateRoleSelection;
+      d.querySelector('form').onsubmit=async event=>{event.preventDefault();if(fixed)return;const button=d.querySelector('#rights-save');button.disabled=true;try{if(select?.value)await send('/api/admin/users/'+row.id+'/permission-role','PUT',{permission_role_id:select.value},row);else await send('/api/admin/users/'+row.id+'/rights','PUT',{rights:editor.read()},row);d.close();await load(true);}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;}finally{if(button.isConnected)button.disabled=false;}};
+    }catch(error){notice(error.message,true);}
   }
   async function loadAdministration() {
     if (
@@ -1053,10 +1040,12 @@
       try {
         lastReportUrl = "/api/reports/" + report + "?" + params;
         const result = await request(lastReportUrl);
+        syncAccess(result.access);
         showAuxRows(result.data,"#report-result");
         form.querySelector('[role="status"]').textContent =
           result.data.length + " rows returned.";
       } catch (err) {
+        if(err.status===401||err.status===403){document.querySelector('#report-result').replaceChildren();lastReportUrl=null;try{syncAccess((await request('/api/auth/me')).data);}catch{}}
         form.querySelector('[role="status"]').textContent = err.message;
       }
     };

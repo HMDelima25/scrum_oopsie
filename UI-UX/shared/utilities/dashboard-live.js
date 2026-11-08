@@ -14,13 +14,19 @@
   try {
     const bundle=(await api('ui-dashboard-data')).data;
     let user=bundle.user, dashboardData=bundle.records, firstSnapshot=true;
-    const can=right=>user.role==='superadmin'||user.rights?.[right]===true;
+    const can=right=>user.role==='superadmin'||(user.rights?.[right.split('.')[0]+'.view']===true&&user.rights?.[right]===true);
+    const navSource=(window.hopeSidebarTemplate?new DOMParser().parseFromString(window.hopeSidebarTemplate,'text/html'):document).querySelector('.sidebar-nav').innerHTML;
+    function refreshNavigation(){
+      const nav=document.querySelector('.sidebar-nav');nav.innerHTML=navSource;
+      const names={Dashboard:['dashboard',true],Customers:['customers',can('customers.view')],Products:['products',can('products.view')],'Human Resources':['human-resources',can('hr.view')],Sales:['sales',can('sales.view')],'User Management':['user-management',['superadmin','admin'].includes(user.role)]};
+      nav.querySelectorAll('a').forEach(a=>{const entry=names[a.getAttribute('aria-label')];if(!entry?.[1]){a.remove();return;}a.href='../'+entry[0]+'/index.html';a.classList.toggle('is-active',entry[0]==='dashboard');if(entry[0]==='dashboard')a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    }
     const resources={customers:'customers.view',products:'products.view',prices:'products.view',employees:'hr.view',departments:'hr.view',jobs:'hr.view',sales:'sales.view',payments:'sales.view'};
     async function records(name){return dashboardData[name]||[];}
     const sum=(rows,key)=>rows.reduce((a,r)=>a+Number(r[key]||0),0);
     const group=(rows,key)=>Object.entries(rows.reduce((a,r)=>{const k=r[key]||'Unspecified';a[k]=(a[k]||0)+1;return a;},{})).map(([label,value])=>({label:escape(label),value}));
     async function snapshot(){
-      if(!firstSnapshot){const next=(await api('ui-dashboard-data')).data;user=next.user;dashboardData=next.records;}
+      if(!firstSnapshot){const next=(await api('ui-dashboard-data')).data;const changed=JSON.stringify([user.role,user.rights])!==JSON.stringify([next.user.role,next.user.rights]);user=next.user;dashboardData=next.records;if(changed)refreshNavigation();}
       firstSnapshot=false;
       const [customers,products,prices,employees,departments,jobs,sales,payments]=await Promise.all(Object.keys(resources).map(records));
       const active=employees.filter(r=>!r.sepdate).length;
@@ -30,8 +36,7 @@
     }
     window.HOPE_DB_DATA=await snapshot();
     if(!alive)return;
-    const names={Dashboard:['dashboard',true],Customers:['customers',can('customers.view')],Products:['products',can('products.view')],'Human Resources':['human-resources',can('hr.view')],Sales:['sales',can('sales.view')],'User Management':['user-management',['superadmin','admin'].includes(user.role)]};
-    document.querySelectorAll('.sidebar-nav a').forEach(a=>{const entry=names[a.getAttribute('aria-label')];if(!entry?.[1]){a.remove();return;}a.href='../'+entry[0]+'/index.html';});
+    refreshNavigation();
     document.querySelector('.profile-copy strong').textContent=user.name;
     document.querySelector('.profile-copy small').textContent=user.role;
     document.querySelector('.avatar').textContent=user.name.split(/\s+/).map(n=>n[0]).slice(0,2).join('');

@@ -370,3 +370,10 @@ select:focus-visible {
  .record-dialog .dialog-actions{flex-wrap:wrap}
 }
 .module-primary[hidden],.dialog-secondary[hidden]{display:none!important}
+.live-rights-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-rights-tools [data-rights-count]{margin-right:auto;color:var(--muted);font-size:.68rem}
+.live-role-note{font-size:.68rem;line-height:1.45;color:var(--muted);margin:10px 0 14px}
+.record-dialog .permission-groups input[type="checkbox"]{accent-color:var(--ocean);width:14px;height:14px;flex:0 0 14px}
+.record-dialog .permission-groups legend label{display:flex;align-items:center;gap:6px;font-size:.72rem}
+.record-dialog .permission-groups fieldset>div label{display:flex;align-items:flex-start;gap:6px;font-size:.69rem;line-height:1.4}
+.record-dialog .permission-groups{gap:12px}
