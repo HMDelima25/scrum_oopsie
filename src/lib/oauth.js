@@ -39,6 +39,7 @@ async function establishSession(req, user) {
   );
   req.session.userId = user.id;
   req.session.authVersion = user.auth_version;
+  await require('./login-activity')(req,user,'google');
   await new Promise((resolve, reject) =>
     req.session.save((e) => (e ? reject(e) : resolve())),
   );

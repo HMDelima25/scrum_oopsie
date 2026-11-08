@@ -11,12 +11,88 @@ router.use(requireUser, requireAdmin);
 router.get("/rights-catalogue", (req, res) =>
   res.json({ status: "success", data: catalogue }),
 );
-const roleController=require("../controllers/roles.controller");
-router.get("/roles",wrap(roleController.list));
-router.post("/roles",wrap(roleController.save));
-router.get("/roles/:id",wrap(roleController.get));
-router.put("/roles/:id",wrap(roleController.save));
-router.put("/users/:id/permission-role",wrap(roleController.assign));
+const roleController = require("../controllers/roles.controller");
+router.get(
+  "/activities",
+  wrap(async (req, res) => {
+    let q = req.app.locals.db
+      .from("login_activity")
+      .select("id,name,role,logged_in_at", { count: "exact" });
+    if (req.user.role === "admin") q = q.eq("role", "user");
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 200)),
+      offset = Math.max(0, parseInt(req.query.offset) || 0);
+    const result = await q
+      .order("logged_in_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + limit - 1);
+    const rows = check(result).map(({ id, name, role, logged_in_at }) => ({
+      logged_in_at,
+      name,
+      role,
+      login_date: new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Manila",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(logged_in_at)),
+      login_time: new Intl.DateTimeFormat("en-PH", {
+        timeZone: "Asia/Manila",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      }).format(new Date(logged_in_at)),
+    }));
+    res.json({
+      status: "success",
+      data: rows,
+      count: result.count,
+      limit,
+      offset,
+    });
+  }),
+);
+router.get(
+  "/system-roles",
+  wrap(async (req, res) => {
+    let q = req.app.locals.db
+      .from("users")
+      .select("name,username,role,status")
+      .eq("is_deleted", false);
+    if (req.user.role === "admin") q = q.eq("role", "user");
+    const people = check(await q);
+    const roles =
+      req.user.role === "superadmin"
+        ? ["superadmin", "admin", "user"]
+        : ["user"];
+    res.json({
+      status: "success",
+      data: roles.map((role) => ({
+        id: "system:" + role,
+        system_role: role,
+        name:
+          role === "superadmin"
+            ? "Superadmin"
+            : role === "admin"
+              ? "Admin"
+              : "User",
+        description: "Built-in system role",
+        status: "active",
+        members: people.filter(
+          (p) => p.role === role && p.status === "approved",
+        ).length,
+        permission_count:
+          role === "superadmin" ? Object.keys(catalogue).length : "Per account",
+        members_details: people.filter((p) => p.role === role),
+      })),
+    });
+  }),
+);
+router.get("/roles", wrap(roleController.list));
+router.post("/roles", wrap(roleController.save));
+router.get("/roles/:id", wrap(roleController.get));
+router.put("/roles/:id", wrap(roleController.save));
+router.put("/users/:id/permission-role", wrap(roleController.assign));
 router.get("/users", wrap(c.getUsersList));
 router.post("/users", wrap(c.addUser));
 router.get("/users/:id/rights", wrap(c.getUserRights));

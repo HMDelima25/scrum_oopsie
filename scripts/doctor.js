@@ -12,7 +12,7 @@ async function main(){
  report(Boolean(process.env.SESSION_SECRET&&process.env.SESSION_SECRET.length>=32&&!/replace-with/i.test(process.env.SESSION_SECRET)),'Session secret','Use a private random SESSION_SECRET of at least 32 characters.');
  if(configured){
   const db=require('../src/config/supabase')();
-  for(const [table,columns] of [['users','id,username,password_hash,auth_version'],['app_session','sid,expires_at']]){
+  for(const [table,columns] of [['users','id,username,password_hash,auth_version'],['app_session','sid,expires_at'],['login_activity','id,logged_in_at']]){
    const {error}=await db.from(table).select(columns).limit(1);
    const hint=error?.code==='42501'?'This key cannot access server tables. Use a server-only secret/service-role key, not an anon or publishable key.':error?.code==='PGRST205'||error?.code==='PGRST204'?'This database is missing the fork’s schema or columns. Use the configured HOPE project or apply its matching migrations.':error?.code==='PGRST301'||error?.code==='PGRST303'?'The Supabase key is invalid or expired. Replace it privately.':'Check the project URL, key, network connection and Supabase project status.';
    report(!error,`${table} database access`,hint);

@@ -60,6 +60,7 @@
       paid: "Paid",
       balance: "Balance",
       name: "Name",
+      username: "Username",
       email: "Email",
       role: "System role",
       permission_role: "Permission role",
@@ -275,13 +276,13 @@
   function tableParams(){const params=new URLSearchParams({status:filter,limit:groupBy?"200":"50",offset:groupBy?"0":String(page*50),sort:sortField||cfg()?.pk[0]||"name",direction:descending?"desc":"asc"});if(query.trim())params.set("q",query.trim());for(const [key,value]of Object.entries(extraFilters))if(value!=="")params.set("f_"+key,value);return params;}
   function refreshTable(){
     clearTimeout(searchTimer);page=0;initialRecords=null;
-    if(view==="reports"||view==="audit-log"){paintAuxRows();return;}
+    if(["reports","audit-log","activities"].includes(view)){paintAuxRows();return;}
     listAbort?.abort();loading=false;queued=false;version++;load(true);
   }
   function filterSpecs(fields=[]){return schema.tableFilters?.[view]||fields.filter(f=>!['new_values','old_values'].includes(f)).map(field=>({field,type:schema.fields[field]?.[1]==="number"||typeof auxiliaryRows.find(r=>r[field]!=null)?.[field]==="number"?"number":schema.fields[field]?.[1]==="date"?"date":"text"}));}
   function configureTools(auxFields){
     const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...(cfg().displayFields||cfg().fields),...(cfg().readFields||[])])]:[]);
-    if(!fields.includes(sortField))sortField=view==="users"?"name":fields[0];
+    if(!fields.includes(sortField)){sortField=view==="activities"?"logged_in_at":view==="users"?"name":fields[0];if(view==="activities")descending=true;}
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
     const specs=filterSpecs(fields),panel=document.querySelector("#live-filters");
@@ -301,12 +302,12 @@
     const changed=()=>{extraFilters=Object.fromEntries([...panel.querySelectorAll('[data-table-filter]')].map(el=>[el.dataset.tableFilter,el.value]));updateFilterIcon();clearTimeout(searchTimer);searchTimer=setTimeout(refreshTable,250);};
     panel.querySelectorAll('[data-table-filter]').forEach(el=>{el.value=extraFilters[el.dataset.tableFilter]||"";el.oninput=changed;el.onchange=changed;});
     panel.querySelector('#live-filter-clear').onclick=()=>{panel.querySelectorAll('[data-table-filter]').forEach(el=>el.value="");changed();};
-    document.querySelector('#live-filter').closest('label').hidden=!admin()||view==='reports'||view==='audit-log';
+    document.querySelector('#live-filter').closest('label').hidden=!admin()||view==='reports'||['audit-log','activities'].includes(view);
   }
-  function showAuxRows(data,target){auxiliaryRows=data;auxiliaryTarget=target;const fields=Object.keys(data[0]||{}).filter(f=>!['password_hash','rights'].includes(f));if(auxiliaryColumns!==JSON.stringify(fields)){auxiliaryColumns=JSON.stringify(fields);configureTools(fields);}document.querySelector('#live-toolbar').hidden=false;paintAuxRows();}
+  function showAuxRows(data,target){auxiliaryRows=data;auxiliaryTarget=target;const fields=(view==='activities'?['logged_in_at','name','role','login_date','login_time']:Object.keys(data[0]||{})).filter(f=>!['password_hash','rights'].includes(f));if(auxiliaryColumns!==JSON.stringify(fields)){auxiliaryColumns=JSON.stringify(fields);configureTools(fields);}document.querySelector('#live-toolbar').hidden=false;paintAuxRows();}
   function paintAuxRows(){
     if(!auxiliaryTarget)return;
-    const fields=Object.keys(auxiliaryRows[0]||{}).filter(f=>!['password_hash','rights'].includes(f));
+    const fields=(view==='activities'?['name','role','login_date','login_time']:Object.keys(auxiliaryRows[0]||{})).filter(f=>!['password_hash','rights'].includes(f)&&!(view==='activities'&&f==='logged_in_at'));
     const data=auxiliaryRows.filter(row=>{
       if(query&&!Object.values(row).some(v=>String(v??'').toLowerCase().includes(query.toLowerCase())))return false;
       for(const spec of filterSpecs(fields)){
@@ -356,7 +357,7 @@
     return `../${group}/index.html?${params}`;
   }
   function cellMarkup(row, field) {
-    const displayed=view==='employees'&&['jobname','deptname'].includes(field)&&!row[field]?'Unassigned':field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
+    const displayed=field==='permission_role'&&row.role==='superadmin'?'All permissions':view==='employees'&&['jobname','deptname'].includes(field)&&!row[field]?'Unassigned':field==='stamp'&&row.is_deleted?String(row[field]||'').replace(/^DELETE /,view==='employees'&&row.archived_at?'FIRE ':'MAKE INACTIVE '):cell(row[field],field);
     const text=h(field==="is_deleted"?(row[field]?(view==='employees'&&row.archived_at?'Archived':'Inactive'):"Active"):displayed);
     if(row[field]===null||row[field]===undefined)return text;
     const relation=schema.cellLinks?.[view]?.[field];
@@ -387,7 +388,7 @@
     const filtered = rows;
     const fields =
       view === "roles" ? ["name","description","members","permission_count","status"] : view === "users"
-        ? ["name", "email", "role", "permission_role", "status"]
+        ? ["name", "username", "email", "role", "permission_role", "status"]
         : [
             ...new Set([
               ...cfg().pk,
@@ -479,7 +480,7 @@
           if(!lastReportUrl)return;
           showAuxRows(result.data,"#report-result");
         }
-      } else if (view === "settings" || view === "audit-log") {
+      } else if (view === "settings" || view === "audit-log" || view === "activities") {
         await loadAdministration();
       } else {
         document.querySelector("#live-toolbar").hidden = false;
@@ -497,9 +498,13 @@
         if(syncAccess(result.access))lastRows="";
         rowCache.set(endpoint,result);
         if (requestVersion !== version || requestedView !== view) return;
-        const next = JSON.stringify(result.data);
         rows = result.data;
         count = result.count ?? rows.length;
+        if(view==='roles'&&page===0&&filter!=='inactive'){
+          const system=(await request('/api/admin/system-roles')).data.filter(row=>!query||[row.name,row.description].some(v=>v.toLowerCase().includes(query.toLowerCase())));
+          rows=[...system,...rows];count+=system.length;
+        }
+        const next = JSON.stringify(rows);
         if (force || next !== lastRows) {
           lastRows = next;
           paintRows();
@@ -603,6 +608,7 @@
     }catch(error){if(parent.open&&parent.querySelector('#live-dialog-title')===title)parent.querySelector('.live-dialog-notice').textContent=error.message;}
   }
   async function openRecord(row,initialTab='overview') {
+    if(view==='roles'&&row.system_role){const body='<p>Built-in '+h(row.name)+' authority. Account roles are assigned in Users.</p>'+hrMemberTable(row.members_details,['name','username','status'],'users','No accounts assigned to this system role.');showDialog(row.name,body,'');return;}
     if(view==="roles")return openRoleProfile(row);
     restoreKey = rowKey(row);
     const resource = view;
@@ -623,7 +629,7 @@
     if (resource !== view) return;
     const fields =
       view === "roles" ? ["name","description","members","permission_count","status"] : view === "users"
-        ? ["name", "email", "role", "permission_role", "status"]
+        ? ["name", "username", "email", "role", "permission_role", "status"]
         : [
             ...new Set([
               ...cfg().pk,
@@ -1004,10 +1010,11 @@
     )
       return;
     document.querySelector("#live-add").hidden = true;
-    document.querySelector("#live-toolbar").hidden = view!=="audit-log";
-    if(view!=="audit-log")document.querySelector("#live-filters").hidden=true;
-    const result = await request("/api/admin/" + view);
-    if (view === "audit-log") {
+    document.querySelector("#live-toolbar").hidden = !["audit-log","activities"].includes(view);
+    if(!["audit-log","activities"].includes(view))document.querySelector("#live-filters").hidden=true;
+    const result = await request('/api/admin/'+view);
+    if(view==='activities')result.data=(await window.HopeTableGroups.collectPages(result,offset=>request('/api/admin/activities?limit=200&offset='+offset),lifecycle.signal)).data;
+    if (["audit-log","activities"].includes(view)) {
       const fields = [
         "action_at",
         "table_name",

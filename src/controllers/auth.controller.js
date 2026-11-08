@@ -91,6 +91,7 @@ async function loginUser(req, res) {
   );
   req.session.userId = user.id;
   req.session.authVersion = user.auth_version;
+  await require('../lib/login-activity')(req,user,'password');
   await new Promise((resolve, reject) =>
     req.session.save((e) => (e ? reject(e) : resolve())),
   );

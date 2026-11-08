@@ -147,6 +147,18 @@
       "Job prefix",
       "text",
       3
+    ],
+    "logged_in_at": [
+      "Login date and time",
+      "datetime"
+    ],
+    "login_date": [
+      "Login date",
+      "date"
+    ],
+    "login_time": [
+      "Login time",
+      "text"
     ]
   },
   "groups": {
@@ -171,7 +183,8 @@
     ],
     "user-management": [
       "users",
-      "roles"
+      "roles",
+      "activities"
     ],
     "reports": [
       "reports"
@@ -196,7 +209,8 @@
     "reports": "Reports",
     "settings": "System settings",
     "audit-log": "Audit history",
-    "roles": "Roles"
+    "roles": "Roles",
+    "activities": "Activities"
   },
   "lookups": {
     "prices": {

@@ -43,12 +43,12 @@ test("HOPE database and backend integration", async (t) => {
   ).rows[0].id;
   let userId;
   await t.test(
-    "schema includes 24 RLS-protected tables and 36 actions plus 5 view gates",
+    "schema includes 25 RLS-protected tables and 36 actions plus 5 view gates",
     async () => {
       const a = await db.pg.query(
         `SELECT count(*)::int n FROM pg_tables WHERE schemaname='public' AND rowsecurity`,
       );
-      assert.equal(a.rows[0].n, 24);
+      assert.equal(a.rows[0].n, 25);
       assert.equal(
         (await db.pg.query("SELECT count(*)::int n FROM rights")).rows[0].n,
         41,
@@ -239,7 +239,7 @@ test("HOPE database and backend integration", async (t) => {
           [userId],
         )
       ).rows[0];
-      assert.equal(row.action_by, "super@example.test");
+      assert.equal(row.action_by, "Test Superadmin");
       assert.equal(row.new_values.rights["customers.add"], true);
       assert.equal(row.new_values.password_hash, undefined);
       assert.equal(
@@ -287,7 +287,7 @@ test("HOPE database and backend integration", async (t) => {
         200,
       );
       const a = (await request("GET", "/api/customers/T0001")).body.data;
-      assert.match(a.stamp, /RESTORE super@example.test/);
+      assert.match(a.stamp, /RESTORE Test Superadmin/);
       await assert.rejects(
         db.pg.query(`DELETE FROM customer WHERE custno='T0001'`),
         /Hard delete/,
