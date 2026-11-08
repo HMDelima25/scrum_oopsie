@@ -1,6 +1,9 @@
 const supabase = require('../config/supabase');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { sendPasswordResetEmail } = require('../utils/mailer');
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 // @desc    Register a new user with password (status defaults to 'pending')
 const registerUser = async (req, res) => {
@@ -141,36 +144,38 @@ const requestPasswordReset = async (req, res) => {
       .eq('email', email)
       .single();
 
-    // To prevent user enumeration attacks, we can return a generic success message even if email is not found,
-    // but for internal testing convenience, let's return a clear message or handle it gracefully.
+    // Always answer the same way so the form never reveals which emails are registered.
+    const genericResponse = {
+      status: 'success',
+      message: 'If an account exists for that email, password-recovery instructions have been sent.',
+    };
+
     if (fetchError || !user) {
-      return res.status(404).json({ status: 'error', message: 'User with this email does not exist.' });
+      return res.status(200).json(genericResponse);
     }
 
-    // Generate secure random reset token (expires in 1 hour)
+    // Generate a secure random token. Only its hash is stored; the raw token goes in the email link.
     const resetToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour from now
 
-    // Save token to database
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        reset_token: resetToken,
+        reset_token: hashToken(resetToken),
         reset_token_expires: expiresAt,
       })
       .eq('id', user.id);
 
     if (updateError) throw updateError;
 
-    // Log token to console for easy testing (in production, send via email service like Nodemailer/Resend)
-    console.log(`\n🔑 [PASSWORD RESET TOKEN FOR ${email}]: ${resetToken}\n`);
+    try {
+      await sendPasswordResetEmail(user.email, resetToken);
+    } catch (mailErr) {
+      // Logged on the server only; the visitor still gets the generic answer.
+      console.error('Password reset email failed:', mailErr.message);
+    }
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'Password reset token generated. Check your server console for the token (simulated email delivery).',
-      // Included in response for easy local testing:
-      debugToken: resetToken, 
-    });
+    return res.status(200).json(genericResponse);
 
   } catch (err) {
     console.error('Password Reset Request Error:', err.message);
@@ -187,11 +192,15 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Please provide both token and new password.' });
     }
 
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ status: 'error', message: 'Password must be at least 8 characters.' });
+    }
+
     // Find user with matching token and valid expiration time
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('*')
-      .eq('reset_token', token)
+      .eq('reset_token', hashToken(String(token)))
       .single();
 
     if (fetchError || !user) {
