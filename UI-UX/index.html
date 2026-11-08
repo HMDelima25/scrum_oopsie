@@ -200,7 +200,7 @@
           <div class="dialog-heading">
             <p class="feature-kicker">Account recovery</p>
             <h2 id="reset-title">Forgot password?</h2>
-            <p>Choose how you want to confirm your identity and receive recovery instructions.</p>
+            <p>Enter the email saved on your HOPE account. We’ll send a six-digit code to verify it.</p>
           </div>
 
           <label class="compact-label" for="recovery-email">Account email</label>
@@ -211,7 +211,7 @@
               <span class="recovery-option__icon recovery-option__icon--email" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M4.75 5h14.5A2.75 2.75 0 0 1 22 7.75v8.5A2.75 2.75 0 0 1 19.25 19H4.75A2.75 2.75 0 0 1 2 16.25v-8.5A2.75 2.75 0 0 1 4.75 5Zm.05 2 6.53 5.04a1.1 1.1 0 0 0 1.34 0L19.2 7H4.8Zm15.2 2.1-6.11 4.72a3.1 3.1 0 0 1-3.78 0L4 9.1v7.15c0 .41.34.75.75.75h14.5a.75.75 0 0 0 .75-.75V9.1Z" /></svg>
               </span>
-              <span><strong>Send via email</strong><small>Receive a secure link at your account email.</small></span>
+              <span><strong>Send via email</strong><small>Receive a six-digit, one-time code.</small></span>
               <span class="option-check" aria-hidden="true">✓</span>
             </button>
 
@@ -233,7 +233,7 @@
           </div>
 
           <button class="primary-button" id="continue-recovery" type="button">
-            Continue
+            Send code
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 5.3a1 1 0 0 1 1.4 0l6 6a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4-1.4l4.3-4.3H4a1 1 0 1 1 0-2h13.5l-4.3-4.3a1 1 0 0 1 0-1.4Z" /></svg>
           </button>
           <p class="dialog-message" id="recovery-message" role="status" aria-live="polite"></p>
@@ -245,12 +245,29 @@
             <span class="confirmation-shield">✓</span>
           </div>
           <p class="feature-kicker" id="recovery-confirmation-kicker">Check your inbox</p>
-          <h2 id="recovery-confirmation-title">Confirmation email sent</h2>
-          <p id="recovery-confirmation-copy">We sent password-recovery instructions to <strong id="masked-recovery-email"></strong>.</p>
-          <p class="confirmation-note">The link should expire after the time set by the backend security policy.</p>
-          <button class="primary-button" id="resend-recovery" type="button">Resend email</button>
-          <button class="secondary-button" id="change-recovery-method" type="button">Choose another method</button>
+          <h2 id="recovery-confirmation-title">Enter your code</h2>
+          <p id="recovery-confirmation-copy">If this email matches an account, a six-digit code will arrive shortly. Check your inbox and spam folder.</p>
+          <label class="compact-label" for="recovery-code">Six-digit code</label>
+          <input class="dialog-input" id="recovery-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required />
+          <p class="confirmation-note">The code expires in 10 minutes. You have five attempts.</p>
+          <button class="primary-button" id="confirm-recovery-code" type="button">Confirm code</button>
+          <button class="secondary-button" id="resend-recovery" type="button">Resend code</button>
+          <button class="secondary-button" id="change-recovery-method" type="button">Use a different email</button>
           <p class="dialog-message" id="resend-message" role="status" aria-live="polite"></p>
+        </section>
+        <section class="flow-step" id="reset-password-step" hidden>
+          <div class="dialog-heading"><p class="feature-kicker">Email confirmed</p><h2 id="recovery-password-title">Create a new password</h2><p>Use at least 12 characters. Your account access and approval status stay the same.</p></div>
+          <label class="compact-label" for="recovery-password">New password</label>
+          <input class="dialog-input" id="recovery-password" type="password" autocomplete="new-password" minlength="12" required />
+          <label class="compact-label" for="recovery-password-confirm">Confirm new password</label>
+          <input class="dialog-input" id="recovery-password-confirm" type="password" autocomplete="new-password" minlength="12" required />
+          <button class="primary-button" id="save-recovery-password" type="button">Change password</button>
+          <p class="dialog-message" id="recovery-password-message" role="status" aria-live="polite"></p>
+        </section>
+        <section class="flow-step confirmation-step" id="reset-success-step" hidden>
+          <div class="confirmation-art" aria-hidden="true"><span class="confirmation-envelope"></span><span class="confirmation-shield">✓</span></div>
+          <p class="feature-kicker">You’re all set</p><h2 id="recovery-success-title">Password changed</h2><p>Sign in with your new password to continue.</p>
+          <button class="primary-button" id="recovery-done" type="button">Back to sign in</button>
         </section>
       </div>
     </dialog>

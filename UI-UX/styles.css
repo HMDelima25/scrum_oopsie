@@ -1202,6 +1202,18 @@ dialog::backdrop {
   text-align: center;
 }
 
+#recovery-code {
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 1.4rem;
+  letter-spacing: 0.45em;
+  font-variant-numeric: tabular-nums;
+}
+
+#reset-password-step .dialog-input {
+  margin-bottom: 18px;
+}
+
 .confirmation-art {
   position: relative;
   width: 150px;

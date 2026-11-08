@@ -120,41 +120,128 @@
     }
   };
   const reset = $("#reset-dialog");
-  document.querySelectorAll("[data-recovery]").forEach((b) => {
-    b.hidden = b.dataset.recovery !== "email";
-  });
+  document
+    .querySelectorAll("[data-recovery]")
+    .forEach((b) => (b.hidden = b.dataset.recovery !== "email"));
+  let resendAt = 0;
+  const steps = ["method", "confirmation", "password", "success"];
+  function recoveryStep(step) {
+    steps.forEach(
+      (name) => ($("#reset-" + name + "-step").hidden = name !== step),
+    );
+    $("#reset-title").textContent = "Forgot password?";
+    reset.removeAttribute("aria-labelledby");
+    reset.setAttribute(
+      "aria-label",
+      {
+        method: "Forgot password",
+        confirmation: "Enter your recovery code",
+        password: "Create a new password",
+        success: "Password changed",
+      }[step],
+    );
+  }
+  function clearRecovery() {
+    [
+      "#recovery-code",
+      "#recovery-password",
+      "#recovery-password-confirm",
+    ].forEach((id) => ($(id).value = ""));
+    [
+      "#recovery-message",
+      "#resend-message",
+      "#recovery-password-message",
+    ].forEach((id) => ($(id).textContent = ""));
+  }
   $("#forgot-password").onclick = () => {
-    $("#recovery-email").value = email.value;
-    $("#reset-method-step").hidden = false;
-    $("#reset-confirmation-step").hidden = true;
-    $("#recovery-message").textContent = "";
+    clearRecovery();
+    $("#recovery-email").value = email.value.includes("@") ? email.value : "";
+    recoveryStep("method");
     reset.showModal();
   };
   $("#reset-close").onclick = () => reset.close();
+  reset.addEventListener("close", clearRecovery);
+  $("#recovery-done").onclick = () => reset.close();
   async function recover() {
-    const b = $("#continue-recovery");
     const address = $("#recovery-email");
-    address.required = true;
     if (!address.reportValidity()) return;
-    b.disabled = true;
+    const buttons = [$("#continue-recovery"), $("#resend-recovery")];
+    buttons.forEach((b) => (b.disabled = true));
+    $("#recovery-message").textContent = "";
+    $("#resend-message").textContent = "";
     try {
       const result = await send("forgot-password", { email: address.value });
-      $("#reset-method-step").hidden = true;
-      $("#reset-confirmation-step").hidden = false;
-      $("#recovery-confirmation-title").textContent =
-        "Recovery request received";
-      $("#recovery-confirmation-copy").textContent = result.message;
+      resendAt = Date.now() + result.retryAfter * 1000;
+      $("#recovery-code").value = "";
+      recoveryStep("confirmation");
+      $("#recovery-code").focus();
     } catch (error) {
-      $("#recovery-message").textContent = error.message;
+      const target = $("#reset-method-step").hidden
+        ? "#resend-message"
+        : "#recovery-message";
+      $(target).textContent = error.message;
     } finally {
-      b.disabled = false;
+      buttons.forEach((b) => (b.disabled = false));
+      updateResend();
     }
   }
+  function updateResend() {
+    const seconds = Math.max(0, Math.ceil((resendAt - Date.now()) / 1000));
+    $("#resend-recovery").disabled = seconds > 0;
+    $("#resend-recovery").textContent = seconds
+      ? "Resend code in " + seconds + "s"
+      : "Resend code";
+  }
+  setInterval(updateResend, 1000);
   $("#continue-recovery").onclick = recover;
   $("#resend-recovery").onclick = recover;
   $("#change-recovery-method").onclick = () => {
-    $("#reset-confirmation-step").hidden = true;
-    $("#reset-method-step").hidden = false;
+    clearRecovery();
+    recoveryStep("method");
+  };
+  $("#recovery-code").addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+  });
+  $("#confirm-recovery-code").onclick = async () => {
+    const input = $("#recovery-code"),
+      button = $("#confirm-recovery-code");
+    if (!input.reportValidity()) return;
+    button.disabled = true;
+    $("#resend-message").textContent = "";
+    try {
+      await send("verify-recovery-code", { code: input.value });
+      input.value = "";
+      recoveryStep("password");
+      $("#recovery-password").focus();
+    } catch (error) {
+      $("#resend-message").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  };
+  $("#save-recovery-password").onclick = async () => {
+    const input = $("#recovery-password"),
+      confirmation = $("#recovery-password-confirm"),
+      button = $("#save-recovery-password");
+    if (!input.reportValidity() || !confirmation.reportValidity()) return;
+    if (input.value !== confirmation.value) {
+      $("#recovery-password-message").textContent =
+        "The passwords do not match.";
+      return;
+    }
+    button.disabled = true;
+    try {
+      await send("change-recovered-password", {
+        newPassword: input.value,
+        confirmPassword: confirmation.value,
+      });
+      clearRecovery();
+      recoveryStep("success");
+    } catch (error) {
+      $("#recovery-password-message").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
   };
   for (const d of [create, reset])
     d.addEventListener("click", (e) => {

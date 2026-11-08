@@ -7,7 +7,7 @@ const {
   password,
   object,
 } = require("../lib/http");
-const { hash, issueToken } = require("../lib/tokens");
+const { hash } = require("../lib/tokens");
 const safe = "id,username,email,name,role,status,rights,created_at";
 function username(value) {
   const u = text(value, "Username", 32).toLowerCase();
@@ -101,27 +101,6 @@ async function logoutUser(req, res) {
   res.clearCookie("hope.sid");
   res.json({ status: "success" });
 }
-async function requestPasswordReset(req, res) {
-  const address = email(object(req.body).email);
-  if (!process.env.SMTP_HOST && process.env.MAIL_DELIVERY !== "local")
-    throw new HttpError(503, "Account email delivery is not configured.");
-  const user = check(
-    await req.app.locals.db
-      .from("users")
-      .select("id,email")
-      .eq("email", address)
-      .eq("is_deleted", false)
-      .maybeSingle(),
-  );
-  if (user) await issueToken(req.app.locals.db, user, "reset");
-  res.json({
-    status: "success",
-    message:
-      process.env.MAIL_DELIVERY === "local"
-        ? "Local development delivery: check the private server outbox. No email was sent."
-        : "If the account is eligible, check your email.",
-  });
-}
 async function resetPassword(req, res) {
   const b = object(req.body);
   const token = text(b.token, "Token", 256);
@@ -148,7 +127,6 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
-  requestPasswordReset,
   resetPassword,
   getMe,
 };

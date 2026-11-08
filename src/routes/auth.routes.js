@@ -31,7 +31,10 @@ function limit(req, res, next) {
 router.post("/register", limit, wrap(c.registerUser));
 router.post("/login", limit, wrap(c.loginUser));
 router.post("/logout", wrap(c.logoutUser));
-router.post("/forgot-password", limit, wrap(c.requestPasswordReset));
+const recovery = require('../lib/recovery');
+router.post("/forgot-password", limit, wrap(recovery.requestCode));
+router.post('/verify-recovery-code', limit, wrap(recovery.verifyCode));
+router.post('/change-recovered-password', limit, wrap(recovery.changePassword));
 router.post("/reset-password", limit, wrap(c.resetPassword));
 router.post("/set-password", limit, wrap(c.resetPassword));
 router.get("/methods", (req, res) =>

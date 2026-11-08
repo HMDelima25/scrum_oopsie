@@ -10,6 +10,7 @@ module.exports = function createApp({
   sessionSecret,
   origins,
   production = false,
+  recoveryMailer,
 } = {}) {
   if (!db) db = require("./config/supabase")();
   const secret = sessionSecret || process.env.SESSION_SECRET;
@@ -23,6 +24,8 @@ module.exports = function createApp({
     ).split(",");
   const app = express();
   app.locals.db = db;
+  app.locals.recoveryMailer = recoveryMailer;
+  app.locals.recoverySecret = secret;
   app.disable("x-powered-by");
   if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
   app.use(
@@ -105,7 +108,7 @@ module.exports = function createApp({
     res.status(status).json({
       status: "error",
       message:
-        status >= 500
+        status >= 500 && !(err instanceof HttpError && err.expose === true)
           ? "The server could not complete the request."
           : err.message,
     });

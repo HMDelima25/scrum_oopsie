@@ -10,11 +10,13 @@ Base URL: `http://127.0.0.1:5000`. JSON responses use `{status:"success",data:..
 | POST /api/auth/login           | `{identifier,password}` (email or username; legacy email accepted)                                                                                    | Establishes a regenerated session only for approved accounts with a valid existing hash        |
 | POST /api/auth/logout          | none                                                                                                  | Ends persisted session                                                                         |
 | GET /api/auth/me               | none                                                                                                  | Fresh account profile/rights; 401 on expired/revoked/blocked session                           |
-| POST /api/auth/forgot-password | `{email}`                                                                                             | Neutral response with configured delivery; local outbox mode explicitly says no email was sent |
+| POST /api/auth/forgot-password | `{email}`                                                                                             | Send six-digit email code; neutral account lookup response; missing SMTP returns 503 |
+| POST /api/auth/verify-recovery-code | `{code}` (six numeric digits) | Five attempts; creates a session-bound password grant |
+| POST /api/auth/change-recovered-password | `{newPassword,confirmPassword}` | Requires verified grant; changes password once without approving the account |
 | POST /api/auth/set-password    | `{token,newPassword}`                                                                                 | Consumes unexpired one-time setup/reset token                                                  |
 | POST /api/auth/reset-password  | `{token,newPassword}`                                                                                 | Same atomic token/password processing                                                          |
 
-Passwords must contain at least 12 characters and at most 72 UTF-8 bytes (bcrypt limit). Public registration/login/reset requests are rate-limited. Tokens live in the link fragment; the password page removes the fragment and sends the token in the JSON request body. First passwords are never silently assigned during login.
+Passwords must contain at least 12 characters and at most 72 UTF-8 bytes (bcrypt limit). Public registration/login/reset requests are rate-limited. Forgot password sends codes, never links. Setup and legacy tokens live in the link fragment; the password page removes the fragment and sends the token in the JSON request body. First passwords are never silently assigned during login.
 
 ## Administration
 
@@ -107,7 +109,7 @@ Admin workspace URLs accept `view=<resource>` plus `record=<primary-key>` for a 
 
 ## Automatic record codes
 
-`GET /api/next-code/:resource?prefix=AD` returns the next code preview and existing prefix choices, subject to Add permission. Customer/company IDs use C plus 4 digits; employee IDs use 5 digits and continue the reference data’s odd-number sequence; sales use TR plus 6 digits; receipts use OR plus 6 digits. Products, departments and jobs use a selected existing prefix with a numeric suffix, respecting their 6/3/4-character column limits. Alphabetic-only department/job reference codes contribute a prefix shortened only as needed to leave room for a number.
+`GET /api/next-code/:resource?prefix=AD` returns the next code preview and existing prefix choices, subject to Add permission. Customer/company IDs use C plus 4 digits; employee IDs use 5 digits and continue the reference dataï¿½s odd-number sequence; sales use TR plus 6 digits; receipts use OR plus 6 digits. Products, departments and jobs use a selected existing prefix with a numeric suffix, respecting their 6/3/4-character column limits. Alphabetic-only department/job reference codes contribute a prefix shortened only as needed to leave room for a number.
 
 Omit the generated primary key when creating customers, employees, products, departments, jobs or payments. Prefix-based records accept `_code_prefix` metadata, which is removed before ordinary column validation. The database allocates the actual ID and inserts/audits the record in the same transaction. Explicit IDs remain supported for existing import/API clients; forms use automatic IDs. Sales headers receive their ID within the existing atomic sale-and-lines transaction. Previews do not reserve numbers; another save can change the final assigned number. Inactive IDs are never reused, exhausted column ranges fail clearly, and counters use row locks to serialize concurrent allocation.
 
