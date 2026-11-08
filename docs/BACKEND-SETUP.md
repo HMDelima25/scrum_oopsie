@@ -4,6 +4,28 @@ Configured November 7, 2026, for Supabase project `tlsqkmjrmcnlgucjniuv` (`hope-
 
 ## Start and verify
 
+### Running a fresh clone on another computer
+
+The public fork contains the code, not the private `.env`. A copied `.env.example` still has a placeholder database key and cannot authenticate to Supabase.
+
+From the repository root:
+
+```powershell
+npm ci
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Run the copy step only if `.env` does not already exist. Configure the real `SUPABASE_URL`, a server-only `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`), and a private random `SESSION_SECRET` of at least 32 characters. Obtain authorized database credentials privately from the project owner. Never put them in browser files, GitHub, or chat. A publishable/anon key cannot run the server's account queries or session storage.
+
+Then run:
+
+```powershell
+npm run doctor
+npm start
+```
+
+Open `http://localhost:5000/UI-UX/index.html`. The diagnostic checks account columns and database-backed session access without printing keys or account records. Email/password login requires this fork's `users` and `app_session` schema; a different team database containing only `app_user` is not interchangeable. SMTP and Google OAuth are separate optional configurations and are not needed for username/password login.
+
 Use Node.js 22 or later. Open a terminal in this checkout:
 
 ```powershell
