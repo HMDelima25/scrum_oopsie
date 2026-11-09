@@ -24,6 +24,7 @@
     "nodemailer": "^10.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "nodemon": "^3.1.14"
   }
 }
