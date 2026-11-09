@@ -1,16 +1,30 @@
 require("dotenv").config({ quiet: true });
-// Render assigns the public URL when the service is created.
-if (process.env.RENDER_EXTERNAL_URL) {
-  process.env.APP_URL ||= process.env.RENDER_EXTERNAL_URL;
-  process.env.FRONTEND_ORIGINS ||= process.env.APP_URL;
-}
+const runtime = require("./config/runtime")();
+if (runtime.production) process.env.NODE_ENV = "production";
+process.env.APP_URL = runtime.appUrl;
 const app = require("./app")({
-  production: process.env.NODE_ENV === "production",
+  production: runtime.production,
+  origins: runtime.origins,
 });
-const port = Number(process.env.PORT || 5000);
-const host = process.env.HOST || "127.0.0.1";
+const { port, host } = runtime;
 const server = app.listen(port, host, () =>
   console.log(`HOPE backend listening on http://${host}:${port}`),
 );
-process.on("SIGTERM", () => server.close());
-process.on("SIGINT", () => server.close());
+let closing = false;
+function shutdown() {
+  if (closing) return;
+  closing = true;
+  // Render normally allows 30 seconds; drain in-flight requests before that.
+  const deadline = setTimeout(() => {
+    server.closeAllConnections();
+    process.exit(1);
+  }, 25000);
+  deadline.unref();
+  server.close(() => {
+    clearTimeout(deadline);
+    process.exit(0);
+  });
+  server.closeIdleConnections();
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

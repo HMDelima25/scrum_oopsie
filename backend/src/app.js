@@ -16,18 +16,14 @@ module.exports = function createApp({
   const secret = sessionSecret || process.env.SESSION_SECRET;
   if (!secret || secret.length < 32)
     throw new Error("SESSION_SECRET must contain at least 32 characters.");
-  const allowedOrigins =
-    origins ||
-    (
-      process.env.FRONTEND_ORIGINS ||
-      "http://localhost:5000,http://127.0.0.1:5000,http://localhost:4173,http://127.0.0.1:4173"
-    ).split(",");
+  const runtime = require("./config/runtime")();
+  const allowedOrigins = origins || runtime.origins;
   const app = express();
   app.locals.db = db;
   app.locals.recoveryMailer = recoveryMailer;
   app.locals.recoverySecret = secret;
   app.disable("x-powered-by");
-  if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
+  if (runtime.trustProxy) app.set("trust proxy", 1);
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -50,6 +46,28 @@ module.exports = function createApp({
     next();
   });
   app.use(cors({ origin: allowedOrigins, credentials: true }));
+  // Health checks must not depend on session storage or write any cookies.
+  app.get("/api/health", async (req, res) => {
+    const controller = new AbortController();
+    let timer;
+    try {
+      let query = db.from("users").select("id", { head: true, count: "exact" });
+      if (typeof query.abortSignal === "function") query = query.abortSignal(controller.signal);
+      const { error } = await Promise.race([
+        query,
+        new Promise((resolve, reject) => {
+          timer = setTimeout(() => { controller.abort(); reject(new Error("Health timeout")); }, 3500);
+        }),
+      ]);
+      if (error) throw error;
+      res.set("Cache-Control", "no-store").json({ status: "success", database: "supabase", connected: true });
+    } catch {
+      res.status(503).set("Cache-Control", "no-store")
+        .json({ status: "error", database: "supabase", connected: false });
+    } finally {
+      clearTimeout(timer);
+    }
+  });
   app.use(express.json({ limit: "256kb" }));
   app.use(
     session({
@@ -66,19 +84,6 @@ module.exports = function createApp({
       },
     }),
   );
-  app.get("/api/health", async (req, res) => {
-    try {
-      const { error } = await db
-        .from("users")
-        .select("id", { head: true, count: "exact" });
-      if (error) throw error;
-      res.json({ status: "success", database: "supabase", connected: true });
-    } catch {
-      res
-        .status(503)
-        .json({ status: "error", database: "supabase", connected: false });
-    }
-  });
   const path = require("node:path");
   const projectRoot = path.resolve(__dirname, "../..");
   const frontendPages = require("./config/frontend-pages.json");

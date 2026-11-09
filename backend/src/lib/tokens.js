@@ -1,7 +1,7 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { check, HttpError } = require("./http");
+const { check } = require("./http");
 const hash = (token) => crypto.createHash("sha256").update(token).digest("hex");
 async function issueToken(db, user, purpose) {
   const token = crypto.randomBytes(32).toString("hex");
@@ -34,23 +34,13 @@ async function issueToken(db, user, purpose) {
         JSON.stringify({ to: user.email, purpose, url: url.href }, null, 2),
         { mode: 0o600 },
       );
-    } else if (process.env.SMTP_HOST && process.env.MAIL_FROM) {
-      const mail = require("nodemailer").createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: process.env.SMTP_PORT === "465",
-        auth: process.env.SMTP_USER
-          ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-          : undefined,
-      });
-      await mail.sendMail({
-        from: process.env.MAIL_FROM,
+    } else {
+      await require("./mailer").createMailer()({
         to: user.email,
         subject: "HOPE, Inc. account access",
         text: `Use this one-time link within one hour: ${url.href}`,
       });
-    } else
-      throw new HttpError(503, "Account email delivery is not configured.");
+    }
   } catch (error) {
     await db
       .from("user_token")

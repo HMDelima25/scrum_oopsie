@@ -11,25 +11,7 @@ const digest = (secret, id, code) =>
   crypto.createHmac("sha256", secret).update(`${id}:${code}`).digest("hex");
 function mailer(req) {
   if (req.app.locals.recoveryMailer) return req.app.locals.recoveryMailer;
-  if (
-    !process.env.SMTP_HOST ||
-    !process.env.MAIL_FROM ||
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASSWORD
-  )
-    throw unavailable(
-      "Email delivery is not configured yet. Please contact your administrator.",
-    );
-  const transport = require("nodemailer").createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_PORT === "465",
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    connectionTimeout: 10000,
-    socketTimeout: 15000,
-  });
-  return (message) =>
-    transport.sendMail({ from: process.env.MAIL_FROM, ...message });
+  return require("./mailer").createMailer();
 }
 async function requestCode(req, res) {
   const address = email(object(req.body).email),
