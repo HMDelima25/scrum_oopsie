@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const session = require('express-session');
 const path = require('path');
 
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const supabase = require('./config/supabase');
 const SupabaseSessionStore = require('./utils/supabase-session-store');
