@@ -50,10 +50,10 @@ form.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
 
   try {
-    const response = await fetch("/api/auth/reset-password", {
+    const response = await fetch((window.API_BASE || "") + "/api/auth/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
+      credentials: "include",
       body: JSON.stringify({ token, newPassword: newPassword.value }),
     });
 

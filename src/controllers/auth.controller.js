@@ -8,33 +8,42 @@ const hashToken = (token) => crypto.createHash('sha256').update(token).digest('h
 // @desc    Register a new user with password (status defaults to 'pending')
 const registerUser = async (req, res) => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name, firstName, lastName, username, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedName = String(name || [firstName, lastName].filter(Boolean).join(' ')).trim();
 
-    if (!email || !name || !password) {
+    if (!normalizedEmail || !normalizedName || !password) {
       return res.status(400).json({ status: 'error', message: 'Please provide email, name, and password.' });
     }
-
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      return res.status(400).json({ status: 'error', message: 'A user with this email already exists.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ status: 'error', message: 'Please provide a valid email address.' });
+    }
+    if (String(password).length < 8 || Buffer.byteLength(String(password), 'utf8') > 72) {
+      return res.status(400).json({ status: 'error', message: 'Password must be at least 8 characters and no more than 72 UTF-8 bytes.' });
+    }
+    if (username && !/^[A-Za-z][A-Za-z0-9._-]{2,31}$/.test(username)) {
+      return res.status(400).json({ status: 'error', message: 'Username must be 3-32 characters and start with a letter.' });
     }
 
-    // Hash the password right away
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const { data: existingUser, error: existingError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('email', normalizedEmail)
+      .maybeSingle();
+    if (existingError) throw existingError;
 
-    // Insert user with password_hash and 'pending' status
+    if (existingUser) {
+      return res.status(409).json({ status: 'error', message: 'An account with this email already exists.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert([{
-        email,
-        name,
+        email: normalizedEmail,
+        name: normalizedName.slice(0, 160),
+        username: username ? username.toLowerCase() : null,
         password_hash: hashedPassword,
         status: 'pending',
         role: 'user'
@@ -51,27 +60,32 @@ const registerUser = async (req, res) => {
     });
   } catch (err) {
     console.error('Registration Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error.', error: err.message });
+    if (err.code === '23505') return res.status(409).json({ status: 'error', message: 'That email or username is already in use.' });
+    return res.status(500).json({ status: 'error', message: 'Registration could not be completed.' });
   }
 };
 
 // @desc    Login user (standard login with password comparison)
 const loginUser = async (req, res) => {
+  let loginStage = 'user lookup';
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const identifier = String(req.body.email || req.body.identifier || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ status: 'error', message: 'Please provide email and password.' });
+    if (!identifier || !password) {
+      return res.status(400).json({ status: 'error', message: 'Please provide an email/username and password.' });
     }
-
-    const { data: user, error: fetchError } = await supabase
+    let userQuery = supabase
       .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
+      .select('*');
+    userQuery = identifier.includes('@')
+      ? userQuery.ilike('email', identifier)
+      : userQuery.ilike('username', identifier);
+    const { data: user, error: fetchError } = await userQuery.maybeSingle();
 
-    if (fetchError || !user) {
-      return res.status(404).json({ status: 'error', message: 'Invalid email or user not found.' });
+    if (fetchError) throw fetchError;
+    if (!user || user.is_deleted === true) {
+      return res.status(401).json({ status: 'error', message: 'Invalid email/username or password.' });
     }
 
     if (user.status === 'blocked') {
@@ -82,25 +96,14 @@ const loginUser = async (req, res) => {
       return res.status(403).json({ status: 'error', message: 'Account is pending Superadmin approval.' });
     }
 
-    if (!user.password_hash) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ password_hash: hashedPassword })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      user.password_hash = hashedPassword;
-    } else {
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-      if (!isMatch) {
-        return res.status(401).json({ status: 'error', message: 'Invalid email or password.' });
-      }
+    if (!user.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ status: 'error', message: 'Invalid email/username or password.' });
     }
 
+    loginStage = 'session regeneration';
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((error) => error ? reject(error) : resolve());
+    });
     req.session.userId = user.id;
     req.session.userRole = user.role;
     req.session.userEmail = user.email;
@@ -109,12 +112,12 @@ const loginUser = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Login successful!',
-      data: { id: user.id, email: user.email, name: user.name, role: user.role, status: user.status },
+      data: { id: user.id, email: user.email, username: user.username, name: user.name, role: user.role, status: user.status },
     });
 
   } catch (err) {
-    console.error('Login Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error during login.', error: err.message });
+    console.error(`Login Error during ${loginStage}:`, { code: err.code, message: err.message });
+    return res.status(500).json({ status: 'error', message: 'Login could not be completed.' });
   }
 };
 
@@ -124,7 +127,7 @@ const logoutUser = (req, res) => {
     if (err) {
       return res.status(500).json({ status: 'error', message: 'Could not log out, please try again.' });
     }
-    res.clearCookie('connect.sid');
+    res.clearCookie('hope.sid', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.status(200).json({ status: 'success', message: 'Logged out successfully.' });
   });
 };
@@ -141,8 +144,8 @@ const requestPasswordReset = async (req, res) => {
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('id, email')
-      .eq('email', email)
-      .single();
+      .ilike('email', String(email).trim())
+      .maybeSingle();
 
     // Always answer the same way so the form never reveals which emails are registered.
     const genericResponse = {
@@ -150,7 +153,8 @@ const requestPasswordReset = async (req, res) => {
       message: 'If an account exists for that email, password-recovery instructions have been sent.',
     };
 
-    if (fetchError || !user) {
+    if (fetchError) throw fetchError;
+    if (!user) {
       return res.status(200).json(genericResponse);
     }
 
@@ -179,7 +183,7 @@ const requestPasswordReset = async (req, res) => {
 
   } catch (err) {
     console.error('Password Reset Request Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error.', error: err.message });
+    return res.status(500).json({ status: 'error', message: 'Password recovery could not be completed.' });
   }
 };
 
@@ -192,8 +196,8 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Please provide both token and new password.' });
     }
 
-    if (String(newPassword).length < 8) {
-      return res.status(400).json({ status: 'error', message: 'Password must be at least 8 characters.' });
+    if (String(newPassword).length < 8 || Buffer.byteLength(String(newPassword), 'utf8') > 72) {
+      return res.status(400).json({ status: 'error', message: 'Password must be at least 8 characters and no more than 72 UTF-8 bytes.' });
     }
 
     // Find user with matching token and valid expiration time
@@ -201,9 +205,10 @@ const resetPassword = async (req, res) => {
       .from('users')
       .select('*')
       .eq('reset_token', hashToken(String(token)))
-      .single();
+      .maybeSingle();
 
-    if (fetchError || !user) {
+    if (fetchError) throw fetchError;
+    if (!user) {
       return res.status(400).json({ status: 'error', message: 'Invalid or expired password reset token.' });
     }
 
@@ -235,7 +240,7 @@ const resetPassword = async (req, res) => {
 
   } catch (err) {
     console.error('Reset Password Error:', err.message);
-    return res.status(500).json({ status: 'error', message: 'Internal server error during password reset.', error: err.message });
+    return res.status(500).json({ status: 'error', message: 'Password reset could not be completed.' });
   }
 };
 
@@ -248,13 +253,21 @@ const getMe = async (req, res) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, name, role, status, rights')
+      .select('id, email, name, role, status, rights, permission_role_id, is_deleted')
       .eq('id', req.session.userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !user) {
-      return res.status(404).json({ status: 'error', message: 'User not found.' });
+    if (error) throw error;
+    if (!user || user.is_deleted || user.status !== 'approved') {
+      return res.status(401).json({ status: 'error', message: 'Not authenticated.' });
     }
+    if (user.permission_role_id && user.role === 'user') {
+      const { data: role, error: roleError } = await supabase.from('permission_role')
+        .select('rights, status').eq('id', user.permission_role_id).maybeSingle();
+      if (roleError) throw roleError;
+      user.rights = role?.status === 'active' ? role.rights : {};
+    }
+    delete user.is_deleted;
 
     return res.status(200).json({
       status: 'success',
@@ -266,6 +279,11 @@ const getMe = async (req, res) => {
   }
 };
 
+const getAuthMethods = (_req, res) => res.json({
+  status: 'success',
+  data: { email: true, google: false },
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -273,4 +291,5 @@ module.exports = {
   requestPasswordReset,
   resetPassword,
   getMe,
+  getAuthMethods,
 };

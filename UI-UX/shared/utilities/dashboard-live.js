@@ -7,14 +7,14 @@
   shell.hidden = true;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   async function api(path) {
-    const response = await fetch('/api/'+path,{credentials:'same-origin',signal:lifecycle.signal});
-    if(response.status===401){location.replace('/UI-UX/index.html');throw new Error('Sign in required.');}
+    const response = await fetch((window.API_BASE||'')+'/api/'+path,{credentials:'include',signal:lifecycle.signal});
+    if(response.status===401){location.replace((window.API_BASE||'')+'/UI-UX/index.html');throw new Error('Sign in required.');}
     const json=await response.json();if(!response.ok)throw new Error(json.message||'Records could not be loaded.');return json;
   }
   try {
     const bundle=(await api('ui-dashboard-data')).data;
     let user=bundle.user, dashboardData=bundle.records, firstSnapshot=true;
-    const can=right=>user.role==='superadmin'||(user.rights?.[right.split('.')[0]+'.view']===true&&user.rights?.[right]===true);
+    const can=right=>['admin','superadmin'].includes(user.role)||(user.rights?.[right.split('.')[0]+'.view']===true&&user.rights?.[right]===true);
     const navSource=(window.hopeSidebarTemplate?new DOMParser().parseFromString(window.hopeSidebarTemplate,'text/html'):document).querySelector('.sidebar-nav').innerHTML;
     function refreshNavigation(){
       const nav=document.querySelector('.sidebar-nav');nav.innerHTML=navSource;

@@ -70,7 +70,7 @@
     key.replaceAll("_", " ");
   const label = (key) => schema?.labels[key] || key;
   const can = (key) =>
-    user?.role === "superadmin" ||
+    ["admin", "superadmin"].includes(user?.role) ||
     (user?.rights?.[key.split(".")[0] + ".view"] === true &&
       user?.rights?.[key] === true);
   const admin = () => ["admin", "superadmin"].includes(user?.role);
@@ -102,8 +102,8 @@
         }).format(Number(value));
   async function request(url, options = {}) {
     let response;
-    for(let attempt=0;attempt<2;attempt++)try{response = await fetch(url, {
-      credentials: "same-origin",
+    for(let attempt=0;attempt<2;attempt++)try{response = await fetch((window.API_BASE||"")+url, {
+      credentials: "include",
       signal: lifecycle.signal,
       ...options,
       headers: { "content-type": "application/json", ...options.headers },
@@ -112,7 +112,7 @@
     if (!response.ok) {
       const error = new Error(result.message || "The request failed.");
       error.status = response.status;
-      if (response.status === 401) location.assign("/UI-UX/index.html");
+      if (response.status === 401) location.assign((window.API_BASE||"")+"/UI-UX/index.html");
       throw error;
     }
     return result;

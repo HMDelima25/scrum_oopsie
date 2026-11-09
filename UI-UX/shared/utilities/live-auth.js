@@ -1,9 +1,9 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   async function send(path, data) {
-    const r = await fetch("/api/auth/" + path, {
+    const r = await fetch((window.API_BASE||"")+"/api/auth/" + path, {
       method: "POST",
-      credentials: "same-origin",
+      credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(data),
     });
