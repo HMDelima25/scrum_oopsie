@@ -1,3 +1,7 @@
+# HOPE, Inc. ERP
+
+See [Project structure](.documentation/PROJECT-STRUCTURE.md) for folder organization and [Setup](.documentation/BACKEND-SETUP.md) to run the app. Private configuration stays in the root `.env`.
+
 # Guide to the Directories
 
 Scrum Master = DELIMA, Honey Mae D.
@@ -42,4 +46,4 @@ npm install express dotenv cors helmet morgan @supabase/supabase-js bcryptjs exp
 
 ## Backend and database
 
-Supabase setup, local startup, first-account creation and verification: [Backend setup](docs/BACKEND-SETUP.md). API contracts: [API reference](docs/API.md).
+Supabase setup, local startup, first-account creation and verification: [Backend setup](.documentation/BACKEND-SETUP.md). API contracts: [API reference](.documentation/API.md).

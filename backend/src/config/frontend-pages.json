@@ -1,0 +1,13 @@
+{
+  "/UI-UX/index.html": "frontend/login/sign-in/index.html",
+  "/UI-UX/modules/administrator/index.html": "frontend/admin/settings/index.html",
+  "/UI-UX/modules/customers/index.html": "frontend/admin/customers/index.html",
+  "/UI-UX/modules/dashboard/index.html": "frontend/admin/dashboard/index.html",
+  "/UI-UX/modules/human-resources/index.html": "frontend/admin/human-resources/index.html",
+  "/UI-UX/modules/products/index.html": "frontend/admin/products/index.html",
+  "/UI-UX/modules/reports/index.html": "frontend/admin/reports/index.html",
+  "/UI-UX/modules/sales/index.html": "frontend/admin/sales/index.html",
+  "/UI-UX/modules/user-management/index.html": "frontend/admin/user-management/index.html",
+  "/UI-UX/shared/utilities/original-sidebar.html": "frontend/shared/sidebar/original-sidebar.html",
+  "/account/password.html": "frontend/login/forgot-password/password.html"
+}

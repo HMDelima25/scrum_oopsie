@@ -25,7 +25,7 @@ jobs:
 
       # 3. Run the migrations!
       - name: Apply migrations to Supabase
-        run: dbmate up
+        run: dbmate --migrations-dir database/migrations up
         env:
           # GitHub automatically injects the secret we created in Step 2
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

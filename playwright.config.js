@@ -1,6 +1,6 @@
 const { defineConfig, devices } = require("@playwright/test");
 module.exports = defineConfig({
-  testDir: "./test/browser",
+  testDir: "./testing/browser",
   testMatch: "*.spec.js",
   fullyParallel: false,
   workers: 1,
@@ -20,7 +20,7 @@ module.exports = defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "node test/browser/server.js",
+    command: "node testing/browser/server.js",
     url: "http://127.0.0.1:5179/_test/ready",
     reuseExistingServer: false,
     timeout: 60000,
