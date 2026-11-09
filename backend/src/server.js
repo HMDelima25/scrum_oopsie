@@ -1,4 +1,9 @@
 require("dotenv").config({ quiet: true });
+// Render assigns the public URL when the service is created.
+if (process.env.RENDER_EXTERNAL_URL) {
+  process.env.APP_URL ||= process.env.RENDER_EXTERNAL_URL;
+  process.env.FRONTEND_ORIGINS ||= process.env.APP_URL;
+}
 const app = require("./app")({
   production: process.env.NODE_ENV === "production",
 });
