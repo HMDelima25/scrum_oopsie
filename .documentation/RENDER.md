@@ -7,7 +7,7 @@ Use a Free Web Service in Singapore, sourced from `riellealia/scrum_oopsie`, bra
 - Store SUPABASE_URL, SUPABASE_SECRET_KEY and a separately generated SESSION_SECRET privately in Render. Never commit .env.
 - APP_URL and FRONTEND_ORIGINS default to Render's assigned external URL. Explicit values override these defaults for custom domains.
 - Health check `/api/health` verifies the Supabase connection. Migrations are not run at startup.
-- The public Git repository connection does not provide automatic deployment. Deploy future changes manually or separately authorize the GitHub repository integration.
+- The existing service now uses the authenticated GitHub connection, limited to `riellealia/scrum_oopsie`, with Auto-Deploy set to On Commit. Pushes to `codex/hope-railway-deploy` automatically build and deploy the website. Other branches do not update the live site. See [Updating HOPE](UPDATING-HOPE.md).
 
 Render Free sleeps while idle. Gmail SMTP ports are blocked. Both recovery codes and setup invitations now support Gmail's HTTPS API: set MAIL_DELIVERY=gmail-api and privately configure GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN and MAIL_FROM. Authorize the sender account with the narrow gmail.send permission. This is separate from users signing into HOPE with Google; existing SMTP app passwords cannot be used as Gmail API tokens. The code does not grant this permission or send a real email during tests. Until sender authorization is configured, hosted email remains unavailable.
 
