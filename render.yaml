@@ -1,11 +1,11 @@
 services:
   - type: web
     name: hope-erp
-    repo: https://github.com/riellealia/scrum_oopsie
+    repo: https://github.com/HMDelima25/scrum_oopsie
     runtime: node
     region: singapore
     plan: free
-    branch: codex/hope-railway-deploy
+    branch: main
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
