@@ -103,7 +103,7 @@ window.initializeHopeRecovery = ({ $, guides, email, password, matchPassword, va
     if (!validateInputs([address])) return;
     const buttons = [$("#continue-recovery"), $("#resend-recovery")];
     recoveryBusy = true;
-    $("#continue-recovery").textContent = "Sending code…";
+    $("#continue-recovery").textContent = "Sending codeâ€¦";
     buttons.forEach((b) => (b.disabled = true));
     updateResend();
     $("#recovery-message").textContent = "";
@@ -136,7 +136,7 @@ window.initializeHopeRecovery = ({ $, guides, email, password, matchPassword, va
     const seconds = Math.max(0, Math.ceil((resendAt - Date.now()) / 1000));
     $("#resend-recovery").disabled = recoveryBusy || seconds > 0;
     $("#resend-recovery").textContent = recoveryBusy
-      ? "Requesting another code…"
+      ? "Requesting another codeâ€¦"
       : seconds
         ? "Request another code in " + seconds + "s"
         : "Request another code";

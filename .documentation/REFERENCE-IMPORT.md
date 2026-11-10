@@ -1,7 +1,7 @@
 # Professor SQL reference import
 
 Source: `C:/Natalia/softeng/HOPE, Inc. ERP/.files/.sql/HopeDB_audit.sql.txt`.
-Imported into Supabase project `tlsqkmjrmcnlgucjniuv` on November 7, 2026, at the user’s request.
+Imported into Supabase project `tlsqkmjrmcnlgucjniuv` on November 7, 2026, at the userâ€™s request.
 
 The original file includes destructive DROP/CREATE commands and a different audit implementation. Only its business INSERT statements were imported, using explicit column lists against the existing secured schema. No source file was moved or removed. Accounts, roles, permissions, audit protections and existing schema were preserved. The import ran in one transaction, checked that business tables were empty, and recorded `202611070004_reference_data` in `app_migration`. Repeating it fails instead of overwriting or duplicating data.
 

@@ -14,7 +14,7 @@ function username(value) {
   if (!/^[a-z][a-z0-9._-]{2,31}$/.test(u))
     throw new HttpError(
       400,
-      "Use a username of 3�32 letters, numbers, dots, underscores or hyphens, starting with a letter.",
+      "Use a username of 3–32 letters, numbers, dots, underscores or hyphens, starting with a letter.",
     );
   return u;
 }

@@ -48,7 +48,7 @@
       else if (input.validity.patternMismatch)
         notice =
           input.id === "create-username"
-            ? "Use 3–32 letters, numbers, dots, underscores or hyphens. Start with a letter."
+            ? "Use 3â€“32 letters, numbers, dots, underscores or hyphens. Start with a letter."
             : "Enter the six-digit code from your email.";
       else if (!input.validity.valid) notice = input.validationMessage;
       fieldError(input, notice);
@@ -135,7 +135,7 @@
     if (!validateInputs([email, password])) return;
     const b = form.querySelector('[type="submit"]');
     b.disabled = true;
-    message.textContent = "Signing in…";
+    message.textContent = "Signing inâ€¦";
     try {
       const result = await send("login", {
         identifier: email.value,
@@ -213,7 +213,7 @@
     if (!validateInputs([address, secret])) return;
     const button = e.currentTarget.querySelector('[type="submit"]');
     button.disabled = true;
-    button.textContent = "Signing in…";
+    button.textContent = "Signing inâ€¦";
     try {
       const result = await send("login", {
         identifier: address.value,

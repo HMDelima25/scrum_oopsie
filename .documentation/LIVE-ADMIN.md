@@ -49,7 +49,7 @@ Removed integration overrides that replaced the dark sidebar with a pale off-scr
 
 ## Connected cells
 
-Customer, employee, product, department, job, transaction and receipt identifiers open their stored record. Product prices open that product’s price history. Sale totals open its detail lines; paid/balance cells open its payments. Read-only record dialogs also offer the relevant child lists. These use the existing record-action styling and preserve sidebar/navigation behavior. Browser verification used isolated records on port 5010; no sample business rows were added to live Supabase.
+Customer, employee, product, department, job, transaction and receipt identifiers open their stored record. Product prices open that productâ€™s price history. Sale totals open its detail lines; paid/balance cells open its payments. Read-only record dialogs also offer the relevant child lists. These use the existing record-action styling and preserve sidebar/navigation behavior. Browser verification used isolated records on port 5010; no sample business rows were added to live Supabase.
 
 ## Loading optimization
 
@@ -57,7 +57,7 @@ Module startup now uses `/api/ui-bootstrap` for authenticated account details, s
 
 Local live measurements: previous sequential account + schema + customer list requests totaled 2215 ms; customer bootstrap measured 749 ms, product bootstrap 875 ms, and the dashboard data response 990 ms. These are single local observations, not guaranteed response times.
 
-## Table controls and inactive samples — November 8, 2026
+## Table controls and inactive samples â€” November 8, 2026
 
 Non-dashboard tables now include Filter, a column selector and an Asc/Desc toggle beside Records. Filters derive from the table: customer payment terms/address, product units, employee gender/employment/dates, transaction/customer/employee references, job/department references, and date/numeric ranges for prices, salaries, quantities and payments. Search and operational filters/sorting execute before pagination with matching total counts. Reports filter/sort their generated result; audit controls apply to the loaded recent audit set. Settings is a form and has no table controls.
 
@@ -67,7 +67,7 @@ All business Add API routes and Add User passed integration checks; Customer and
 
 ## Compact icon tools and grouping
 
-Filter, sort-column, sort-direction and grouping are icon controls with accessible names and tooltips. Filters open a compact floating panel using existing theme tokens; reset is an icon. Group choices come from the current table’s filter/schema characteristics. Grouped operational lists collect every matching page before rendering groups, preserve original row indexes for actions, and hide ordinary page controls. Reports/audit group their loaded results. Grouping composes with status, search, filters and sort direction. Shared pure helpers in `table-groups.js` are covered for indexes, null/date/employee values, numeric ordering, full pagination and cancellation. Audit/report refreshes preserve filter controls and focus when columns have not changed.
+Filter, sort-column, sort-direction and grouping are icon controls with accessible names and tooltips. Filters open a compact floating panel using existing theme tokens; reset is an icon. Group choices come from the current tableâ€™s filter/schema characteristics. Grouped operational lists collect every matching page before rendering groups, preserve original row indexes for actions, and hide ordinary page controls. Reports/audit group their loaded results. Grouping composes with status, search, filters and sort direction. Shared pure helpers in `table-groups.js` are covered for indexes, null/date/employee values, numeric ordering, full pagination and cancellation. Audit/report refreshes preserve filter controls and focus when columns have not changed.
 
 ## Add dialog sizing and actions
 

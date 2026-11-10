@@ -25,7 +25,7 @@ window.initializeHopeRegistration = ({ $, matchPassword, validateInputs, fieldEr
     }
     const b = f.querySelector('[type="submit"]');
     b.disabled = true;
-    $("#create-message").textContent = "Requesting an account…";
+    $("#create-message").textContent = "Requesting an accountâ€¦";
     try {
       const result = await send("register", {
         firstName: $("#first-name").value,
