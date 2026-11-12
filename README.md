@@ -136,3 +136,7 @@ Use `npm ci` to install the versions in `package-lock.json`. Express serves the 
 - [Updating the website](.documentation/UPDATING-HOPE.md)
 
 This integration PR targets the original repository's main branch. Backend/schema differences need reconciliation before merging. Historical QA evidence in this branch does not certify a merged main build or substitute for teammate review.
+
+## Main branch integration
+
+See [integration decisions](.documentation/INTEGRATION.md) for the reconciled application, database differences and deployment prerequisites. Teammates' [Sprint 1 documents and UI mockups](.documentation/team-main/) are retained with their credits. The [original main implementation](.files/reference/README.md) is preserved as a source reference; `npm start` runs only the organized application. `npm test` also runs main's retained schema and grouping tests.

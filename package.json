@@ -4,7 +4,7 @@
   "description": "",
   "main": "backend/src/server.js",
   "scripts": {
-    "test": "node --test testing/*.test.js",
+    "test": "node --test testing/*.test.js testing/upstream-main/tests/*.test.js testing/upstream-main/table-groups.test.js",
     "start": "node backend/src/server.js",
     "dev": "nodemon backend/src/server.js",
     "bootstrap": "node backend/scripts/bootstrap.js",
@@ -19,7 +19,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@supabase/supabase-js": "^2.118.0",
+    "@supabase/supabase-js": "^2.119.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
@@ -27,7 +27,7 @@
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
     "morgan": "^1.12.1",
-    "nodemailer": "^10.3.1"
+    "nodemailer": "^10.4.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",
