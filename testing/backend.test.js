@@ -6,7 +6,9 @@ const bcrypt = require("bcryptjs");
 const crypto = require("node:crypto");
 test("HOPE database and backend integration", async (t) => {
   const db = await createDatabase();
+  const messages=[];
   const app = createApp({
+    registrationMailer:async m=>messages.push(m),
     db,
     sessionSecret: "test-only-session-secret-".repeat(3),
     origins: ["http://localhost:4173"],
@@ -43,12 +45,12 @@ test("HOPE database and backend integration", async (t) => {
   ).rows[0].id;
   let userId;
   await t.test(
-    "schema includes 25 RLS-protected tables and 36 actions plus 5 view gates",
+    "schema includes 26 RLS-protected tables and 36 actions plus 5 view gates",
     async () => {
       const a = await db.pg.query(
         `SELECT count(*)::int n FROM pg_tables WHERE schemaname='public' AND rowsecurity`,
       );
-      assert.equal(a.rows[0].n, 25);
+      assert.equal(a.rows[0].n, 26);
       assert.equal(
         (await db.pg.query("SELECT count(*)::int n FROM rights")).rows[0].n,
         41,
@@ -99,13 +101,15 @@ test("HOPE database and backend integration", async (t) => {
   await t.test(
     "registration cannot self-assign approval or admin role",
     async () => {
-      const a = await request("POST", "/api/auth/register", {
+      let a = await request("POST", "/api/auth/register", {
         name: "Test User",
         email: "user@example.test",
         password,
         role: "superadmin",
         status: "approved",
       });
+      assert.equal(a.status, 202);
+      a=await request("POST","/api/auth/verify-registration-code",{code:messages.at(-1).text.match(/code is (\d{6})/)[1]});
       assert.equal(a.status, 201);
       assert.equal(a.body.data.role, "user");
       assert.equal(a.body.data.status, "pending");

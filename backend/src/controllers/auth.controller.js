@@ -26,16 +26,8 @@ async function registerUser(req, res) {
   );
   const row = { name, email: email(b.email), role: "user", status: "pending" };
   if (b.username !== undefined) row.username = username(b.username);
-  if (b.password !== undefined)
-    row.password_hash = await bcrypt.hash(password(b.password), 12);
-  const data = check(
-    await req.app.locals.db.from("users").insert(row).select(safe).single(),
-  );
-  res.status(201).json({
-    status: "success",
-    message: "Your account is awaiting Superadmin approval.",
-    data,
-  });
+  row.password_hash = await bcrypt.hash(password(b.password), 12);
+  await require('../lib/registration').issue(req,res,row);
 }
 async function loginUser(req, res) {
   const b = object(req.body);

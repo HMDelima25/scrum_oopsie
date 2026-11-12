@@ -46,7 +46,7 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 18);
+  assert.equal(result.tables.app_migration, 19);
   const directory=await db.from('employee_directory').select('empno,jobname,deptname',{count:'exact',head:true});
   if(directory.error)throw new Error('employee_directory: '+directory.error.code);
   assert.equal(directory.count,result.tables.employee);

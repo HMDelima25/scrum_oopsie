@@ -29,6 +29,8 @@ function limit(req, res, next) {
   next();
 }
 router.post("/register", limit, wrap(c.registerUser));
+router.post('/verify-registration-code',limit,wrap(require('../lib/registration').verify));
+router.post('/resend-registration-code',limit,wrap(require('../lib/registration').resend));
 router.post("/login", limit, wrap(c.loginUser));
 router.post("/logout", wrap(c.logoutUser));
 const recovery = require('../lib/recovery');

@@ -6,7 +6,7 @@ Base URL: `http://127.0.0.1:5000`. JSON responses use `{status:"success",data:..
 
 | Method/path                    | Input                                                                                                 | Behavior                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| POST /api/auth/register        | `{firstName,lastName,email}` or `{name,email}`; optional `username` and `password` (required by the signup UI) | Always pending User; no public role/status assignment                                          |
+| POST /api/auth/register        | `{firstName,lastName,email,password}` or `{name,email,password}`; optional `username` | 202: email code required; no User exists until verification                                          |
 | POST /api/auth/login           | `{identifier,password}` (email or username; legacy email accepted)                                                                                    | Establishes a regenerated session only for approved accounts with a valid existing hash        |
 | POST /api/auth/logout          | none                                                                                                  | Ends persisted session                                                                         |
 | GET /api/auth/me               | none                                                                                                  | Fresh account profile/rights; 401 on expired/revoked/blocked session                           |
@@ -118,3 +118,12 @@ Price history, sale details and job history retain their existing foreign/compos
 ## Combined table query controls
 
 Operational lists and `/api/admin/users` accept `q`, `sort`, `direction=asc|desc`, `limit`, `offset` and `status=active|inactive|all`. Server-side search, allowed table-specific filters, and sorting run before pagination/counting. Filters use `f_<field>` for select/text values and `f_<field>_from` / `f_<field>_to` for numeric/date ranges. `GET /api/ui-schema` exposes `tableFilters`. Unknown sort columns, invalid directions/choices/ranges return 400. Search expressions are quoted and values remain bound by PostgREST; hidden system columns cannot be sorted by ordinary Users. Users always receive active business records regardless of the requested status; only administrators can read inactive accounts. Report/audit table tools filter the result set loaded into the UI.
+
+### Registration email verification
+
+- `POST /api/auth/verify-registration-code` accepts `{code:"012345"}` in the same browser session as registration. Successful proof creates a pending User and returns 201. It never signs in or approves the account.
+- `POST /api/auth/resend-registration-code` sends a replacement code for that session's draft, with a 60-second email cooldown. Previous codes become invalid.
+- Codes expire after ten minutes, allow five attempts and can be used once. Drafts store only bcrypt passwords and HMAC code digests in a private, RLS-protected staging table. Consumed drafts have their password and code digests cleared.
+- Email sending uses the existing SMTP/Gmail HTTPS sender. Delivery failures return 503 and invalidate the draft; no pending account is created.
+- Before deploying this code, apply `database/migrations/20261110001900_registration_email_verification.sql`. Render Free requires the Gmail HTTPS sender authorization to be completed; SMTP is blocked there. Registration is unavailable until real email delivery is configured.
+- Google sign-in already requires a server-verified Google email and continues to require application approval.

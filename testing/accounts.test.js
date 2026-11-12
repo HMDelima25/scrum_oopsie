@@ -3,7 +3,8 @@ const {createDatabase}=require('./helpers/database');const createApp=require('..
 test('Username, email and Google authentication guards',async t=>{
  const db=await createDatabase();
  const admin=(await db.pg.query(`INSERT INTO users(username,email,name,role,status,password_hash) VALUES('admin',NULL,'Administrator','admin','approved',$1) RETURNING id`,[await bcrypt.hash('admin123',4)])).rows[0];
- const app=createApp({db,sessionSecret:'account-tests-private-secret-'.repeat(2),origins:[]});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ const messages=[];
+ const app=createApp({registrationMailer:async m=>messages.push(m),db,sessionSecret:'account-tests-private-secret-'.repeat(2),origins:[]});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  t.after(async()=>{await new Promise(r=>server.close(r));await db.pg.close();});const base='http://127.0.0.1:'+server.address().port;let cookie='';
  async function req(path,method='GET',body){const response=await fetch(base+path,{method,redirect:'manual',headers:{'content-type':'application/json',cookie},body:body===undefined?undefined:JSON.stringify(body)});if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];const text=await response.text();let data;try{data=JSON.parse(text);}catch{data=text;}return{status:response.status,data,location:response.headers.get('location')};}
  await t.test('empty or incorrect credentials never create a session',async()=>{
@@ -25,7 +26,10 @@ test('Username, email and Google authentication guards',async t=>{
   await req('/api/auth/logout','POST',{});assert.equal((await req('/api/auth/me')).status,401);
  });
  await t.test('registration persists username and password but never public Admin privileges',async()=>{
-  const r=await req('/api/auth/register','POST',{firstName:'Account',lastName:'Test',username:'new-user',email:'new@example.test',password:'A-real-test-password-1',role:'admin',status:'approved'});
+  let r=await req('/api/auth/register','POST',{firstName:'Account',lastName:'Test',username:'new-user',email:'new@example.test',password:'A-real-test-password-1',role:'admin',status:'approved'});
+  assert.equal(r.status,202);
+  assert.equal((await db.pg.query("SELECT count(*)::int n FROM users WHERE username='new-user'")).rows[0].n,0);
+  r=await req('/api/auth/verify-registration-code','POST',{code:messages.at(-1).text.match(/code is (\d{6})/)[1]});
   assert.equal(r.status,201);assert.equal(r.data.data.username,'new-user');assert.equal(r.data.data.status,'pending');assert.equal(r.data.data.role,'user');
   const row=(await db.pg.query(`SELECT * FROM users WHERE username='new-user'`)).rows[0];assert.ok(await bcrypt.compare('A-real-test-password-1',row.password_hash));assert.equal(r.data.data.password_hash,undefined);
   assert.equal((await req('/api/auth/login','POST',{identifier:'new-user',password:'A-real-test-password-1'})).status,403);

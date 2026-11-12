@@ -39,11 +39,13 @@ async function buildFixtures(origin) {
   await db.pg.query(
     "INSERT INTO customer(custno,custname,payterm,address) VALUES('C0001','QA Customer','COD','Synthetic test data')",
   );
+  const registrationMessages=[];
   const app = createApp({
+    registrationMailer:async m=>registrationMessages.push(m),
     db,
     sessionSecret: "isolated-browser-fixture-secret-".repeat(2),
     origins: [origin],
   });
-  return { db, app, ids };
+  return { db, app, ids, registrationMessages };
 }
 module.exports = { buildFixtures, password };

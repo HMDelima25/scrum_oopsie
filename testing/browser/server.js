@@ -7,6 +7,7 @@ const origin = `http://127.0.0.1:${port}`;
 (async () => {
   let state = await buildFixtures(origin);
   const wrapper = express();
+  wrapper.get("/_test/registration-code", (req,res)=>res.json({code:state.registrationMessages.at(-1)?.text.match(/code is (\d{6})/)[1]}));
   wrapper.get("/_test/ready", (req, res) => res.json({ isolated: true }));
   wrapper.get("/_test/fixtures", (req, res) => res.json({ ids: state.ids }));
   wrapper.post("/_test/reset", async (req, res, next) => {
