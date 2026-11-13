@@ -2,11 +2,17 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "src/server.js",
+  "main": "backend/src/server.js",
   "scripts": {
-    "test": "node --test src/tests/ui-schema.test.js UI-UX/tests/table-groups.test.js",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "test": "node --test testing/*.test.js testing/upstream-main/tests/*.test.js testing/upstream-main/table-groups.test.js",
+    "start": "node backend/src/server.js",
+    "dev": "nodemon backend/src/server.js",
+    "bootstrap": "node backend/scripts/bootstrap.js",
+    "verify": "node backend/scripts/verify-database.js",
+    "doctor": "node backend/scripts/doctor.js",
+    "test:browser": "node backend/scripts/run-browser-tests.js",
+    "test:browser:report": "playwright show-report",
+    "test:browser:serve": "node testing/browser/server.js"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +30,11 @@
     "nodemailer": "^10.4.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@playwright/test": "^1.65.0",
     "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

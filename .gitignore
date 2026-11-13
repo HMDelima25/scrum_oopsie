@@ -1,5 +1,10 @@
 node_modules/
-test-results/
-playwright-report/
 .env
-.DS_Store   
+.env.*
+!.env.example
+var/
+.documentation/evidence/
+*.log
+.DS_Store
+playwright-report/
+test-results/
