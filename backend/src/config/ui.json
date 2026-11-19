@@ -1,0 +1,751 @@
+{
+  "fields": {
+    "custno": [
+      "Customer code",
+      "text",
+      5
+    ],
+    "custname": [
+      "Customer name",
+      "text",
+      20
+    ],
+    "address": [
+      "Address",
+      "text",
+      50
+    ],
+    "payterm": [
+      "Payment term",
+      "select",
+      [
+        "COD",
+        "30D",
+        "45D"
+      ]
+    ],
+    "prodcode": [
+      "Product code",
+      "text",
+      6
+    ],
+    "description": [
+      "Description",
+      "text",
+      30
+    ],
+    "unit": [
+      "Unit",
+      "select",
+      [
+        "pc",
+        "ea",
+        "mtr",
+        "pkg",
+        "ltr"
+      ]
+    ],
+    "unitprice": [
+      "Unit price",
+      "number"
+    ],
+    "effdate": [
+      "Effective date",
+      "date"
+    ],
+    "empno": [
+      "Employee number",
+      "text",
+      5
+    ],
+    "firstname": [
+      "First name",
+      "text",
+      15
+    ],
+    "lastname": [
+      "Last name",
+      "text",
+      15
+    ],
+    "gender": [
+      "Gender",
+      "select",
+      [
+        "M",
+        "F"
+      ]
+    ],
+    "birthdate": [
+      "Birth date",
+      "date"
+    ],
+    "hiredate": [
+      "Hire date",
+      "date"
+    ],
+    "sepdate": [
+      "Separation date",
+      "date"
+    ],
+    "deptcode": [
+      "Department code",
+      "text",
+      3
+    ],
+    "deptname": [
+      "Department name",
+      "text",
+      20
+    ],
+    "jobcode": [
+      "Job code",
+      "text",
+      4
+    ],
+    "jobdesc": [
+      "Job description",
+      "text",
+      500
+    ],
+    "salary": [
+      "Salary",
+      "number"
+    ],
+    "transno": [
+      "Transaction number",
+      "text",
+      8
+    ],
+    "salesdate": [
+      "Sale date",
+      "date"
+    ],
+    "quantity": [
+      "Quantity",
+      "number"
+    ],
+    "orno": [
+      "Official receipt number",
+      "text",
+      8
+    ],
+    "paydate": [
+      "Payment date",
+      "date"
+    ],
+    "amount": [
+      "Amount",
+      "number"
+    ],
+    "jobname": [
+      "Job name",
+      "text",
+      80
+    ],
+    "jobprefix": [
+      "Job prefix",
+      "text",
+      3
+    ],
+    "logged_in_at": [
+      "Login date and time",
+      "datetime"
+    ],
+    "login_date": [
+      "Login date",
+      "date"
+    ],
+    "login_time": [
+      "Login time",
+      "text"
+    ]
+  },
+  "groups": {
+    "dashboard": [],
+    "customers": [
+      "customers"
+    ],
+    "products": [
+      "products",
+      "prices"
+    ],
+    "human-resources": [
+      "employees",
+      "departments",
+      "jobs",
+      "job-history"
+    ],
+    "sales": [
+      "sales",
+      "sale-details",
+      "payments"
+    ],
+    "user-management": [
+      "users",
+      "roles",
+      "activities"
+    ],
+    "reports": [
+      "reports"
+    ],
+    "administrator": [
+      "settings",
+      "audit-log"
+    ]
+  },
+  "labels": {
+    "customers": "Customers",
+    "products": "Products",
+    "prices": "Price history",
+    "employees": "Employees",
+    "departments": "Departments",
+    "jobs": "Jobs",
+    "job-history": "Job history",
+    "sales": "Sales",
+    "sale-details": "Sale details",
+    "payments": "Payments",
+    "users": "Users",
+    "reports": "Reports",
+    "settings": "System settings",
+    "audit-log": "Audit history",
+    "roles": "Roles",
+    "activities": "Activities"
+  },
+  "lookups": {
+    "prices": {
+      "prodcode": "products"
+    },
+    "job-history": {
+      "empno": "employees",
+      "jobcode": "jobs",
+      "deptcode": "departments"
+    },
+    "sales": {
+      "custno": "customers",
+      "empno": "employees"
+    },
+    "sale-details": {
+      "transno": "sales",
+      "prodcode": "products"
+    },
+    "payments": {
+      "transno": "sales"
+    },
+    "employees": {
+      "jobcode": "jobs",
+      "deptcode": "departments"
+    },
+    "jobs": {
+      "deptcode": "departments"
+    }
+  },
+  "listFilters": {
+    "prices": [
+      "prodcode"
+    ],
+    "job-history": [
+      "empno",
+      "deptcode",
+      "jobcode"
+    ],
+    "sales": [
+      "custno",
+      "empno"
+    ],
+    "sale-details": [
+      "transno",
+      "prodcode"
+    ],
+    "payments": [
+      "transno"
+    ]
+  },
+  "cellLinks": {
+    "customers": {
+      "custno": {
+        "resource": "customers",
+        "key": [
+          "custno"
+        ]
+      },
+      "custname": {
+        "resource": "customers",
+        "key": [
+          "custno"
+        ]
+      }
+    },
+    "products": {
+      "prodcode": {
+        "resource": "products",
+        "key": [
+          "prodcode"
+        ]
+      },
+      "description": {
+        "resource": "products",
+        "key": [
+          "prodcode"
+        ]
+      },
+      "current_price": {
+        "resource": "prices",
+        "filter": [
+          "prodcode"
+        ]
+      },
+      "price_effective_date": {
+        "resource": "prices",
+        "filter": [
+          "prodcode"
+        ]
+      }
+    },
+    "employees": {
+      "empno": {
+        "resource": "employees",
+        "key": [
+          "empno"
+        ]
+      },
+      "firstname": {
+        "resource": "employees",
+        "key": [
+          "empno"
+        ]
+      },
+      "lastname": {
+        "resource": "employees",
+        "key": [
+          "empno"
+        ]
+      }
+    },
+    "departments": {
+      "deptcode": {
+        "resource": "departments",
+        "key": [
+          "deptcode"
+        ]
+      }
+    },
+    "jobs": {
+      "jobcode": {
+        "resource": "jobs",
+        "key": [
+          "jobcode"
+        ]
+      }
+    },
+    "prices": {
+      "prodcode": {
+        "resource": "products",
+        "key": [
+          "prodcode"
+        ]
+      }
+    },
+    "job-history": {
+      "empno": {
+        "resource": "employees",
+        "key": [
+          "empno"
+        ]
+      },
+      "jobcode": {
+        "resource": "jobs",
+        "key": [
+          "jobcode"
+        ]
+      },
+      "deptcode": {
+        "resource": "departments",
+        "key": [
+          "deptcode"
+        ]
+      }
+    },
+    "sales": {
+      "transno": {
+        "resource": "sales",
+        "key": [
+          "transno"
+        ]
+      },
+      "custno": {
+        "resource": "customers",
+        "key": [
+          "custno"
+        ]
+      },
+      "empno": {
+        "resource": "employees",
+        "key": [
+          "empno"
+        ]
+      },
+      "total": {
+        "resource": "sale-details",
+        "filter": [
+          "transno"
+        ]
+      },
+      "paid": {
+        "resource": "payments",
+        "filter": [
+          "transno"
+        ]
+      },
+      "balance": {
+        "resource": "payments",
+        "filter": [
+          "transno"
+        ]
+      }
+    },
+    "sale-details": {
+      "transno": {
+        "resource": "sales",
+        "key": [
+          "transno"
+        ]
+      },
+      "prodcode": {
+        "resource": "products",
+        "key": [
+          "prodcode"
+        ]
+      }
+    },
+    "payments": {
+      "orno": {
+        "resource": "payments",
+        "key": [
+          "orno"
+        ]
+      },
+      "transno": {
+        "resource": "sales",
+        "key": [
+          "transno"
+        ]
+      }
+    }
+  },
+  "related": {
+    "customers": [
+      {
+        "resource": "sales",
+        "filter": [
+          "custno"
+        ]
+      }
+    ],
+    "products": [
+      {
+        "resource": "prices",
+        "filter": [
+          "prodcode"
+        ]
+      }
+    ],
+    "employees": [
+      {
+        "resource": "job-history",
+        "filter": [
+          "empno"
+        ]
+      }
+    ],
+    "departments": [
+      {
+        "resource": "job-history",
+        "filter": [
+          "deptcode"
+        ]
+      }
+    ],
+    "jobs": [
+      {
+        "resource": "job-history",
+        "filter": [
+          "jobcode"
+        ]
+      }
+    ],
+    "sales": [
+      {
+        "resource": "sale-details",
+        "filter": [
+          "transno"
+        ]
+      },
+      {
+        "resource": "payments",
+        "filter": [
+          "transno"
+        ]
+      }
+    ]
+  },
+  "autoCodes": {
+    "customers": {
+      "field": "custno",
+      "table": "customer",
+      "choosePrefix": false
+    },
+    "employees": {
+      "field": "empno",
+      "table": "employee",
+      "choosePrefix": false
+    },
+    "products": {
+      "field": "prodcode",
+      "table": "product",
+      "choosePrefix": true
+    },
+    "departments": {
+      "field": "deptcode",
+      "table": "department",
+      "choosePrefix": true
+    },
+    "jobs": {
+      "field": "jobcode",
+      "table": "job",
+      "choosePrefix": false,
+      "departmentPrefix": true
+    },
+    "sales": {
+      "field": "transno",
+      "table": "sales",
+      "choosePrefix": false
+    },
+    "payments": {
+      "field": "orno",
+      "table": "payment",
+      "choosePrefix": false
+    }
+  },
+  "tableFilters": {
+    "customers": [
+      {
+        "field": "payterm",
+        "type": "select",
+        "options": [
+          "COD",
+          "30D",
+          "45D"
+        ]
+      },
+      {
+        "field": "address",
+        "type": "text"
+      }
+    ],
+    "products": [
+      {
+        "field": "unit",
+        "type": "select",
+        "options": [
+          "pc",
+          "ea",
+          "mtr",
+          "pkg",
+          "ltr"
+        ]
+      }
+    ],
+    "prices": [
+      {
+        "field": "prodcode",
+        "type": "text"
+      },
+      {
+        "field": "effdate",
+        "type": "date"
+      },
+      {
+        "field": "unitprice",
+        "type": "number"
+      }
+    ],
+    "employees": [
+      {
+        "field": "gender",
+        "type": "select",
+        "options": [
+          "M",
+          "F"
+        ]
+      },
+      {
+        "field": "employment",
+        "type": "select",
+        "options": [
+          "employed",
+          "separated"
+        ]
+      },
+      {
+        "field": "hiredate",
+        "type": "date"
+      },
+      {
+        "field": "birthdate",
+        "type": "date"
+      },
+      {
+        "field": "jobname",
+        "type": "text"
+      },
+      {
+        "field": "deptname",
+        "type": "text"
+      }
+    ],
+    "departments": [
+      {
+        "field": "deptcode",
+        "type": "text"
+      },
+      {
+        "field": "deptname",
+        "type": "text"
+      }
+    ],
+    "jobs": [
+      {
+        "field": "jobname",
+        "type": "text"
+      },
+      {
+        "field": "deptname",
+        "type": "text"
+      },
+      {
+        "field": "jobdesc",
+        "type": "text"
+      }
+    ],
+    "job-history": [
+      {
+        "field": "empno",
+        "type": "text"
+      },
+      {
+        "field": "jobcode",
+        "type": "text"
+      },
+      {
+        "field": "deptcode",
+        "type": "text"
+      },
+      {
+        "field": "effdate",
+        "type": "date"
+      },
+      {
+        "field": "salary",
+        "type": "number"
+      }
+    ],
+    "sales": [
+      {
+        "field": "custno",
+        "type": "text"
+      },
+      {
+        "field": "empno",
+        "type": "text"
+      },
+      {
+        "field": "salesdate",
+        "type": "date"
+      }
+    ],
+    "sale-details": [
+      {
+        "field": "transno",
+        "type": "text"
+      },
+      {
+        "field": "prodcode",
+        "type": "text"
+      },
+      {
+        "field": "quantity",
+        "type": "number"
+      }
+    ],
+    "payments": [
+      {
+        "field": "transno",
+        "type": "text"
+      },
+      {
+        "field": "paydate",
+        "type": "date"
+      },
+      {
+        "field": "amount",
+        "type": "number"
+      }
+    ],
+    "users": [
+      {
+        "field": "role",
+        "type": "select",
+        "options": [
+          "user",
+          "admin",
+          "superadmin"
+        ]
+      },
+      {
+        "field": "status",
+        "type": "select",
+        "options": [
+          "pending",
+          "approved",
+          "disapproved",
+          "blocked"
+        ]
+      }
+    ],
+    "audit-log": [
+      {
+        "field": "table_name",
+        "type": "text"
+      },
+      {
+        "field": "action",
+        "type": "select",
+        "options": [
+          "ADD",
+          "EDIT",
+          "DELETE",
+          "RESTORE"
+        ]
+      },
+      {
+        "field": "action_by",
+        "type": "text"
+      },
+      {
+        "field": "action_at",
+        "type": "date"
+      }
+    ],
+    "roles": [
+      {
+        "field": "status",
+        "type": "select",
+        "options": [
+          "active",
+          "inactive"
+        ]
+      }
+    ]
+  }
+}

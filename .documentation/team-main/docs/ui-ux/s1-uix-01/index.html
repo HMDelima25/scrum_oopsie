@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design system | HOPE, Inc.</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f1f5f7;color:#07131a;font:16px/1.55 system-ui,sans-serif}header,main,footer{max-width:1200px;margin:auto;padding:24px}h1{font-size:clamp(28px,4vw,44px);line-height:1.15}h2{font-size:24px}h3{font-size:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px}.card{background:white;border:1px solid #9aa8af;border-radius:14px;padding:24px;min-width:0}label{display:block;margin:12px 0}input:not([type=checkbox]),select{display:block;width:100%;padding:12px;border:1px solid #697a83;border-radius:8px;font:inherit}button,.button{display:inline-block;padding:12px 18px;border:1px solid #697a83;border-radius:10px;background:#e7edf0;color:#07131a;font:inherit;text-decoration:none;margin:4px 4px 4px 0}button:disabled{cursor:not-allowed}a{color:#075b7b}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #075b7b;outline-offset:3px}.note{padding:12px;border-left:4px solid #075b7b;background:#e4f2f7}.error{color:#982c2c}.badge{display:inline-block;padding:4px 8px;border:1px solid;border-radius:6px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:12px;text-align:left;border-bottom:1px solid #bac8d0}fieldset{min-width:0;margin:12px 0;border:1px solid #9aa8af;border-radius:10px}nav{display:flex;gap:16px;flex-wrap:wrap}code{overflow-wrap:anywhere}.muted{color:#54656d}details{margin:12px 0}summary{cursor:pointer}@media(max-width:600px){header,main,footer{padding:16px}.card{padding:16px}}@media print{body{background:white}.card{break-inside:avoid}nav{display:none}}button{border-radius:14px}</style>
+</head>
+<body>
+<header>
+<a href="#content">Skip to content</a>
+<p>HOPE, Inc. · Sprint 1 · Natalia Ortiz</p>
+<h1>Design system</h1>
+<p class="note">Design review artifact. Sample data only. Form actions are disabled; no accounts, sessions or records are created.</p>
+</header>
+<main id="content">
+<h2>Established palette</h2>
+<div class="grid">
+<div class="card">
+<div style="height:64px;background:#03141e;border:1px solid #697a83">
+</div>
+<code>--ocean-950</code>
+<p>#03141e</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#052637;border:1px solid #697a83">
+</div>
+<code>--ocean-900</code>
+<p>#052637</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#073e57;border:1px solid #697a83">
+</div>
+<code>--ocean-800</code>
+<p>#073e57</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#075b7b;border:1px solid #697a83">
+</div>
+<code>--ocean-700</code>
+<p>#075b7b</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#087da4;border:1px solid #697a83">
+</div>
+<code>--ocean-600</code>
+<p>#087da4</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#0ca4cc;border:1px solid #697a83">
+</div>
+<code>--ocean-500</code>
+<p>#0ca4cc</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#62d3e9;border:1px solid #697a83">
+</div>
+<code>--ocean-300</code>
+<p>#62d3e9</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#d8f5fa;border:1px solid #697a83">
+</div>
+<code>--ocean-100</code>
+<p>#d8f5fa</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#d6a72d;border:1px solid #697a83">
+</div>
+<code>--gold-500</code>
+<p>#d6a72d</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#ecc354;border:1px solid #697a83">
+</div>
+<code>--gold-400</code>
+<p>#ecc354</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#f9e6a1;border:1px solid #697a83">
+</div>
+<code>--gold-200</code>
+<p>#f9e6a1</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#07131a;border:1px solid #697a83">
+</div>
+<code>--ink</code>
+<p>#07131a</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#54656d;border:1px solid #697a83">
+</div>
+<code>--muted</code>
+<p>#54656d</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#ffffff;border:1px solid #697a83">
+</div>
+<code>--white</code>
+<p>#ffffff</p>
+</div>
+<div class="card">
+<div style="height:64px;background:#b93838;border:1px solid #697a83">
+</div>
+<code>--danger</code>
+<p>#b93838</p>
+</div>
+</div>
+<h2>Typography and components</h2>
+<div class="grid">
+<section class="card">
+<h2>Page heading</h2>
+<h3>Section heading</h3>
+<p>Body: 16px / 1.55. Supporting copy remains readable at 14px minimum.</p>
+<label>Email<input type="email" placeholder="name@example.com">
+</label>
+<button disabled style="background:#075b7b;color:white">Primary action</button>
+<button disabled>Secondary action</button>
+<p class="error">Error: enter a valid email address.</p>
+</section>
+<section class="card">
+<h3>States</h3>
+<p>
+<span class="badge">Pending</span> <span class="badge">Approved</span> <span class="badge">Blocked</span>
+</p>
+<p class="note">Loading records… Use aria-busy on the affected region.</p>
+<p>No users yet. Add a user when permitted.</p>
+<p>No matches. Clear the current search.</p>
+<p class="error">Could not load users. Keep filters and offer Retry.</p>
+</section>
+</div>
+</main>
+<footer>Review at desktop and mobile widths. Backend enforcement remains the Developer’s responsibility.</footer>
+</body>
+</html>
