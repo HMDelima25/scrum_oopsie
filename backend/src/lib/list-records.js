@@ -3,11 +3,12 @@ const ui=require("../config/ui.json");
 const {check,HttpError}=require("./http");
 module.exports=async function listRecords(req,path){
  const c=resources[path];
+      const staffFields=[...new Set([...c.pk,...c.fields,...(c.readFields||[]),"updated_at"])].filter(field=>!(path==="employees"&&field==="birthdate"));
       let q = req.app.locals.db
         .from(c.listView||c.table)
         .select(
           req.user.role === "user"
-            ? [...new Set([...c.pk, ...c.fields, ...(c.readFields||[]), "updated_at"])].join(",")
+            ? staffFields.join(",")
             : "*",
           {
             count: "exact",
@@ -28,7 +29,8 @@ module.exports=async function listRecords(req,path){
         q = q.eq(field, req.query[field]);
       }
       if(req.query.status!==undefined && !["active","inactive","all"].includes(req.query.status))throw new HttpError(400,"Unknown record status.");
-      q = require("./table-query")(q,req.query,path,[...new Set([...c.pk,...c.fields,...(c.readFields||[]),"is_deleted","stamp","updated_at"])],c.pk,req.user).range(offset, offset + limit - 1);
+      const queryFields=req.user.role==="user"?staffFields:[...new Set([...c.pk,...c.fields,...(c.readFields||[]),"is_deleted","stamp","updated_at"])];
+      q = require("./table-query")(q,req.query,path,queryFields,c.pk,req.user).range(offset, offset + limit - 1);
       const result = await q;
       const rows = check(result);
       if (rows.length && ["products", "sales"].includes(path)) {

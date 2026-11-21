@@ -12,6 +12,7 @@ module.exports = function createApp({
   production = false,
   recoveryMailer,
   registrationMailer,
+  accountDecisionMailer,
 } = {}) {
   if (!db) db = require("./config/supabase")();
   const secret = sessionSecret || process.env.SESSION_SECRET;
@@ -23,6 +24,7 @@ module.exports = function createApp({
   app.locals.db = db;
   app.locals.recoveryMailer = recoveryMailer;
   app.locals.registrationMailer = registrationMailer;
+  app.locals.accountDecisionMailer = accountDecisionMailer;
   app.locals.recoverySecret = secret;
   app.disable("x-powered-by");
   if (runtime.trustProxy) app.set("trust proxy", 1);

@@ -1,0 +1,20 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {codeEmail,decisionEmail,accessLinkEmail}=require('../backend/src/lib/email-template');
+test('HOPE account emails use one branded, email-safe template family',()=>{
+  const registration=codeEmail({name:'Natalia <Owner>',code:'012345',purpose:'registration'});
+  assert.match(registration.html,/H<span[^>]*>O<\/span>PE/);
+  assert.match(registration.html,/Enterprise Resource Planning/);
+  assert.match(registration.html,/012345/);
+  assert.ok(!registration.html.includes('<script'));
+  assert.ok(!registration.html.includes('Natalia <Owner>'));
+  assert.match(registration.text,/012345/);
+  const approved=decisionEmail({name:'Natalia',approved:true,appUrl:'https://hope.example/UI-UX/index.html'});
+  assert.match(approved.html,/Sign in to HOPE/);
+  assert.match(approved.html,/https:\/\/hope\.example/);
+  const rejected=decisionEmail({name:'Natalia',approved:false,appUrl:'https://hope.example'});
+  assert.match(rejected.html,/not approved/i);
+  assert.doesNotMatch(rejected.html,/Sign in to HOPE/);
+  const access=accessLinkEmail({name:'Natalia',url:'https://hope.example/token?a=1&b=2'});
+  assert.match(access.html,/a=1&amp;b=2/);
+});

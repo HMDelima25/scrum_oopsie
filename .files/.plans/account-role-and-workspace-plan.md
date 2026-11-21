@@ -2,7 +2,21 @@
 
 ## Status
 
-Draft for professor and team confirmation. This document defines the recommended direction; it does not authorize database or application changes by itself.
+Approved implementation direction. Staff and User receive separate page trees that reuse the Admin layout, visual theme, and proven operational components without placing all account types on the same page routes.
+
+## Workspace architecture decision
+
+| Workspace | Route family | Audience |
+| --- | --- | --- |
+| Admin | `/UI-UX/modules/` | Admin and Superadmin |
+| Staff | `/UI-UX/staff/modules/` | Approved User accounts with an active named business role |
+| User | `/UI-UX/user/` | Approved User accounts without a named business role |
+
+The Staff pages duplicate the Admin page entry points, but reuse the established Admin CSS, layout conventions, table behavior, and permission-aware JavaScript. This provides separate routes and page ownership without copying security logic into multiple inconsistent implementations.
+
+The User pages are account-only pages: Account Home, My Profile, My Access, and Security. They do not expose ERP business modules.
+
+After authentication, the backend returns a calculated `workspace` value: `admin` for Admin and Superadmin, `staff` for a User with at least one effective business permission, and `user` for a User without operational access. This keeps the editable premade `User` permission role in the account-only workspace because its business permissions are all disabled. Password and Google sign-in use the same decision.
 
 ## Problem
 
@@ -58,7 +72,7 @@ flowchart LR
     E --> O[All modules, audit, and protected settings]
 ```
 
-The diagram shows why User should not be treated as a job title. User identifies the base account authority; the named business role and its permissions determine whether the account receives a Staff workspace.
+The diagram shows why User should not be treated as a job title. User identifies the base account authority; the named business role and its permissions determine whether the account is routed to the separate Staff workspace.
 
 ## Role and permission behavior
 
@@ -150,7 +164,7 @@ Show only pages allowed by effective permissions. Examples:
 | Accounting Staff | Dashboard, Payments, Balances, permitted Reports |
 | Report Viewer | Dashboard and individually permitted Reports |
 
-The sidebar, quick actions, dashboard counts, page controls, and backend routes must use the same effective permission source.
+The Staff sidebar, quick actions, dashboard counts, page controls, and backend routes must use the same effective permission source. Staff pages reuse the Admin visual system but live under their own `/UI-UX/staff/modules/` routes.
 
 ### Admin
 
@@ -265,15 +279,18 @@ If the professor wants this direction, treat it as a separate marketplace or ven
 
 ### Phase 1: Confirm terminology and workflow
 
-- Ask the professor whether User means the base account or a specific external actor.
+- Record that User is the base website account and Staff is a User with an assigned named business role, unless the professor supplies a different external workflow.
 - Ask whether registration is public or invitation-only.
 - Confirm whether one named role per account is sufficient.
 - Confirm who can create, edit, deactivate, assign, and remove named roles.
 - Record the answers in the authoritative requirements documentation.
 
-### Phase 2: Align interface language
+### Phase 2: Separate and align the workspaces
 
-- Keep Users as the account-management page.
+- Keep Users as the Admin account-management page.
+- Maintain separate Admin, Staff, and User page routes.
+- Reuse the Admin layout and theme in Staff pages without routing Staff through Admin URLs.
+- Provide User-only Account Home, My Profile, My Access, and Security pages.
 - Label `permission_role` in the UI as Assigned role or Business role.
 - Remove wording that treats User as a staff job title.
 - Add the Account Status and My Access states.
@@ -301,21 +318,22 @@ If the professor wants this direction, treat it as a separate marketplace or ven
 Test at minimum:
 
 1. Pending User cannot sign in or open business modules.
-2. Approved User without a named role sees only account pages and the no-role message.
-3. Staff User sees only the modules and actions granted by the assigned named role.
-4. Changing a role updates existing members on their next protected request.
-5. Deactivating a role removes its operational access without deleting the accounts.
-6. Admin cannot see or modify protected Superadmin accounts.
-7. A named role cannot grant Admin or Superadmin authority.
-8. Direct API and URL access is denied when the corresponding permission is absent.
-9. Audit entries identify the actor, target account or role, change, and time.
-10. Desktop and mobile navigation correctly handle no-role, Staff, Admin, and Superadmin states.
+2. Approved User without a named role is routed to `/UI-UX/user/` and sees only account pages and the no-role message.
+3. Staff User is routed to `/UI-UX/staff/modules/` and sees only the modules and actions granted by the assigned named role.
+4. Admin and Superadmin are routed to `/UI-UX/modules/`.
+5. Changing a role updates existing members on their next protected request.
+6. Deactivating a role removes its operational access without deleting the accounts.
+7. Admin cannot see or modify protected Superadmin accounts.
+8. A named role cannot grant Admin or Superadmin authority.
+9. Direct API and URL access is denied when the corresponding permission is absent.
+10. Audit entries identify the actor, target account or role, change, and time.
+11. Desktop and mobile navigation correctly handle User, Staff, Admin, and Superadmin states.
 
 ## Acceptance criteria
 
 This plan is ready for implementation only when:
 
-- The professor has defined whether User is a base account or a concrete external actor.
+- User is defined as the base website account unless a separate external workflow is approved.
 - Every approved actor has at least one real task and corresponding page or state.
 - No marketplace behavior is assumed without approval.
 - Staff access comes from named business roles and effective permissions.

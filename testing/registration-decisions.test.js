@@ -6,7 +6,7 @@ const createApp = require("../backend/src/app");
 test("Registration review decisions are atomic, authorized and filterable", async (t) => {
   const db = await createDatabase(),
     hash = await bcrypt.hash("Fixture-auth-2026!", 4),
-    ids = {};
+    ids = {},messages=[];
   for (const [username, name, role, status] of [
     ["root", "Review Superadmin", "superadmin", "approved"],
     ["manager", "Review Admin", "admin", "approved"],
@@ -16,14 +16,15 @@ test("Registration review decisions are atomic, authorized and filterable", asyn
   ])
     ids[username] = (
       await db.pg.query(
-        "INSERT INTO users(username,name,role,status,password_hash) VALUES($1,$2,$3,$4,$5) RETURNING id",
-        [username, name, role, status, hash],
+        "INSERT INTO users(username,email,name,role,status,password_hash) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",
+        [username, username+"@example.test", name, role, status, hash],
       )
     ).rows[0].id;
   const server = createApp({
     db,
     sessionSecret: "registration-review-test-secret-".repeat(2),
     origins: [],
+    accountDecisionMailer:async mail=>messages.push(mail),
   }).listen(0, "127.0.0.1");
   await new Promise((r) => server.once("listening", r));
   t.after(async () => {
@@ -82,6 +83,7 @@ test("Registration review decisions are atomic, authorized and filterable", asyn
           expected,
         );
       assert.equal((await row("approve-me")).status, "pending");
+      assert.equal(messages.length,0);
     },
   );
   await t.test(
@@ -99,6 +101,9 @@ test("Registration review decisions are atomic, authorized and filterable", asyn
       assert.equal(result.body.data.role, "user");
       assert.match(result.body.data.stamp, /Review Superadmin/);
       assert.equal(result.body.data.password_hash, undefined);
+      assert.equal(result.body.notification.sent,true);
+      assert.equal(messages.at(-1).to,"approve-me@example.test");
+      assert.match(messages.at(-1).subject,/approved/i);
     },
   );
   await t.test(
@@ -117,6 +122,8 @@ test("Registration review decisions are atomic, authorized and filterable", asyn
         200,
       );
       assert.equal((await row("reject-me")).status, "disapproved");
+      assert.equal(messages.at(-1).to,"reject-me@example.test");
+      assert.match(messages.at(-1).subject,/not approved/i);
       const login = await req("rejected", "/api/auth/login", {
         identifier: "reject-me",
         password: "Fixture-auth-2026!",

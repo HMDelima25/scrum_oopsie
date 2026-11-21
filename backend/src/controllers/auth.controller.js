@@ -91,15 +91,7 @@ async function loginUser(req, res) {
   );
   res.json({
     status: "success",
-    data: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      status: user.status,
-      rights: user.rights,
-    },
+    data: await require("../lib/access-profile")(req, user),
   });
 }
 async function logoutUser(req, res) {
@@ -124,11 +116,10 @@ async function resetPassword(req, res) {
     message: "Password updated. Sign in to continue.",
   });
 }
-function getMe(req, res) {
-  const { id, username, email, name, role, status, rights } = req.user;
+async function getMe(req, res) {
   res.json({
     status: "success",
-    data: { id, username, email, name, role, status, rights },
+    data: await require("../lib/access-profile")(req, req.user),
   });
 }
 module.exports = {

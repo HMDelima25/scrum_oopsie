@@ -2,7 +2,7 @@
 (() => {
   if(window.HopeNavigation)return;
   let navigating=false, pending;
-  const isModule=url=>url.origin===location.origin&&/^\/UI-UX\/modules\/[a-z-]+\/(?:index\.html)?$/.test(url.pathname);
+  const isModule=url=>url.origin===location.origin&&/^\/UI-UX\/(?:staff\/)?modules\/[a-z-]+\/(?:index\.html)?$/.test(url.pathname);
   async function go(target,pop=false){
     const url=new URL(target,location.href);
     if(!isModule(url)){location.assign(url.href);return;}
@@ -16,7 +16,8 @@
       const page=new DOMParser().parseFromString(await response.text(),'text/html');
       // Fetch first, so the current workspace remains visible during navigation.
       document.dispatchEvent(new Event('hope:leave'));
-      const module=url.pathname.split('/')[3];
+      const parts=url.pathname.split('/').filter(Boolean);
+      const module=parts[1]==='staff'?parts[3]:parts[2];
       document.body.dataset.module=module;
       document.title=page.title;
       if(!pop)history.pushState({},'',url.href);
@@ -41,7 +42,10 @@
       }
       frame.querySelectorAll('.sidebar-nav a').forEach(a=>{const active=new URL(a.href).pathname===url.pathname;a.classList.toggle('is-active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
       const script=document.createElement('script');
-      script.src=(module==='dashboard'?'/frontend/admin/dashboard/dashboard-live.js':'/frontend/admin/ui/live-admin.js');
+      const workspace=document.body.dataset.workspace||'admin';
+      script.src=module==='dashboard'&&workspace==='staff'
+        ?'/frontend/staff/dashboard/staff-dashboard.js'
+        :(module==='dashboard'?'/frontend/admin/dashboard/dashboard-live.js':'/frontend/admin/ui/live-admin.js');
       const ready=new Promise(resolve=>document.addEventListener('hope:ready',resolve,{once:true}));
       script.onerror=()=>document.dispatchEvent(new Event('hope:ready'));
       script.onload=()=>script.remove();document.body.append(script);
