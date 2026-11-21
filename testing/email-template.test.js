@@ -9,9 +9,10 @@ test('HOPE account emails use one branded, email-safe template family',()=>{
   assert.ok(!registration.html.includes('<script'));
   assert.ok(!registration.html.includes('Natalia <Owner>'));
   assert.match(registration.text,/012345/);
-  const approved=decisionEmail({name:'Natalia',approved:true,appUrl:'https://hope.example/UI-UX/index.html'});
+  const approved=decisionEmail({name:'Natalia',approved:true,appUrl:'https://hope-erp-cgko.onrender.com/UI-UX/index.html'});
   assert.match(approved.html,/Sign in to HOPE/);
-  assert.match(approved.html,/https:\/\/hope\.example/);
+  assert.match(approved.html,/https:\/\/hope-erp-cgko\.onrender\.com\/UI-UX\/index\.html/);
+  assert.doesNotMatch(approved.html,/localhost|127\.0\.0\.1/);
   const rejected=decisionEmail({name:'Natalia',approved:false,appUrl:'https://hope.example'});
   assert.match(rejected.html,/not approved/i);
   assert.doesNotMatch(rejected.html,/Sign in to HOPE/);

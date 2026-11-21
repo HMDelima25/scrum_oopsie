@@ -122,7 +122,7 @@ router.post(
     );
     let notification={sent:false,message:"The account decision was saved, but no email address is available."};
     if(data.email){
-      const approved=body.decision==="approved",appUrl=(process.env.APP_URL||`${req.protocol}://${req.get("host")}`).replace(/\/$/,"");
+      const approved=body.decision==="approved",appUrl=(process.env.RENDER_EXTERNAL_URL||process.env.APP_URL||`${req.protocol}://${req.get("host")}`).replace(/\/$/,"");
       try{
         const mail=req.app.locals.accountDecisionMailer||require("../lib/mailer").createMailer();
         const content=require("../lib/email-template").decisionEmail({name:data.name,approved,appUrl:appUrl+"/UI-UX/index.html"});
