@@ -1032,6 +1032,44 @@ dialog::backdrop {
   border-color: var(--danger);
 }
 
+.dialog-password-shell {
+  position: relative;
+}
+
+.dialog-password-shell .dialog-input {
+  padding-right: 54px;
+}
+
+.dialog-visibility-toggle {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  color: var(--ocean-700);
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  place-items: center;
+}
+
+.dialog-visibility-toggle:hover,
+.dialog-visibility-toggle:focus-visible {
+  background: var(--ocean-100);
+}
+
+.dialog-visibility-toggle:focus-visible {
+  outline: 2px solid var(--ocean-600);
+  outline-offset: 1px;
+}
+
+.dialog-visibility-toggle svg {
+  width: 22px;
+  fill: currentColor;
+}
+
 .password-strength {
   --strength-color: #87949a;
   margin-top: 10px;

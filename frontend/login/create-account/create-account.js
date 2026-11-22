@@ -13,6 +13,22 @@ window.initializeHopeRegistration = ({ $, matchPassword, validateInputs, fieldEr
   $("#create-password").minLength = 12;
   $("#confirm-password").minLength = 12;
 
+  document.querySelectorAll("#create-form .dialog-visibility-toggle").forEach((button) => {
+    const input = $("#" + button.dataset.passwordTarget);
+    button.addEventListener("click", () => {
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      button.setAttribute("aria-pressed", String(!showing));
+      button.setAttribute(
+        "aria-label",
+        showing
+          ? button.dataset.passwordTarget === "confirm-password" ? "Show confirm password" : "Show password"
+          : button.dataset.passwordTarget === "confirm-password" ? "Hide confirm password" : "Hide password",
+      );
+      input.focus({ preventScroll: true });
+    });
+  });
+
   let verifying = false;
   const code = $("#registration-code");
   const codeDigits = [...document.querySelectorAll(".registration-digit")];
