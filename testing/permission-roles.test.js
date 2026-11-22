@@ -7,11 +7,13 @@ const resources=require('../backend/src/config/resources');
 const catalogue=require('../backend/src/config/rights.json');
 test('permission catalogue and named roles enforce real requests',async t=>{
  const db=await createDatabase(),password='Role-verification-2026',hash=await bcrypt.hash(password,4),ids={};
+ await t.test('editable Admin, Staff and User presets have safe defaults',async()=>{const presets=(await db.pg.query("SELECT name,rights FROM permission_role WHERE name IN ('Admin','Staff','User') ORDER BY name")).rows;assert.deepEqual(presets.map(r=>r.name),['Admin','Staff','User']);const admin=presets.find(r=>r.name==='Admin').rights,staff=presets.find(r=>r.name==='Staff').rights,user=presets.find(r=>r.name==='User').rights;assert.ok(Object.values(admin).every(Boolean));assert.equal(staff['customers.view'],true);assert.equal(staff['customers.add'],true);assert.equal(staff['products.priceAdd'],true);assert.equal(staff['customers.delete'],false);assert.ok(Object.values(user).every(v=>v===false));});
  for(const [name,role,status] of [['root','superadmin','approved'],['manager','admin','approved'],['member','user','approved'],['pending','user','pending']])ids[name]=(await db.pg.query('INSERT INTO users(email,name,password_hash,role,status) VALUES($1,$2,$3,$4,$5) RETURNING id',[name+'@example.test',name,hash,role,status])).rows[0].id;
  const server=createApp({db,sessionSecret:'role-test-only-secret-'.repeat(3)}).listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(async()=>{await new Promise(r=>server.close(r));await db.pg.close();});
  const cookies={},base='http://127.0.0.1:'+server.address().port;
  async function request(who,method,path,body,headers={}){const response=await fetch(base+path,{method,headers:{'content-type':'application/json',...(cookies[who]?{cookie:cookies[who]}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];return {status:response.status,body:await response.json()};}
  for(const who of ['root','manager','member'])assert.equal((await request(who,'POST','/api/auth/login',{email:who+'@example.test',password})).status,200);
+ await t.test('premade roles remain editable through the normal role API',async()=>{const staff=(await db.pg.query("SELECT id,rights FROM permission_role WHERE name='Staff'")).rows[0],rights={...staff.rights,'reports.view':true};const changed=await request('root','PUT','/api/admin/roles/'+staff.id,{description:'Editable operational Staff preset',rights});assert.equal(changed.status,200,JSON.stringify(changed));assert.equal(changed.body.data.description,'Editable operational Staff preset');assert.equal(changed.body.data.rights['reports.view'],true);});
  const all=Object.fromEntries(Object.keys(catalogue).map(k=>[k,true]));
  const grant=async (rights,who="member")=>{const r=await request('root','PUT',`/api/admin/users/${ids[who]}/rights`,{rights});assert.equal(r.status,200,JSON.stringify(r));};
  let seq=0;
@@ -72,7 +74,7 @@ test('permission catalogue and named roles enforce real requests',async t=>{
  });
  await t.test('invalid, duplicate and stale changes fail; parent gates clear child permissions',async()=>{
   assert.equal((await request('root','POST','/api/admin/roles',{name:'CUSTOMER CLERK'})).status,409);
-  for(const payload of [{name:'Admin'},{name:'bad',rights:{'customers.add':'yes'}},{name:'bad',rights:{'settings.edit':true}},{name:'bad',role:'superadmin'}])assert.equal((await request('root','POST','/api/admin/roles',payload)).status,400);
+  for(const payload of [{name:''},{name:'bad',rights:{'customers.add':'yes'}},{name:'bad',rights:{'settings.edit':true}},{name:'bad',role:'superadmin'}])assert.equal((await request('root','POST','/api/admin/roles',payload)).status,400);
   assert.equal((await request('root','PUT','/api/admin/roles/'+role.id,{name:'Changed'},{'if-match':JSON.stringify('2000-01-01T00:00:00Z')})).status,409);
   assert.equal((await request('root','POST','/api/admin/roles',{name:'Invalid prototype key',rights:JSON.parse('{"toString":true}')})).status,400);
   const r=await request('root','PUT','/api/admin/roles/'+role.id,{rights:{'customers.view':false,'customers.add':true}});assert.equal(r.body.data.rights['customers.add'],false);
