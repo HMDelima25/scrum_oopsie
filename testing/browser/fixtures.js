@@ -11,6 +11,7 @@ async function buildFixtures(origin) {
     ["qa-root", "QA Superadmin", "superadmin", "approved"],
     ["qa-admin", "QA Admin", "admin", "approved"],
     ["qa-user", "QA User", "user", "approved"],
+    ["qa-basic", "QA Basic User", "user", "approved"],
     ["qa-managed", "QA Managed User", "user", "approved"],
     ["qa-pending", "QA Pending User", "user", "pending"],
     ["qa-reject", "QA Reject User", "user", "pending"],
@@ -18,7 +19,7 @@ async function buildFixtures(origin) {
   ];
   for (const [username, name, role, status] of users) {
     const rights =
-      role === "superadmin"
+      role === "superadmin" || username === "qa-basic"
         ? {}
         : { "customers.view": true, "customers.add": role === "admin" };
     ids[username] = (
@@ -36,6 +37,16 @@ async function buildFixtures(origin) {
       )
     ).rows[0].id;
   }
+  const staffRole = (
+    await db.pg.query(
+      "INSERT INTO permission_role(name,description,rights) VALUES('Customer Staff','Browser fixture role',$1) RETURNING id",
+      [{ "customers.view": true }],
+    )
+  ).rows[0];
+  await db.pg.query(
+    "UPDATE users SET permission_role_id=$1 WHERE id=$2",
+    [staffRole.id, ids["qa-user"]],
+  );
   await db.pg.query(
     "INSERT INTO customer(custno,custname,payterm,address) VALUES('C0001','QA Customer','COD','Synthetic test data')",
   );
