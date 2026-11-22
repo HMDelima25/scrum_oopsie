@@ -1,13 +1,15 @@
 const resources=require("../config/resources");
 const ui=require("../config/ui.json");
 const {check,HttpError}=require("./http");
+const {allowed}=require("./permissions");
 module.exports=async function listRecords(req,path){
  const c=resources[path];
+      const readFields=(c.readFields||[]).filter(field=>field!=="outstanding_balance"||path!=="customers"||allowed(req.user,"sales.view"));
       let q = req.app.locals.db
         .from(c.listView||c.table)
         .select(
           req.user.role === "user"
-            ? [...new Set([...c.pk, ...c.fields, ...(c.readFields||[]), "updated_at"])].join(",")
+            ? [...new Set([...c.pk, ...c.fields, ...readFields, "updated_at"])].join(",")
             : "*",
           {
             count: "exact",
@@ -28,9 +30,10 @@ module.exports=async function listRecords(req,path){
         q = q.eq(field, req.query[field]);
       }
       if(req.query.status!==undefined && !["active","inactive","all"].includes(req.query.status))throw new HttpError(400,"Unknown record status.");
-      q = require("./table-query")(q,req.query,path,[...new Set([...c.pk,...c.fields,...(c.readFields||[]),"is_deleted","stamp","updated_at"])],c.pk,req.user).range(offset, offset + limit - 1);
+      q = require("./table-query")(q,req.query,path,[...new Set([...c.pk,...c.fields,...readFields,"is_deleted","stamp","updated_at"])],c.pk,req.user).range(offset, offset + limit - 1);
       const result = await q;
       const rows = check(result);
+      if(path==="customers"&&!allowed(req.user,"sales.view"))for(const row of rows)delete row.outstanding_balance;
       if (rows.length && ["products", "sales"].includes(path)) {
         const key = path === "products" ? "prodcode" : "transno";
         const computed = check(

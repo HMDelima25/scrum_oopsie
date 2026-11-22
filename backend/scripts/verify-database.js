@@ -46,7 +46,7 @@ async function main() {
   assert.equal(result.tables.rights, 41);
   assert.equal(result.tables.role, 3);
   assert.equal(result.tables.module, 5);
-  assert.equal(result.tables.app_migration, 19);
+  assert.equal(result.tables.app_migration, 20);
   const directory=await db.from('employee_directory').select('empno,jobname,deptname',{count:'exact',head:true});
   if(directory.error)throw new Error('employee_directory: '+directory.error.code);
   assert.equal(directory.count,result.tables.employee);
@@ -55,6 +55,10 @@ async function main() {
   if(jobDirectory.error)throw new Error('job_directory: '+jobDirectory.error.code);
   assert.equal(jobDirectory.count,result.tables.job);
   result.jobDirectoryRows=jobDirectory.count;
+  const customerBalance=await db.from('customer_balance').select('custno,outstanding_balance',{count:'exact',head:true});
+  if(customerBalance.error)throw new Error('customer_balance: '+customerBalance.error.code);
+  assert.equal(customerBalance.count,result.tables.customer);
+  result.customerBalanceRows=customerBalance.count;
   for (const report of [
     "topCustomers",
     "productMaster",

@@ -123,12 +123,13 @@ for (const [path, c] of Object.entries(resources)) {
     `/${path}/:key`,
     read,
     wrap(async (req, res) => {
+      const readFields=(c.readFields||[]).filter(field=>field!=="outstanding_balance"||path!=="customers"||allowed(req.user,"sales.view"));
       let q = filtered(
         req.app.locals.db
           .from(c.listView||c.table)
           .select(
             req.user.role === "user"
-              ? [...new Set([...c.pk, ...c.fields, ...(c.readFields||[]), "updated_at"])].join(",")
+              ? [...new Set([...c.pk, ...c.fields, ...readFields, "updated_at"])].join(",")
               : "*",
           ),
         key(c, req.params.key),
@@ -136,6 +137,7 @@ for (const [path, c] of Object.entries(resources)) {
       if (req.user.role === "user") q = q.eq("is_deleted", false);
       const row = check(await q.maybeSingle());
       if (!row) throw new HttpError(404, "Record not found.");
+      if(path==="customers"&&!allowed(req.user,"sales.view"))delete row.outstanding_balance;
       if(path==='products'){const current=check(await req.app.locals.db.from('product_current_price').select('unitprice,effdate').eq('prodcode',row.prodcode).maybeSingle());row.current_price=current?.unitprice??null;row.price_effective_date=current?.effdate??null;}
       res.json({ status: "success", data: row });
     }),

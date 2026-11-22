@@ -17,7 +17,7 @@ The backend accepts either `SUPABASE_SECRET_KEY` or the team's `SUPABASE_SERVICE
 
 Main's older SQL and this application's SQL both create employee/customer/users and other tables, but use different role/session/audit structures (`app_sessions` versus `app_session`, `app_audit_events` versus `audit_log`). They cannot safely be concatenated into one migration chain. Main's alternate SQL is preserved in the source archive and is not executed alongside `database/migrations/`. Respect main's deletion of the unrelated November 2 team/project migrations and its deletion of automatic migration workflows.
 
-No automatic SQL deployment is reintroduced. Existing live databases need an owner-reviewed baseline/upgrade; do not replay the base migration over existing tables. The isolated tests rebuild this application's schema from scratch. Before enabling the new registration flow live, apply `20261110001900_registration_email_verification.sql` and authorize the Gmail HTTPS sender on Render Free, which blocks SMTP.
+No automatic SQL deployment is reintroduced. Existing live databases need an owner-reviewed baseline/upgrade; do not replay the base migration over existing tables. The isolated tests rebuild this application's schema from scratch. Before deploying the current feature set, apply `20261110001900_registration_email_verification.sql` and `20261122002000_customer_outstanding_balance.sql`; also authorize the Gmail HTTPS sender on Render Free, which blocks SMTP, before enabling registration.
 
 ## Review and deployment
 
