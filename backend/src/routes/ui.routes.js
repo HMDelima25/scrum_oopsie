@@ -13,9 +13,9 @@ router.get("/ui-bootstrap", wrap(async(req,res)=>{
   if(!Array.isArray(group))throw new HttpError(400,"Unknown workspace.");
   const views=group.filter(key=>{const c=resources[key];return !c||allowed(req.user,`${c.module}.${c.read||"view"}`);});
   const view=views.includes(req.query.view)?req.query.view:views[0];
-  const {id,username,email,name,role,status,rights}=req.user;
+  const user=await require("../lib/access-profile")(req,req.user);
   const records=resources[view]?await require("../lib/list-records")(req,view):null;
-  res.json({status:"success",data:{user:{id,username,email,name,role,status,rights},schema:{...ui,resources},view,records}});
+  res.json({status:"success",data:{user,schema:{...ui,resources},view,records}});
 }));
 router.get("/ui-dashboard-data",wrap(async(req,res)=>{
   const names=["customers","products","prices","employees","departments","jobs","sales","payments"];
@@ -30,8 +30,8 @@ router.get("/ui-dashboard-data",wrap(async(req,res)=>{
       if(offset>=result.count||!result.data.length)break;
     }
   }));
-  const {id,username,email,name,role,status,rights}=req.user;
-  res.json({status:"success",data:{user:{id,username,email,name,role,status,rights},records}});
+  const user=await require("../lib/access-profile")(req,req.user);
+  res.json({status:"success",data:{user,records}});
 }));
 router.get("/next-code/:resource",wrap(async(req,res)=>{
  const code=ui.autoCodes[req.params.resource],c=resources[req.params.resource];
