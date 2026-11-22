@@ -1,13 +1,13 @@
 # Render deployment
 
-Use the existing Free Web Service in Singapore, sourced from `HMDelima25/scrum_oopsie`, branch `main`, with repository root unchanged. This source is prepared in Render, but the previous working deployment is intentionally still serving traffic until PR #83 is reconciled and merged. The initial build of the older main was canceled before publication.
+Use the existing Free Web Service in Singapore, sourced from Natalia's fork `riellealia/scrum_oopsie`, branch `codex/natalia-current-code`, with repository root unchanged. Do not create a second Render service for this branch.
 
 - Node 22; build `npm ci --omit=dev`; start `npm start`.
 - Set NODE_ENV=production, HOST=0.0.0.0 and TRUST_PROXY=1.
 - Store SUPABASE_URL, SUPABASE_SECRET_KEY and a separately generated SESSION_SECRET privately in Render. Never commit .env.
 - APP_URL and FRONTEND_ORIGINS default to Render's assigned external URL. Explicit values override these defaults for custom domains.
 - Health check `/api/health` verifies the Supabase connection. Migrations are not run at startup.
-- The original repository currently uses a public Git URL. After PR #83 is merged, use Manual Deploy > Deploy latest commit. Automatic deployment requires the original repository owner to authorize the Render GitHub app for `HMDelima25/scrum_oopsie`, then connect that repository as a Git Provider and select On Commit. The fork's authorization does not cover the original owner's repository. See [Updating HOPE](UPDATING-HOPE.md).
+- Use Manual Deploy > Deploy latest commit after the service is connected to Natalia's fork. Automatic deployment requires Natalia to authorize the Render GitHub app for `riellealia/scrum_oopsie`, connect that repository as a Git Provider, and select On Commit. See [Updating HOPE](UPDATING-HOPE.md).
 
 Render Free sleeps while idle. Gmail SMTP ports are blocked. Both recovery codes and setup invitations now support Gmail's HTTPS API: set MAIL_DELIVERY=gmail-api and privately configure GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN and MAIL_FROM. Authorize the sender account with the narrow gmail.send permission. This is separate from users signing into HOPE with Google; existing SMTP app passwords cannot be used as Gmail API tokens. The code does not grant this permission or send a real email during tests. Until sender authorization is configured, hosted email remains unavailable.
 

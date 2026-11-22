@@ -8,3 +8,5 @@ var/
 .DS_Store
 playwright-report/
 test-results/
+tmp/
+.files/.plans/pull-request-issue-list.md
