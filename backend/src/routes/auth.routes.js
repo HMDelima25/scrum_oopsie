@@ -56,4 +56,6 @@ router.get(
   wrap(require("../lib/oauth").googleCallback),
 );
 router.get("/me", requireUser, wrap(c.getMe));
+// Used only by the isolated browser test server between tests.
+router.resetRateLimit = () => buckets.clear();
 module.exports = router;

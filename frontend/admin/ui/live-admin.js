@@ -68,6 +68,10 @@
       members: "Members",
       archived_at: "Archived at",
       changed_at: "Changed on",
+      decided_on: "Decided on",
+      decision: "Decision",
+      decided_by: "Decided by",
+      decided_by_email: "Decided by email",
       change_kind: "Change",
       status: view==="roles"?"Status":"Account status",
     }[key] ||
@@ -287,13 +291,13 @@
   function tableParams(){const params=new URLSearchParams({status:filter,limit:groupBy?"200":"50",offset:groupBy?"0":String(page*50),sort:sortField||cfg()?.pk[0]||"name",direction:descending?"desc":"asc"});if(query.trim())params.set("q",query.trim());for(const [key,value]of Object.entries(extraFilters))if(value!=="")params.set("f_"+key,value);return params;}
   function refreshTable(){
     clearTimeout(searchTimer);page=0;initialRecords=null;
-    if(["reports","audit-log","activities"].includes(view)){paintAuxRows();return;}
+    if(["reports","audit-log","activities","registration-decisions"].includes(view)){paintAuxRows();return;}
     listAbort?.abort();loading=false;queued=false;version++;load(true);
   }
   function filterSpecs(fields=[]){return schema.tableFilters?.[view]||fields.filter(f=>!['new_values','old_values'].includes(f)).map(field=>({field,type:schema.fields[field]?.[1]==="number"||typeof auxiliaryRows.find(r=>r[field]!=null)?.[field]==="number"?"number":schema.fields[field]?.[1]==="date"?"date":"text"}));}
   function configureTools(auxFields){
     const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...(cfg().displayFields||cfg().fields),...(cfg().readFields||[])])]:[]);
-    if(!fields.includes(sortField)){sortField=view==="activities"?"logged_in_at":view==="users"?"name":fields[0];if(view==="activities")descending=true;}
+    if(!fields.includes(sortField)){sortField=view==="activities"?"logged_in_at":view==="registration-decisions"?"decided_on":view==="users"?"name":fields[0];if(["activities","registration-decisions"].includes(view))descending=true;}
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
     const specs=filterSpecs(fields),panel=document.querySelector("#live-filters");
@@ -313,7 +317,7 @@
     const changed=()=>{extraFilters=Object.fromEntries([...panel.querySelectorAll('[data-table-filter]')].map(el=>[el.dataset.tableFilter,el.value]));updateFilterIcon();clearTimeout(searchTimer);searchTimer=setTimeout(refreshTable,250);};
     panel.querySelectorAll('[data-table-filter]').forEach(el=>{el.value=extraFilters[el.dataset.tableFilter]||"";el.oninput=changed;el.onchange=changed;});
     panel.querySelector('#live-filter-clear').onclick=()=>{panel.querySelectorAll('[data-table-filter]').forEach(el=>el.value="");changed();};
-    document.querySelector('#live-filter').closest('label').hidden=!admin()||view==='reports'||['audit-log','activities'].includes(view);
+    document.querySelector('#live-filter').closest('label').hidden=!admin()||view==='reports'||['audit-log','activities','registration-decisions'].includes(view);
   }
   function showAuxRows(data,target){auxiliaryRows=data;auxiliaryTarget=target;const fields=(view==='activities'?['logged_in_at','name','role','login_date','login_time']:Object.keys(data[0]||{})).filter(f=>!['password_hash','rights'].includes(f));if(auxiliaryColumns!==JSON.stringify(fields)){auxiliaryColumns=JSON.stringify(fields);configureTools(fields);}document.querySelector('#live-toolbar').hidden=false;paintAuxRows();}
   function paintAuxRows(){
@@ -458,13 +462,16 @@
         event.preventDefault();event.stopPropagation();
         const row=rows.find(row=>row.id===button.dataset.userId);if(!row)return;
         const controls=button.closest('.registration-decisions').querySelectorAll('button');controls.forEach(control=>control.disabled=true);
-        try{const result=await send('/api/admin/users/'+encodeURIComponent(row.id)+'/review','POST',{decision:button.dataset.registrationDecision},row);await load(true);notice(result.notification?.message||'Registration decision saved.',result.notification?.sent===false);}
-        catch(error){notice(error.message,true);controls.forEach(control=>control.disabled=false);}
+        if(!await reviewRegistration(row,button.dataset.registrationDecision))controls.forEach(control=>control.disabled=false);
       };
     });
     const add = document.querySelector("#live-add");
     add.hidden = !permitted(0);
     add.textContent = view==="roles"?"+ Add role":`+ Add ${singular(view)}`;
+  }
+  async function reviewRegistration(row,decision){
+    try{const result=await send('/api/admin/users/'+encodeURIComponent(row.id)+'/review','POST',{decision},row);await load(true);notice(result.notification?.message||'Registration decision saved.',result.notification?.sent===false);return true;}
+    catch(error){notice(error.message,true);return false;}
   }
   function context(row, x, y) {
     const menu = document.querySelector("#live-context");
@@ -473,8 +480,10 @@
       menu.querySelector('[data-role-action="edit"]').onclick=()=>{menu.hidden=true;openRoleProfile(row);};
       menu.querySelector('[data-role-action="members"]').onclick=()=>{menu.hidden=true;openRoleMembers(row);};
     }else if(view==="users"){
-      menu.innerHTML='<button type="button" role="menuitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.5-13.5 4 4M14 5l2-2 4 4-2 2"/></svg><span>Edit user</span></button>';
-      menu.querySelector("button").onclick = () => { menu.hidden=true; openForm(row); };
+      const reviewable=row.status==='pending'&&!row.is_deleted&&user.role==='superadmin'&&row.id!==user.id;
+      menu.innerHTML=(reviewable?'<button type="button" role="menuitem" data-user-action="approved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span>Approve registration</span></button><button type="button" role="menuitem" data-user-action="disapproved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg><span>Disapprove registration</span></button>':'')+'<button type="button" role="menuitem" data-user-action="edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.5-13.5 4 4M14 5l2-2 4 4-2 2"/></svg><span>Edit user</span></button>';
+      menu.querySelector('[data-user-action="edit"]').onclick = () => { menu.hidden=true; openForm(row); };
+      menu.querySelectorAll('[data-user-action="approved"],[data-user-action="disapproved"]').forEach(item=>item.onclick=async()=>{menu.hidden=true;await reviewRegistration(row,item.dataset.userAction);});
     }else{
       menu.innerHTML='<button type="button" role="menuitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Open record</span></button>';
       menu.querySelector("button").onclick = () => openRecord(row);
@@ -516,7 +525,7 @@
           if(!lastReportUrl)return;
           showAuxRows(result.data,"#report-result");
         }
-      } else if (view === "settings" || view === "audit-log" || view === "activities") {
+      } else if (view === "settings" || ["audit-log","activities","registration-decisions"].includes(view)) {
         await loadAdministration();
       } else {
         document.querySelector("#live-toolbar").hidden = false;
@@ -1097,11 +1106,11 @@
     )
       return;
     document.querySelector("#live-add").hidden = true;
-    document.querySelector("#live-toolbar").hidden = !["audit-log","activities"].includes(view);
-    if(!["audit-log","activities"].includes(view))document.querySelector("#live-filters").hidden=true;
+    document.querySelector("#live-toolbar").hidden = !["audit-log","activities","registration-decisions"].includes(view);
+    if(!["audit-log","activities","registration-decisions"].includes(view))document.querySelector("#live-filters").hidden=true;
     const result = await request('/api/admin/'+view);
     if(view==='activities')result.data=(await window.HopeTableGroups.collectPages(result,offset=>request('/api/admin/activities?limit=200&offset='+offset),lifecycle.signal)).data;
-    if (["audit-log","activities"].includes(view)) {
+    if (["audit-log","activities","registration-decisions"].includes(view)) {
       const fields = [
         "action_at",
         "table_name",

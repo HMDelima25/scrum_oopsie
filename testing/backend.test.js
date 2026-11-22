@@ -45,12 +45,12 @@ test("HOPE database and backend integration", async (t) => {
   ).rows[0].id;
   let userId;
   await t.test(
-    "schema includes 26 RLS-protected tables and 36 actions plus 5 view gates",
+    "schema includes 27 RLS-protected tables and 36 actions plus 5 view gates",
     async () => {
       const a = await db.pg.query(
         `SELECT count(*)::int n FROM pg_tables WHERE schemaname='public' AND rowsecurity`,
       );
-      assert.equal(a.rows[0].n, 26);
+      assert.equal(a.rows[0].n, 27);
       assert.equal(
         (await db.pg.query("SELECT count(*)::int n FROM rights")).rows[0].n,
         41,

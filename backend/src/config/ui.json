@@ -184,6 +184,7 @@
     "user-management": [
       "users",
       "roles",
+      "registration-decisions",
       "activities"
     ],
     "reports": [
@@ -210,7 +211,8 @@
     "settings": "System settings",
     "audit-log": "Audit history",
     "roles": "Roles",
-    "activities": "Activities"
+    "activities": "Activities",
+    "registration-decisions": "Registration decisions"
   },
   "lookups": {
     "prices": {
@@ -745,6 +747,24 @@
           "active",
           "inactive"
         ]
+      }
+    ],
+    "registration-decisions": [
+      {
+        "field": "decision",
+        "type": "select",
+        "options": [
+          "Approved",
+          "Disapproved"
+        ]
+      },
+      {
+        "field": "email",
+        "type": "text"
+      },
+      {
+        "field": "decided_by",
+        "type": "text"
       }
     ]
   }

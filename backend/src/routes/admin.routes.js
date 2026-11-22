@@ -146,6 +146,35 @@ router.put("/users/:id", wrap(c.updateUser));
 router.patch("/users/:id/status", wrap(c.toggleUserStatus));
 router.post("/users/:id/invite", wrap(c.inviteUser));
 router.get(
+  "/registration-decisions",
+  wrap(async (req, res) => {
+    const rows = check(
+      await req.app.locals.db
+        .from("registration_decision")
+        .select("id,email,name,username,decision,decided_by_name,decided_by_email,decided_at")
+        .order("decided_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(500),
+    );
+    const when = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    });
+    res.json({
+      status: "success",
+      data: rows.map((r) => ({
+        decided_on: when.format(new Date(r.decided_at)).replace(",", ""),
+        decision: r.decision === "approved" ? "Approved" : "Disapproved",
+        name: r.name,
+        email: r.email,
+        username: r.username,
+        decided_by: r.decided_by_name,
+        decided_by_email: r.decided_by_email,
+      })),
+    });
+  }),
+);
+router.get(
   "/audit-log",
   requireSuperadmin,
   wrap(async (req, res) =>

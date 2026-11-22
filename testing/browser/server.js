@@ -15,6 +15,7 @@ const origin = `http://127.0.0.1:${port}`;
       const previous = state;
       state = await buildFixtures(origin);
       await previous.db.pg.close();
+      require("../../backend/src/routes/auth.routes").resetRateLimit();
       res.json({ isolated: true });
     } catch (error) {
       next(error);

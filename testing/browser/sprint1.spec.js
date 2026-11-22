@@ -473,3 +473,32 @@ test("S1-REG-01 inline review icons approve/disapprove without opening the row a
     page.getByRole("row", { name: "Open QA Pending User", exact: true }),
   ).toHaveCount(0);
 });
+
+test("S1-REG-02 right-click approves/disapproves and the decision appears in Registration decisions", async ({
+  page,
+}) => {
+  await login(page, "qa-root");
+  await page.getByRole("link", { name: "User Management", exact: true }).click();
+  const pending = page.getByRole("row", { name: "Open QA Pending User", exact: true });
+  await pending.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Approve registration", exact: true }).click();
+  await expect(pending).toContainText("Approved");
+  await expect(page.locator("#live-dialog")).not.toBeVisible();
+  const reject = page.getByRole("row", { name: "Open QA Reject User", exact: true });
+  await reject.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Disapprove registration", exact: true }).click();
+  await expect(reject).toContainText("Disapproved");
+  // Reviewed accounts no longer offer decision items.
+  await pending.click({ button: "right" });
+  await expect(page.getByRole("menuitem", { name: "Edit user", exact: true })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Approve registration", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.getByRole("tab", { name: "Registration decisions", exact: true }).click();
+  const content = page.locator("#live-content");
+  await expect(content).toContainText("Decided by");
+  const approvedRow = content.getByRole("row").filter({ hasText: "QA Pending User" });
+  await expect(approvedRow).toContainText("Approved");
+  await expect(approvedRow).toContainText("QA Superadmin");
+  const rejectedRow = content.getByRole("row").filter({ hasText: "QA Reject User" });
+  await expect(rejectedRow).toContainText("Disapproved");
+});
