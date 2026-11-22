@@ -97,7 +97,7 @@ Reports return JSON; printing and PDF presentation are frontend responsibilities
 - `GET /api/sale-price?product=:code&date=YYYY-MM-DD`: effective stored price for a sale line, or null when no price applies.
 - Admin edit/soft-delete/restore requests include an `If-Match` header containing a JSON-quoted `updated_at` value. A changed record returns 409 without applying the stale draft. Existing clients without that header retain their previous behavior.
 
-Product lists additionally return `current_price` and `price_effective_date`; sales lists include `total`, `paid` and `balance`. System-generated primary keys such as transaction number are included in responses but cannot be assigned by ordinary edit forms.
+Product lists additionally return `current_price` and `price_effective_date`; sales lists include `total`, `paid` and `balance`. Customer lists and profiles include `outstanding_balance` only when the caller also has `sales.view`; it sums positive balances from active sales, so inactive sales and overpayments do not reduce other unpaid transactions. The balance cell links to that customer's filtered sales list. System-generated primary keys such as transaction number are included in responses but cannot be assigned by ordinary edit forms.
 
 Google routes: `GET /api/auth/methods` reports enabled sign-in methods; `GET /api/auth/google` starts server-side PKCE, `?link=1` requires an authenticated matching-email account, and `GET /api/auth/google/callback` verifies the provider identity before creating an application session. Google identity does not bypass application approval.
 
@@ -125,5 +125,5 @@ Operational lists and `/api/admin/users` accept `q`, `sort`, `direction=asc|desc
 - `POST /api/auth/resend-registration-code` sends a replacement code for that session's draft, with a 60-second email cooldown. Previous codes become invalid.
 - Codes expire after ten minutes, allow five attempts and can be used once. Drafts store only bcrypt passwords and HMAC code digests in a private, RLS-protected staging table. Consumed drafts have their password and code digests cleared.
 - Email sending uses the existing SMTP/Gmail HTTPS sender. Delivery failures return 503 and invalidate the draft; no pending account is created.
-- Before deploying this code, apply `database/migrations/20261110001900_registration_email_verification.sql`. Render Free requires the Gmail HTTPS sender authorization to be completed; SMTP is blocked there. Registration is unavailable until real email delivery is configured.
+- Before deploying this code, apply `database/migrations/20261110001900_registration_email_verification.sql` and `database/migrations/20261122002000_customer_outstanding_balance.sql`. Render Free requires the Gmail HTTPS sender authorization to be completed; SMTP is blocked there. Registration is unavailable until real email delivery is configured.
 - Google sign-in already requires a server-verified Google email and continues to require application approval.

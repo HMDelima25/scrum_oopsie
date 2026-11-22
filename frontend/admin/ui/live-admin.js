@@ -77,6 +77,7 @@
     user?.role === "superadmin" ||
     (user?.rights?.[key.split(".")[0] + ".view"] === true &&
       user?.rights?.[key] === true);
+  const fieldVisible = (field) => field !== "outstanding_balance" || can("sales.view");
   const admin = () => ["admin", "superadmin"].includes(user?.role);
   const cfg = () => schema.resources[view];
   const permitted = (operation) =>
@@ -281,7 +282,7 @@
   }
   function filterSpecs(fields=[]){return schema.tableFilters?.[view]||fields.filter(f=>!['new_values','old_values'].includes(f)).map(field=>({field,type:schema.fields[field]?.[1]==="number"||typeof auxiliaryRows.find(r=>r[field]!=null)?.[field]==="number"?"number":schema.fields[field]?.[1]==="date"?"date":"text"}));}
   function configureTools(auxFields){
-    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...(cfg().displayFields||cfg().fields),...(cfg().readFields||[])])]:[]);
+    const fields=auxFields?.filter(f=>!["new_values","old_values"].includes(f))|| (view==="users"?["name","username","email","role","status","created_at"]:view==="roles"?["name","description","status","created_at"]:cfg()?[...new Set([...cfg().pk,...(cfg().displayFields||cfg().fields),...(cfg().readFields||[])])].filter(fieldVisible):[]);
     if(!fields.includes(sortField)){sortField=view==="activities"?"logged_in_at":view==="users"?"name":fields[0];if(view==="activities")descending=true;}
     const select=document.querySelector("#live-sort-field");select.innerHTML=fields.map(f=>`<option value="${h(f)}">${h(fieldLabel(f))}</option>`).join("");if(sortField)select.value=sortField;
     updateSortButton();
@@ -339,6 +340,7 @@
         "total",
         "paid",
         "balance",
+        "outstanding_balance",
         "line_total",
       ].includes(field)
     )
@@ -406,7 +408,7 @@
                   ? ["total", "paid", "balance"]
                   : []),
             ]),
-          ].concat(admin() ? ["is_deleted", "stamp"] : []);
+          ].concat(admin() ? ["is_deleted", "stamp"] : []).filter(fieldVisible);
     document.querySelector("#live-content").innerHTML =
       `<article class="panel records-panel"><div class="records-meta"><strong>${h(label(view))}</strong><span>${count} saved record${count === 1 ? "" : "s"}</span></div>${tableRows(filtered, fields, true)}<footer class="records-footer"><span>${rows.length ? groupBy ? `Grouped view - ${filtered.length} matching records` : `Page ${page + 1} · ${filtered.length} shown` : "No saved records"} · Refreshes automatically</span><div class="record-pages" ${groupBy?"hidden":""}><button type="button" id="live-prev" aria-label="Previous page" ${page === 0 ? "disabled" : ""}>‹</button><button type="button" class="is-active" aria-current="page">${page + 1}</button><button type="button" id="live-next" aria-label="Next page" ${(page + 1) * 50 >= count ? "disabled" : ""}>›</button></div></footer></article>`;
     bindRecordLinks(document.querySelector("#live-content"));
@@ -657,7 +659,7 @@
                   ? ["total", "paid", "balance"]
                   : []),
             ]),
-          ].concat(admin() ? ["is_deleted", "stamp"] : []).filter(field=>!(view==='jobs'&&field==='deptname'));
+          ].concat(admin() ? ["is_deleted", "stamp"] : []).filter(field=>fieldVisible(field)&&!(view==='jobs'&&field==='deptname'));
     const editable = permitted(1) && !(view === "users" && (row.id === user.id || row.is_deleted));
     let actions = `${editable ? '<button type="button" class="live-edit-icon" id="live-edit" aria-label="Edit record" title="Edit record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1L20 7.5a2.8 2.8 0 0 0-4-4L4.5 15Z"/><path d="M13 20h7"/></svg></button>' : ""}${view === "users" && row.id !== user.id && !row.is_deleted ? '<button type="button" class="dialog-secondary" id="live-rights">Assign rights</button><button type="button" class="dialog-secondary" id="live-invite">Send setup link</button>' : ""}${view !== "users" && permitted(2) ? `<button type="button" class="${row.is_deleted ? "dialog-secondary" : "module-primary live-inactive-action"}" id="live-delete">${row.is_deleted ? "Restore" : "Make inactive"}</button>` : ""}`;
     if(view==='employees'&&admin()&&can('hr.empEdit')&&can('hr.empDelete')&&!row.is_deleted&&!row.sepdate)actions+='<button type="button" class="dialog-secondary live-danger" id="live-fire">Fire employee</button>';

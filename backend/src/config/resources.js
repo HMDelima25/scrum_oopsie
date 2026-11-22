@@ -1,8 +1,11 @@
 module.exports = {
   customers: {
     table: "customer",
+    listView: "customer_balance",
     pk: ["custno"],
     fields: ["custno", "custname", "address", "payterm"],
+    readFields: ["outstanding_balance"],
+    displayFields: ["custno", "custname", "address", "payterm", "outstanding_balance"],
     module: "customers",
     actions: ["add", "edit", "delete"],
   },

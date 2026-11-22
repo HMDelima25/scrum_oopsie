@@ -24,6 +24,10 @@
         "45D"
       ]
     ],
+    "outstanding_balance": [
+      "Outstanding balance",
+      "number"
+    ],
     "prodcode": [
       "Product code",
       "text",
@@ -272,6 +276,12 @@
       "custname": {
         "resource": "customers",
         "key": [
+          "custno"
+        ]
+      },
+      "outstanding_balance": {
+        "resource": "sales",
+        "filter": [
           "custno"
         ]
       }
