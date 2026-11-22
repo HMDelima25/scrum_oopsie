@@ -120,7 +120,23 @@ router.post(
         p_expected: expected,
       }),
     );
-    res.json({ status: "success", data });
+    let notification={sent:false,message:"The account decision was saved, but no email address is available."};
+    if(data.email){
+      const approved=body.decision==="approved",appUrl=(process.env.RENDER_EXTERNAL_URL||process.env.APP_URL||`${req.protocol}://${req.get("host")}`).replace(/\/$/,"");
+      try{
+        const mail=req.app.locals.accountDecisionMailer||require("../lib/mailer").createMailer();
+        const content=require("../lib/email-template").decisionEmail({name:data.name,approved,appUrl:appUrl+"/UI-UX/index.html"});
+        await mail({
+          to:data.email,
+          subject:approved?"Your HOPE account was approved":"Your HOPE registration was not approved",
+          ...content,
+        });
+        notification={sent:true,message:"Decision email sent."};
+      }catch{
+        notification={sent:false,message:"The account decision was saved, but the notification email could not be delivered."};
+      }
+    }
+    res.json({ status: "success", data,notification });
   }),
 );
 router.post("/users", wrap(c.addUser));
