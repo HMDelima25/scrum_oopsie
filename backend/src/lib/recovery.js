@@ -60,10 +60,11 @@ async function requestCode(req, res) {
         "Please wait one minute before requesting another code.",
       );
     try {
+      const content=require("./email-template").codeEmail({name:user.name,code,purpose:"recovery"});
       await send({
         to: user.email,
         subject: "Your HOPE password reset code",
-        text: `Your HOPE password reset code is ${code}.\n\nEnter these six digits in HOPE within 10 minutes. This code can only be used once. If you did not request it, ignore this email.`,
+        ...content,
       });
     } catch {
       await db
