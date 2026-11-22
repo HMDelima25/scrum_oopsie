@@ -35,10 +35,11 @@ async function issueToken(db, user, purpose) {
         { mode: 0o600 },
       );
     } else {
+      const content=require("./email-template").accessLinkEmail({name:user.name,url:url.href});
       await require("./mailer").createMailer()({
         to: user.email,
         subject: "HOPE, Inc. account access",
-        text: `Use this one-time link within one hour: ${url.href}`,
+        ...content,
       });
     }
   } catch (error) {
