@@ -14,6 +14,10 @@
   try {
     const bundle=(await api('ui-dashboard-data')).data;
     let user=bundle.user, dashboardData=bundle.records, firstSnapshot=true;
+    if(user.workspace!=="admin"){
+      location.replace(user.workspace==="staff"?"/UI-UX/staff/modules/dashboard/index.html":"/UI-UX/user/dashboard/index.html");
+      return;
+    }
     const can=right=>user.role==='superadmin'||(user.rights?.[right.split('.')[0]+'.view']===true&&user.rights?.[right]===true);
     const navSource=(window.hopeSidebarTemplate?new DOMParser().parseFromString(window.hopeSidebarTemplate,'text/html'):document).querySelector('.sidebar-nav').innerHTML;
     function refreshNavigation(){
