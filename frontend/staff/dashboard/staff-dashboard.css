@@ -1,0 +1,31 @@
+.quick-action {
+  text-decoration: none;
+}
+
+.quick-panel > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+#payment-chart > .subtitle {
+  align-self: center;
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.staff-notifications {
+  position: fixed;
+  z-index: 60;
+  top: 92px;
+  right: clamp(24px, 5vw, 84px);
+  width: min(330px, calc(100vw - 32px));
+}
+
+.staff-notifications div > p {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.74rem;
+}
