@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft for team and professor review. This plan builds on `account-role-and-workspace-plan.md` and assumes that Staff means an approved User account with an assigned named business role and effective ERP permissions.
+Implementation in progress. The separate Staff workspace, permission-filtered operational pages, dashboard, profile menu, My Profile, My Access, Security, and core browser checks are implemented. The remaining representative-role matrix and exhaustive state/accessibility audit are tracked below.
 
 ## Goal
 
@@ -12,20 +12,18 @@ The Staff UI is not a customer shop, seller portal, or marketplace. It is the op
 
 ## Core design decision
 
-Do not create a completely separate copy of every page for Staff.
-
-Use one shared ERP workspace and adapt it from the authenticated account's effective permissions:
+Use a separate Staff page tree that reuses the established Admin layout, theme, shared navigation behavior, and permission-aware operational controller. Staff and Admin must not share the same route or page wrapper, but shared scripts and styles should prevent behavior from drifting:
 
 ```text
-Shared workspace shell
-  -> Staff sees permitted operational pages and actions
-  -> Admin sees permitted operational pages plus administration
-  -> Superadmin sees all operational and protected pages
+Shared layout and operational behavior
+  -> Separate Staff routes show permitted operational pages and actions
+  -> Separate Admin routes show operations plus administration
+  -> Superadmin receives all operational and protected pages
 ```
 
 This reduces duplicated frontend code and prevents Staff and Admin screens from drifting apart. The visible navigation, dashboard content, table columns, record actions, and API authorization must all use the same effective permission contract.
 
-The existing frontend is stored under `frontend/admin/`, but ordinary permission-filtered Users already reuse much of it. A later implementation may move the shared shell to a neutral `frontend/workspace/` path. Do not perform that structural move until routing, imports, browser tests, and deployment behavior are inventoried and a safe migration is approved.
+The separate Staff wrappers are stored under `frontend/staff/`. They reuse shared/Admin CSS and the permission-aware operational script, while Staff-only dashboard and account pages remain under their own tree. A later implementation may move shared behavior to a neutral `frontend/workspace/` path, but that structural move is not required for this release.
 
 ## Staff workspace map
 
@@ -417,7 +415,7 @@ The Staff UI is ready when:
 
 ## Decisions still needed
 
-1. Should the shared application move from `frontend/admin/` to a neutral `frontend/workspace/` path, or should the current paths remain for this release?
+1. **Resolved for this release:** keep separate Staff wrappers under `frontend/staff/` and reuse shared operational scripts/styles; do not perform a neutral-path migration yet.
 2. Which profile fields may Staff edit themselves?
 3. Should Staff have one named business role or multiple roles?
 4. Does any Staff role need row scope such as own records or department records, or do permissions cover all active records in a module?
@@ -425,3 +423,4 @@ The Staff UI is ready when:
 6. Can ordinary Staff make records inactive, or should that action remain Admin-only even when a delete permission exists?
 7. Who is allowed to record payments and view balances?
 8. Should Staff be able to request additional access inside the application, or should they contact an Admin outside it?
+
