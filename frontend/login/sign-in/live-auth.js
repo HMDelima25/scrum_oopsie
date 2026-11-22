@@ -88,13 +88,13 @@
   }
   const successDialog = $("#login-success-dialog");
   function signedIn(user) {
-    if (user.role !== "user") {
-      location.assign("modules/dashboard/index.html");
-      return;
-    }
-    $("#form-message").textContent = "";
-    $("#password").value = "";
-    successDialog.showModal();
+    const destination =
+      user.workspace === "admin"
+        ? "/UI-UX/modules/dashboard/index.html"
+        : user.workspace === "staff"
+          ? "/UI-UX/staff/modules/dashboard/index.html"
+          : "/UI-UX/user/dashboard/index.html";
+    location.assign(destination);
   }
   $("#login-success-close").onclick = () => successDialog.close();
   $("#login-success-logout").onclick = async () => {
@@ -111,7 +111,7 @@
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : null))
     .then((result) => {
-      if (result?.data?.role === "user") signedIn(result.data);
+      if (result?.data) signedIn(result.data);
     })
     .catch(() => {});
   const form = $("#login-form"),
@@ -255,8 +255,11 @@
     ],
   ];
   let active = 0;
+  let highlightTimer;
+  const featurePanel = $(".feature-panel");
+  const highlightInterval = 5200;
   function show(i) {
-    active = (i + 3) % 3;
+    active = (i + highlights.length) % highlights.length;
     const item = highlights[active];
     $("#feature-kicker").textContent = item[0];
     $("#feature-title").textContent = item[1];
@@ -269,9 +272,33 @@
       );
     });
   }
-  $("#previous-slide").onclick = () => show(active - 1);
-  $("#next-slide").onclick = () => show(active + 1);
+
+  function startHighlightTimer() {
+    window.clearTimeout(highlightTimer);
+    if (document.hidden || featurePanel.matches(":hover, :focus-within")) return;
+    highlightTimer = window.setTimeout(() => {
+      show(active + 1);
+      startHighlightTimer();
+    }, highlightInterval);
+  }
+
+  function navigateTo(i) {
+    show(i);
+    startHighlightTimer();
+  }
+
+  $("#previous-slide").onclick = () => navigateTo(active - 1);
+  $("#next-slide").onclick = () => navigateTo(active + 1);
   document
     .querySelectorAll("[data-slide]")
-    .forEach((b) => (b.onclick = () => show(Number(b.dataset.slide))));
+    .forEach((b) => (b.onclick = () => navigateTo(Number(b.dataset.slide))));
+
+  featurePanel.addEventListener("mouseenter", () => window.clearTimeout(highlightTimer));
+  featurePanel.addEventListener("mouseleave", startHighlightTimer);
+  featurePanel.addEventListener("focusin", () => window.clearTimeout(highlightTimer));
+  featurePanel.addEventListener("focusout", (event) => {
+    if (!featurePanel.contains(event.relatedTarget)) startHighlightTimer();
+  });
+  document.addEventListener("visibilitychange", startHighlightTimer);
+  startHighlightTimer();
 })();

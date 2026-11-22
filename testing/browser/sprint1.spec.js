@@ -138,13 +138,11 @@ test("S1-RIGHTS-01 permission checklist gates children and saves an audited chan
     ),
   ).toBeTruthy();
 });
-test("S1-USER-01 temporary User login confirmation and server-side restrictions", async ({
+test("S1-USER-01 Staff login routing and server-side restrictions", async ({
   page,
 }) => {
   await login(page, "qa-user");
-  await expect(
-    page.getByRole("dialog", { name: "Signed in successfully", exact: true }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/staff\/modules\/dashboard/);
   expect((await page.request.get("/api/admin/users")).status()).toBe(403);
   expect((await page.request.get("/api/admin/settings")).status()).toBe(403);
   expect((await page.request.get("/api/products")).status()).toBe(403);
@@ -199,7 +197,7 @@ test("KNOWN GAP-SP1-002 User workspace is not implemented yet", async ({
     "Owner explicitly requested a temporary User success prompt until the User workspace exists.",
   );
   await login(page, "qa-user");
-  await expect(page).toHaveURL(/modules\/dashboard/, { timeout: 3000 });
+  await expect(page).toHaveURL(/user\/dashboard/, { timeout: 3000 });
 });
 
 test("S1-UM-03 Admin edits an approved User without a fresh approval", async ({
