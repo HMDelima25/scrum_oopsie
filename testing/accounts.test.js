@@ -1,5 +1,14 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const bcrypt=require('bcryptjs');
 const {createDatabase}=require('./helpers/database');const createApp=require('../backend/src/app');
+test('Registration username pattern is valid with Unicode-set regular expressions',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const source=fs.readFileSync(path.join(__dirname,'../frontend/login/create-account/create-account.js'),'utf8');
+ const match=source.match(/\.pattern = ("(?:[^"\\]|\\.)*");/);
+ assert.ok(match,'registration username pattern is configured');
+ const pattern=new RegExp(`^(?:${JSON.parse(match[1])})$`,'v');
+ assert.equal(pattern.test('new-user_1'),true);
+ assert.equal(pattern.test('bad!user'),false);
+});
 test('Username, email and Google authentication guards',async t=>{
  const db=await createDatabase();
  const admin=(await db.pg.query(`INSERT INTO users(username,email,name,role,status,password_hash) VALUES('admin',NULL,'Administrator','admin','approved',$1) RETURNING id`,[await bcrypt.hash('admin123',4)])).rows[0];

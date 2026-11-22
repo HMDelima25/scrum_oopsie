@@ -1,6 +1,7 @@
 class HttpError extends Error {
   constructor(status, message, field) {
     super(message);
+    this.name = "HttpError";
     this.status = status;
     this.field = field;
   }
@@ -31,10 +32,13 @@ function check(result) {
                 ].includes(code)
               ? 400
               : 500;
-    throw new HttpError(
+    const failure = new HttpError(
       status,
       status === 500 ? "Database operation failed." : result.error.message,
     );
+    if (typeof code === "string" && /^[A-Z0-9_]+$/.test(code))
+      failure.code = code;
+    throw failure;
   }
   return result.data;
 }

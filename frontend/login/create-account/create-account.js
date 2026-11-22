@@ -9,7 +9,7 @@ window.initializeHopeRegistration = ({ $, matchPassword, validateInputs, fieldEr
     $("#" + id).closest(".dialog-field").hidden = false;
   }
   $("#create-username").maxLength = 32;
-  $("#create-username").pattern = "[A-Za-z][A-Za-z0-9._-]{2,31}";
+  $("#create-username").pattern = "[A-Za-z][A-Za-z0-9._\\-]{2,31}";
   $("#create-password").minLength = 12;
   $("#confirm-password").minLength = 12;
 
