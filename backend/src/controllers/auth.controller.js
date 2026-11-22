@@ -76,7 +76,7 @@ async function loginUser(req, res) {
       user.status === "pending"
         ? "Your account is awaiting approval."
         : user.status === "disapproved"
-          ? "Your registration was disapproved. Contact a Superadmin."
+          ? "Your registration was disapproved. You can create a new account with this email."
           : "Your account is blocked.",
       "identifier",
     );

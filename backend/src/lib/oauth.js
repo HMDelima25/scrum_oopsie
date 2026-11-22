@@ -33,7 +33,7 @@ async function establishSession(req, user) {
       user.status === "pending"
         ? "Your account is awaiting Superadmin approval."
         : user.status === "disapproved"
-          ? "Your registration was disapproved. Contact a Superadmin."
+          ? "Your registration was disapproved. You can create a new account with this email."
           : "Your account is blocked.",
     );
   await new Promise((resolve, reject) =>

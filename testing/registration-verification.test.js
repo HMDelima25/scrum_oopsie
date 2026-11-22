@@ -37,3 +37,29 @@ test('Registration email proof gates approval and consumes codes once',async t=>
  assert.equal((await db.pg.query("SELECT count(*)::int n FROM users")).rows[0].n,1);
  await db.pg.exec('SET ROLE anon');try{await assert.rejects(db.pg.query('SELECT * FROM registration_challenge'),/permission denied/);}finally{await db.pg.exec('RESET ROLE');}
 });
+test('Disapproved emails can register again; blocked and active emails cannot',async t=>{
+ const db=await createDatabase(), messages=[];
+ const app=createApp({db,sessionSecret:'registration-test-secret-'.repeat(3),origins:[],registrationMailer:async m=>{messages.push(m);}});
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ t.after(async()=>{await new Promise(r=>server.close(r));await db.pg.close();});
+ let cookie='';
+ async function post(path,body){const r=await fetch(`http://127.0.0.1:${server.address().port}/api/auth/${path}`,{method:'POST',headers:{'content-type':'application/json',cookie},body:JSON.stringify(body)});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return {status:r.status,body:await r.json()};}
+ const lastCode=()=>messages.at(-1).text.match(/code is (\d{6})/)[1];
+ const {rows:[old]}=await db.pg.query("INSERT INTO users(email,username,name,status,password_hash) VALUES('Again@Example.test','again','Old Name','disapproved','old-hash') RETURNING *");
+ await db.pg.query("INSERT INTO users(email,username,name,status) VALUES('blocked@example.test','blocked','Blocked','blocked'),('pending@example.test','pending','Pending','pending'),('approved@example.test','approved','Approved','approved')");
+ for(const email of ['blocked@example.test','pending@example.test','approved@example.test'])
+  assert.equal((await post('register',{firstName:'New',lastName:'Person',email,password:'Strong-password-123'})).status,409,email);
+ assert.equal((await post('register',{firstName:'New',lastName:'Person',username:'blocked',email:'fresh@example.test',password:'Strong-password-123'})).status,409);
+ assert.equal((await post('register',{firstName:'New',lastName:'Name',username:'again2',email:'again@example.test',password:'Strong-password-123'})).status,202);
+ const verified=await post('verify-registration-code',{code:lastCode()});
+ assert.equal(verified.status,201);assert.equal(verified.body.data.id,old.id);assert.equal(verified.body.data.status,'pending');assert.equal(verified.body.data.username,'again2');
+ const {rows:[now]}=await db.pg.query('SELECT * FROM users WHERE id=$1',[old.id]);
+ assert.equal(now.name,'New Name');assert.notEqual(now.password_hash,'old-hash');assert.ok(now.auth_version>old.auth_version);
+ assert.equal((await db.pg.query("SELECT count(*)::int n FROM users WHERE lower(email)='again@example.test'")).rows[0].n,1);
+ await db.pg.exec("UPDATE users SET status='disapproved' WHERE id='"+old.id+"'");
+ await db.pg.exec("UPDATE registration_challenge SET created_at=now()-interval '61 seconds'");
+ assert.equal((await post('register',{firstName:'Late',lastName:'Block',email:'again@example.test',password:'Strong-password-123'})).status,202);
+ await db.pg.exec("UPDATE users SET status='blocked' WHERE id='"+old.id+"'");
+ assert.equal((await post('verify-registration-code',{code:lastCode()})).status,409);
+ assert.equal((await db.pg.query('SELECT status FROM users WHERE id=$1',[old.id])).rows[0].status,'blocked');
+});
