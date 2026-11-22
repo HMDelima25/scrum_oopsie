@@ -226,5 +226,23 @@ test("Live UI contracts, lookups and external edit conflicts", async (t) => {
       }
     },
   );
+  await t.test("separate Staff and User page families are served", async () => {
+    for (const page of ["dashboard", "customers", "products", "human-resources", "sales", "reports"]) {
+      const response = await fetch(base + "/UI-UX/staff/modules/" + page + "/index.html");
+      assert.equal(response.status, 200);
+      const html = await response.text();
+      assert.match(html, /data-workspace="staff"/);
+    }
+    for (const page of ["profile", "access", "security"]) {
+      const response = await fetch(base + "/UI-UX/staff/" + page + "/index.html");
+      assert.equal(response.status, 200);
+      assert.match(await response.text(), /data-workspace="staff"/);
+    }
+    for (const page of ["dashboard", "profile", "access", "security"]) {
+      const response = await fetch(base + "/UI-UX/user/" + page + "/index.html");
+      assert.equal(response.status, 200);
+      assert.match(await response.text(), /data-workspace="user"/);
+    }
+  });
 });
 
