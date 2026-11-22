@@ -10,7 +10,8 @@ async function issue(req,res,row) {
  await new Promise((resolve,reject)=>req.session.save(e=>e?reject(e):resolve()));
  try {
   const mail=req.app.locals.registrationMailer||createMailer();
-  await mail({to:row.email,subject:'Verify your HOPE account',text:`Your HOPE verification code is ${code}. It expires in 10 minutes and can be used once. Your account will require Superadmin approval after verification. If you did not request this, ignore this email.`});
+  const content=require('./email-template').codeEmail({name:row.name,code,purpose:'registration'});
+  await mail({to:row.email,subject:'Verify your HOPE account',...content});
  } catch {
   check(await req.app.locals.db.from('registration_challenge').update({used_at:new Date().toISOString(),password_hash:null,code_hash:null}).eq('id',id));
   delete req.session.registrationId;

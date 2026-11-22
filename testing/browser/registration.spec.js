@@ -5,10 +5,10 @@ for (const mobile of [false,true]) test(`Email registration verification ${mobil
  await page.goto('/UI-UX/index.html');await page.locator('#create-account').click();
  for(const [id,value] of Object.entries({'first-name':'Email','last-name':'Owner','create-email':'verify@example.test','create-username':'verify-owner','create-password':'Strong-password-123','confirm-password':'Strong-password-123'})) await page.locator('#'+id).fill(value);
  await page.locator('#account-terms').check();await page.locator('#create-form button[type=submit]').click();
- await expect(page.locator('#registration-code')).toBeVisible();
+ await expect(page.getByRole('group',{name:'Six-digit registration verification code'})).toBeVisible();
  await expect(page.locator('#registration-resend')).toBeDisabled();
  const {code}=await (await request.get('/_test/registration-code')).json();
- await page.locator('#registration-code').fill(code);await page.locator('#registration-verify').click();
+ await page.locator('#registration-digit-1').fill(code);await page.locator('#registration-verify').click();
  await expect(page.locator('#create-message')).toContainText('awaiting Superadmin approval');
  expect((await page.request.get('/api/auth/me')).status()).toBe(401);
 });
