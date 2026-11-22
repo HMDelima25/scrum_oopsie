@@ -183,10 +183,13 @@ async function googleCallback(req, res) {
     delete req.session.oauthStorage;
     delete req.session.oauthLinkUserId;
     await establishSession(req, user);
+    const profile = await require("./access-profile")(req, user);
     res.redirect(
-      user.role === "user"
-        ? "/UI-UX/index.html?signin=success"
-        : "/UI-UX/modules/dashboard/index.html",
+      profile.workspace === "admin"
+        ? "/UI-UX/modules/dashboard/index.html"
+        : profile.workspace === "staff"
+          ? "/UI-UX/staff/modules/dashboard/index.html"
+          : "/UI-UX/user/dashboard/index.html",
     );
   } catch (error) {
     delete req.session.oauthStorage;
