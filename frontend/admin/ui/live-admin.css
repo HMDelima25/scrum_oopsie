@@ -137,6 +137,19 @@
 .live-context button:hover {
   background: #edf7fa;
 }
+.live-context{display:grid;min-width:150px;gap:2px}
+.live-context button{display:grid;min-height:38px;padding:9px 12px;text-align:left;grid-template-columns:18px 1fr;align-items:center;gap:9px;font:500 .76rem/1.2 "DM Sans",system-ui,sans-serif;color:var(--ink)}
+.live-context button svg{width:17px;height:17px;fill:none;stroke:var(--ocean);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.live-context button:disabled{color:var(--muted);cursor:not-allowed;opacity:.55}
+.live-context button:disabled:hover{background:transparent}
+.role-member-summary{margin:0 0 10px;color:var(--muted);font-size:.72rem;font-weight:700}
+.role-member-list{display:grid;max-height:min(390px,45vh);gap:8px;overflow-y:auto}
+.role-member-choice{display:flex;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;align-items:center;gap:10px;cursor:pointer}
+.role-member-choice:hover{border-color:rgba(8,125,164,.35);background:#f8fcfc}
+.role-member-choice input{width:15px;height:15px;accent-color:var(--ocean)}
+.role-member-choice span,.role-member-choice strong,.role-member-choice small{display:block}
+.role-member-choice strong{font-size:.76rem}.role-member-choice small{margin-top:3px;color:var(--muted);font-size:.66rem}
+.live-empty-copy{color:var(--muted);font-size:.76rem}
 .record-dialog {
   max-height: calc(100dvh - 32px);
   background: #f7fbfa;
@@ -178,6 +191,39 @@
 }
 .permission-groups legend {
   width: auto;
+}
+.permission-groups .permission-group {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+.permission-group-heading {
+  margin-bottom: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--line);
+}
+.permission-group-heading label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: .72rem;
+  font-weight: 800;
+}
+.permission-group > div:last-child {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+.record-dialog .permission-group > div:last-child label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .69rem;
+  line-height: 1.4;
 }
 .permission-groups input:disabled + span {
   opacity: 0.6;
