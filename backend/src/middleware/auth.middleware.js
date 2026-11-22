@@ -5,7 +5,7 @@ const requireUser = wrap(async (req, res, next) => {
   const user = check(
     await req.app.locals.db
       .from("users")
-      .select("id,username,email,name,role,status,rights,auth_version,is_deleted")
+      .select("id,username,email,name,role,status,rights,permission_role_id,auth_version,is_deleted")
       .eq("id", req.session.userId)
       .maybeSingle(),
   );
