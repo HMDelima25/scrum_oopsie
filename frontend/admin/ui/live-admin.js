@@ -157,7 +157,7 @@
   function toggleTool(id,trigger){const panel=document.querySelector(id),open=panel.hidden;closeTools();panel.hidden=!open;document.querySelector(trigger).setAttribute('aria-expanded',String(open));if(open)panel.querySelector('input,select')?.focus();}
   function closeTools(returnFocus=false){for(const [panel,trigger]of [['#live-filters','#live-filter-toggle'],['#live-sort-panel','#live-sort-toggle'],['#live-group-panel','#live-group-toggle']]){if(returnFocus&&!document.querySelector(panel).hidden)document.querySelector(trigger).focus();document.querySelector(panel).hidden=true;document.querySelector(trigger).setAttribute('aria-expanded','false');}}
   async function shell() {
-    const presentation = ({"customers":{"eyebrow":"Customer management","description":"Manage customer records, addresses, and payment terms."},"products":{"eyebrow":"Product management","description":"Maintain the product catalog and open each product's price history."},"human-resources":{"eyebrow":"People and organization","description":"Review employee records and open job history without exposing it in navigation."},"sales":{"eyebrow":"Sales management","description":"Review transaction headers and open their detail lines and payments."},"user-management":{"eyebrow":"Administration","description":"Review users and arrange permission-based roles."}})[module] || {eyebrow:"Administrator workspace",description:""};
+    const presentation = ({"customers":{"eyebrow":"Customer management","description":"Manage customer records, addresses, and payment terms."},"products":{"eyebrow":"Product management","description":"Maintain the product catalog and open each product's price history."},"human-resources":{"eyebrow":"People and organization","description":"Review employee records and open job history without exposing it in navigation."},"sales":{"eyebrow":"Sales management","description":"Review transaction headers and open their detail lines and payments."},"reports":{"eyebrow":"Reporting and analytics","description":"Run the business reports permitted for this workspace."},"user-management":{"eyebrow":"Administration","description":"Review users and arrange permission-based roles."}})[module] || {eyebrow:document.body.dataset.workspace==="staff"?"Staff workspace":"Administrator workspace",description:""};
     const links = [
       ["dashboard", "Dashboard", true],
       ["customers", "Customers", can("customers.view")],
@@ -178,7 +178,12 @@
     if(existingSidebar)template.content.querySelector("#sidebar").remove();
     app.append(template.content);
     // Restore Natalia's original navigation markup; retain only live access filtering and handlers.
-    const routeKeys = {Dashboard:"dashboard",Customers:"customers",Products:"products","Human Resources":"human-resources",Sales:"sales","User Management":"user-management"};
+    const routeKeys = {Dashboard:"dashboard",Customers:"customers",Products:"products","Human Resources":"human-resources",Sales:"sales",Reports:"reports","User Management":"user-management"};
+    if(can("reports.view")){
+      const salesLink=template.content.querySelector('[aria-label="Sales"]');
+      const adminLabel=[...template.content.querySelectorAll('.nav-section-label')].find(label=>label.textContent.trim()==='ADMINISTRATION');
+      if(salesLink&&adminLabel){const reportsLink=salesLink.cloneNode(true);reportsLink.setAttribute('aria-label','Reports');reportsLink.dataset.page='Reports';reportsLink.querySelector('span').textContent='Reports';adminLabel.before(reportsLink);}
+    }
     document.querySelectorAll(".sidebar-nav a").forEach(a => {
       const key=routeKeys[a.getAttribute("aria-label")]; const permittedLink=links.find(l=>l[0]===key);
       if(!permittedLink?.[2]) {a.remove();return;}
@@ -189,11 +194,17 @@
     function expand(value){document.querySelector("#sidebar").classList.toggle("is-expanded",value);app.classList.toggle("sidebar-expanded",value);const toggle=document.querySelector("#sidebar-toggle");toggle.setAttribute("aria-expanded",String(value));toggle.setAttribute("aria-label",value?"Collapse navigation":"Expand navigation");localStorage.setItem("hopeSidebarExpanded",String(value));}
     expand(expanded);document.querySelector("#sidebar-toggle").onclick=null;
     document.querySelector("#logout-button").id="live-logout";
-    document.querySelector("#settings-button").onclick=()=>window.HopeNavigation.go("../administrator/index.html");
+    const settingsButton=document.querySelector("#settings-button");
+    if(user.role==="superadmin")settingsButton.onclick=()=>window.HopeNavigation.go("../administrator/index.html");
+    else settingsButton.remove();
+    if(document.body.dataset.workspace==="staff"){
+      document.querySelector('.brand-title small').textContent='Staff ERP';
+      document.querySelector('#profile-button').setAttribute('aria-label','Open staff profile');
+    }
     document.querySelector(".profile-copy strong").textContent=user.name;
     document.querySelector(".profile-copy small").textContent=user.role;
     document.querySelector(".avatar").textContent=user.name.split(/\s+/).map(n=>n[0]).slice(0,2).join("");
-    document.querySelector("#profile-button").onclick=()=>{const old=document.querySelector("#live-profile-popover");if(old){old.remove();return;}const pop=document.createElement("div");pop.id="live-profile-popover";pop.className="module-profile-popover";pop.innerHTML=`<strong>${h(user.name)}</strong><span>${h(user.username||user.email)}</span>${user.email?'<a href="/api/auth/google?link=1">Link Google</a>':''}`;app.append(pop);};
+    document.querySelector("#profile-button").onclick=()=>{const old=document.querySelector("#live-profile-popover");if(old){old.remove();return;}const pop=document.createElement("div");pop.id="live-profile-popover";pop.className="module-profile-popover";pop.innerHTML=document.body.dataset.workspace==='staff'?`<strong>${h(user.name)}</strong><span>${h(user.permission_role?.name||'Staff')}</span><a href="/UI-UX/staff/profile/index.html">My Profile</a><a href="/UI-UX/staff/access/index.html">My Access</a><a href="/UI-UX/staff/security/index.html">Security</a>`:`<strong>${h(user.name)}</strong><span>${h(user.username||user.email)}</span>${user.email?'<a href="/api/auth/google?link=1">Link Google</a>':''}`;app.append(pop);};
     app.setAttribute("aria-busy", "false");
     document.querySelector("#live-menu").onclick = (e) => {
       const open = document
@@ -406,7 +417,7 @@
                   ? ["total", "paid", "balance"]
                   : []),
             ]),
-          ].concat(admin() ? ["is_deleted", "stamp"] : []);
+          ].filter(field=>!(document.body.dataset.workspace==='staff'&&view==='employees'&&field==='birthdate')).concat(admin() ? ["is_deleted", "stamp"] : []);
     document.querySelector("#live-content").innerHTML =
       `<article class="panel records-panel"><div class="records-meta"><strong>${h(label(view))}</strong><span>${count} saved record${count === 1 ? "" : "s"}</span></div>${tableRows(filtered, fields, true)}<footer class="records-footer"><span>${rows.length ? groupBy ? `Grouped view - ${filtered.length} matching records` : `Page ${page + 1} · ${filtered.length} shown` : "No saved records"} · Refreshes automatically</span><div class="record-pages" ${groupBy?"hidden":""}><button type="button" id="live-prev" aria-label="Previous page" ${page === 0 ? "disabled" : ""}>‹</button><button type="button" class="is-active" aria-current="page">${page + 1}</button><button type="button" id="live-next" aria-label="Next page" ${(page + 1) * 50 >= count ? "disabled" : ""}>›</button></div></footer></article>`;
     bindRecordLinks(document.querySelector("#live-content"));
@@ -447,7 +458,7 @@
         event.preventDefault();event.stopPropagation();
         const row=rows.find(row=>row.id===button.dataset.userId);if(!row)return;
         const controls=button.closest('.registration-decisions').querySelectorAll('button');controls.forEach(control=>control.disabled=true);
-        try{await send('/api/admin/users/'+encodeURIComponent(row.id)+'/review','POST',{decision:button.dataset.registrationDecision},row);await load(true);}
+        try{const result=await send('/api/admin/users/'+encodeURIComponent(row.id)+'/review','POST',{decision:button.dataset.registrationDecision},row);await load(true);notice(result.notification?.message||'Registration decision saved.',result.notification?.sent===false);}
         catch(error){notice(error.message,true);controls.forEach(control=>control.disabled=false);}
       };
     });
@@ -457,12 +468,20 @@
   }
   function context(row, x, y) {
     const menu = document.querySelector("#live-context");
-    menu.innerHTML =
-      '<button type="button" role="menuitem">Open record</button>';
+    if(view==="roles"&&!row.system_role){
+      menu.innerHTML='<button type="button" role="menuitem" data-role-action="edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.5-13.5 4 4M14 5l2-2 4 4-2 2"/></svg><span>Edit role</span></button><button type="button" role="menuitem" data-role-action="members" '+(row.status==='inactive'?'disabled title="Activate this role before assigning users"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M8.5 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM18 8v6M15 11h6"/></svg><span>Add users</span></button>';
+      menu.querySelector('[data-role-action="edit"]').onclick=()=>{menu.hidden=true;openRoleProfile(row);};
+      menu.querySelector('[data-role-action="members"]').onclick=()=>{menu.hidden=true;openRoleMembers(row);};
+    }else if(view==="users"){
+      menu.innerHTML='<button type="button" role="menuitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.5-13.5 4 4M14 5l2-2 4 4-2 2"/></svg><span>Edit user</span></button>';
+      menu.querySelector("button").onclick = () => { menu.hidden=true; openForm(row); };
+    }else{
+      menu.innerHTML='<button type="button" role="menuitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Open record</span></button>';
+      menu.querySelector("button").onclick = () => openRecord(row);
+    }
     menu.style.left = Math.min(x, innerWidth - 190) + "px";
-    menu.style.top = Math.min(y, innerHeight - 60) + "px";
+    menu.style.top = Math.min(y, innerHeight - menu.childElementCount*44-12) + "px";
     menu.hidden = false;
-    menu.querySelector("button").onclick = () => openRecord(row);
     menu.querySelector("button").focus();
   }
   async function load(force = false) {
@@ -809,11 +828,20 @@
     const isUser = view === "users";
     const resource = view;
     const editing = !!row;
+    const permissionProfiles = isUser && editing && row.role === "user"
+      ? (await request("/api/admin/roles?status=all&limit=200")).data
+      : [];
+    const permissionRoleField = permissionProfiles.length || row?.permission_role_id
+      ? `<label class="field"><span>Permission role</span><select name="permission_role_id"><option value="">No permission role</option>${permissionProfiles
+          .sort((a,b)=>({Admin:0,Staff:1,User:2}[a.name]??10)-({Admin:0,Staff:1,User:2}[b.name]??10)||a.name.localeCompare(b.name))
+          .filter(profile=>profile.status==="active"||profile.id===row.permission_role_id)
+          .map(profile=>`<option value="${h(profile.id)}" ${profile.id===row.permission_role_id?"selected":""} ${profile.status==="inactive"?"disabled":""}>${h(profile.name)}${profile.status==="inactive"?" (inactive)":""}</option>`).join("")}</select></label>`
+      : "";
     const c = cfg();
     const automatic=!editing&&schema.autoCodes?.[view];
     const fields = (isUser ? [] : automatic ? [...new Set([automatic.field,...c.fields])] : c.fields).filter(field=>!(view==='employees'&&!editing&&field==='sepdate')&&!(view==='jobs'&&field==='jobprefix'));
     let body = isUser
-      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>Role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="disapproved" ${row.status === "disapproved" ? "selected" : ""}>Disapproved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
+      ? `<div class="dialog-fields"><label class="field"><span>Name</span><input name="name" maxlength="160" value="${h(row?.name || "")}" required></label><label class="field"><span>Email</span><input name="email" type="email" maxlength="254" value="${h(row?.email || "")}" required></label><label class="field"><span>System role</span><select name="role" ${user.role !== "superadmin" || row?.role === "superadmin" ? "disabled" : ""}>${["user", "admin", ...(row?.role === "superadmin" ? ["superadmin"] : [])].map((v) => `<option value="${v}" ${v === (row?.role || "user") ? "selected" : ""}>${h(v)}</option>`).join("")}</select></label>${permissionRoleField}${editing ? `<label class="field"><span>Status</span><select name="status"><option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option><option value="approved" ${row.status === "approved" ? "selected" : ""} ${user.role !== "superadmin" ? "disabled" : ""}>Approved</option><option value="disapproved" ${row.status === "disapproved" ? "selected" : ""}>Disapproved</option><option value="blocked" ${row.status === "blocked" ? "selected" : ""}>Blocked</option></select></label>` : "<p>New accounts await approval. Passwords are set through a setup link.</p>"}</div>`
       : `<div class="dialog-fields">${fields.map((f) => input(f, row, editing)).join("")}</div>`;
     if(view==='employees'&&!editing&&can('hr.jhAdd'))body+='<section class="live-employee-job"><h3>Job assignment (optional)</h3><div class="dialog-fields"><label class="field"><span>Job</span><select data-assignment="jobcode" data-lookup="jobs" data-purpose="employees"><option value="">Select a job</option></select></label><label class="field"><span>Department (optional)</span><select data-assignment="deptcode" data-lookup="departments" data-purpose="employees"><option value="">Select a department</option></select></label><label class="field"><span>Salary</span><input data-assignment="salary" type="number" min="0" step="0.01" disabled></label><label class="field"><span>Effective date</span><input data-assignment="effdate" type="date" disabled></label></div></section>';
     if(automatic?.choosePrefix)body+=`<label class="field"><span>Code prefix</span><select name="_code_prefix" required><option value="">Loading prefixes…</option></select></label>`;
@@ -836,6 +864,13 @@
       await openRecord(row);
     };
     d.querySelector(".dialog-actions").prepend(reload);
+    if(isUser&&editing){
+      const systemRole=d.querySelector('[name="role"]'),permissionRole=d.querySelector('[name="permission_role_id"]');
+      if(permissionRole&&systemRole){
+        const syncPermissionRole=()=>{permissionRole.disabled=systemRole.value!=="user";if(permissionRole.disabled)permissionRole.value="";};
+        systemRole.addEventListener("change",syncPermissionRole);syncPermissionRole();
+      }
+    }
     if(view==='employees'&&!editing&&d.querySelector('[data-assignment="jobcode"]')){
       const job=d.querySelector('[data-assignment="jobcode"]'),salary=d.querySelector('[data-assignment="salary"]'),effective=d.querySelector('[data-assignment="effdate"]'),hire=d.querySelector('[name="hiredate"]');
       job.onchange=()=>{const selected=!!job.value;for(const el of [salary,effective]){el.disabled=!selected;el.required=selected;}if(selected&&!effective.value)effective.value=hire.value;};
@@ -897,20 +932,28 @@
           if (payload.lines.some((line) => !line.prodcode))
             throw new Error("Select a product for every sale item.");
         }
-        if (!Object.keys(payload).length) {
+        const permissionRole=d.querySelector('[name="permission_role_id"]');
+        const permissionRoleChanged=isUser&&editing&&permissionRole&&!permissionRole.disabled&&(permissionRole.value||null)!==(row.permission_role_id||null);
+        delete payload.permission_role_id;
+        if (!Object.keys(payload).length&&!permissionRoleChanged) {
           d.close();
           return;
         }
-        await send(
-          editing
-            ? urlFor(rowKey(row))
-            : isUser
-              ? "/api/admin/users"
-              : "/api/" + resource,
-          editing ? (isUser ? "PUT" : "PATCH") : "POST",
-          payload,
-          row,
-        );
+        let savedRow=row;
+        if(Object.keys(payload).length){
+          const result=await send(
+            editing
+              ? urlFor(rowKey(row))
+              : isUser
+                ? "/api/admin/users"
+                : "/api/" + resource,
+            editing ? (isUser ? "PUT" : "PATCH") : "POST",
+            payload,
+            row,
+          );
+          savedRow=result.data||row;
+        }
+        if(permissionRoleChanged)await send(`/api/admin/users/${row.id}/permission-role`,"PUT",{permission_role_id:permissionRole.value||null},savedRow);
         d.close();
         await load(true);
       } catch (e) {
@@ -984,13 +1027,14 @@
   }
   function permissionsMarkup(catalogue,rights){
     const groups={};for(const [key,label]of Object.entries(catalogue))(groups[key.split('.')[0]]??=[]).push([key,label]);
-    return `<div class="live-rights-tools"><span data-rights-count></span><button type="button" class="dialog-secondary" data-all>Select all</button><button type="button" class="dialog-secondary" data-none>Clear</button></div><div class="permission-groups">${Object.entries(groups).map(([mod,items])=>`<fieldset><legend><label><input type="checkbox" data-gate="${mod}" ${rights[mod+'.view']?'checked':''}> ${h(catalogue[mod+'.view'])}</label></legend><div>${items.filter(([key])=>!key.endsWith('.view')).map(([key,text])=>`<label><input type="checkbox" data-right="${key}" ${rights[key]?'checked':''}> ${h(text)}</label>`).join('')}</div></fieldset>`).join('')}</div>`;
+    return `<div class="live-rights-tools"><span data-rights-count></span><button type="button" class="dialog-secondary" data-all>Select all</button><button type="button" class="dialog-secondary" data-none>Clear</button></div><div class="permission-groups">${Object.entries(groups).map(([mod,items])=>`<section class="permission-group"><div class="permission-group-heading"><label><input type="checkbox" data-gate="${mod}" ${rights[mod+'.view']?'checked':''}> <span>${h(catalogue[mod+'.view'])}</span></label></div><div>${items.filter(([key])=>!key.endsWith('.view')).map(([key,text])=>`<label><input type="checkbox" data-right="${key}" ${rights[key]?'checked':''}> <span>${h(text)}</span></label>`).join('')}</div></section>`).join('')}</div>`;
   }
   function bindPermissions(d){
     let locked=false;
     const read=()=>{const value={};d.querySelectorAll('[data-gate]').forEach(b=>value[b.dataset.gate+'.view']=b.checked);d.querySelectorAll('[data-right]').forEach(b=>value[b.dataset.right]=b.checked&&value[b.dataset.right.split('.')[0]+'.view']===true);return value;};
-    const refresh=()=>{d.querySelectorAll('[data-gate]').forEach(g=>{g.disabled=locked;g.closest('fieldset').querySelectorAll('[data-right]').forEach(b=>{b.disabled=locked||!g.checked;if(!g.checked)b.checked=false;});});d.querySelector('[data-rights-count]').textContent=Object.values(read()).filter(Boolean).length+' of '+Object.keys(read()).length+' permissions selected';d.querySelector('[data-all]').disabled=locked;d.querySelector('[data-none]').disabled=locked;};
-    d.querySelectorAll('[data-gate],[data-right]').forEach(b=>b.onchange=refresh);
+    const refresh=()=>{d.querySelectorAll('[data-gate]').forEach(g=>{g.disabled=locked;g.closest('.permission-group').querySelectorAll('[data-right]').forEach(b=>{b.disabled=locked||!g.checked;if(!g.checked)b.checked=false;});});d.querySelector('[data-rights-count]').textContent=Object.values(read()).filter(Boolean).length+' of '+Object.keys(read()).length+' permissions selected';d.querySelector('[data-all]').disabled=locked;d.querySelector('[data-none]').disabled=locked;};
+    d.querySelectorAll('[data-gate]').forEach(g=>g.onchange=()=>{g.closest('.permission-group').querySelectorAll('[data-right]').forEach(b=>b.checked=g.checked);refresh();});
+    d.querySelectorAll('[data-right]').forEach(b=>b.onchange=refresh);
     for(const [attr,value]of [['data-all',true],['data-none',false]])d.querySelector('['+attr+']').onclick=()=>{d.querySelectorAll('[data-gate],[data-right]').forEach(b=>b.checked=value);refresh();};
     const write=rights=>{d.querySelectorAll('[data-gate]').forEach(b=>b.checked=rights[b.dataset.gate+'.view']===true);d.querySelectorAll('[data-right]').forEach(b=>b.checked=rights[b.dataset.right]===true);refresh();};
     refresh();return {read,write,lock:value=>{locked=value;refresh();}};
@@ -999,16 +1043,42 @@
     if(!admin())return;
     try{
       const [catalogueResponse,latest]=await Promise.all([request('/api/admin/rights-catalogue'),row?request('/api/admin/roles/'+row.id):Promise.resolve({data:null})]);row=latest.data;
-      const body=`<div class="dialog-fields"><label class="field"><span>Role name</span><input name="name" maxlength="80" value="${h(row?.name||'')}" required></label><label class="field"><span>Status</span><select name="status"><option value="active" ${row?.status!=='inactive'?'selected':''}>Active</option><option value="inactive" ${row?.status==='inactive'?'selected':''}>Inactive</option></select></label><label class="field field--full"><span>Description</span><textarea name="description" rows="2" maxlength="500">${h(row?.description||'')}</textarea></label></div><p class="live-role-note">Named roles apply permissions to Users. Admin and Superadmin authority is assigned separately.</p>`+permissionsMarkup(catalogueResponse.data,row?.rights||{});
+      const statusField=row?`<label class="field"><span>Status</span><select name="status"><option value="active" ${row.status!=='inactive'?'selected':''}>Active</option><option value="inactive" ${row.status==='inactive'?'selected':''}>Inactive</option></select></label>`:'';
+      const body=`<div class="dialog-fields"><label class="field"><span>Role name</span><input name="name" maxlength="80" value="${h(row?.name||'')}" required></label>${statusField}<label class="field field--full"><span>Description</span><textarea name="description" rows="2" maxlength="500">${h(row?.description||'')}</textarea></label></div><p class="live-role-note">${row?'Inactive roles cannot be assigned until they are made active again.':'New roles are created Active.'} Named roles apply operational permissions to Users. The Admin, Staff and User presets can be edited here; system Admin and Superadmin authority is assigned separately.</p>`+permissionsMarkup(catalogueResponse.data,row?.rights||{});
       const d=showDialog(row?'Edit role':'Add role',body,'<button type="submit" class="module-primary" id="role-save">Save role</button>');
       const editor=bindPermissions(d);
-      d.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=d.querySelector('#role-save');button.disabled=true;try{await send('/api/admin/roles'+(row?'/'+row.id:''),row?'PUT':'POST',{name:d.querySelector('[name="name"]').value,description:d.querySelector('[name="description"]').value,status:d.querySelector('[name="status"]').value,rights:editor.read()},row);d.close();await load(true);}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;}finally{if(button.isConnected)button.disabled=false;}};
+      d.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=d.querySelector('#role-save');button.disabled=true;try{await send('/api/admin/roles'+(row?'/'+row.id:''),row?'PUT':'POST',{name:d.querySelector('[name="name"]').value,description:d.querySelector('[name="description"]').value,status:row?d.querySelector('[name="status"]').value:'active',rights:editor.read()},row);d.close();await load(true);}catch(error){d.querySelector('.live-dialog-notice').textContent=error.message;}finally{if(button.isConnected)button.disabled=false;}};
+    }catch(error){notice(error.message,true);}
+  }
+  async function openRoleMembers(role){
+    try{
+      const [latestRole,usersResponse]=await Promise.all([request('/api/admin/roles/'+role.id),request('/api/admin/users?status=all&limit=200')]);
+      role=latestRole.data;
+      const eligible=usersResponse.data.filter(account=>account.role==='user'&&account.status==='approved'&&!account.is_deleted&&account.permission_role_id!==role.id);
+      const already=usersResponse.data.filter(account=>account.role==='user'&&account.status==='approved'&&!account.is_deleted&&account.permission_role_id===role.id);
+      const choices=eligible.length?eligible.map(account=>`<label class="role-member-choice"><input type="checkbox" name="role-member" value="${h(account.id)}"><span><strong>${h(account.name)}</strong><small>${h(account.username||account.email)}</small></span></label>`).join(''):'<p class="live-empty-copy">Every eligible User is already assigned to this role.</p>';
+      const body=`<p class="live-role-note">Select approved User accounts to add to <strong>${h(role.name)}</strong>. Existing role members are not changed.</p>${already.length?`<p class="role-member-summary">${already.length} current member${already.length===1?'':'s'}</p>`:''}<div class="role-member-list">${choices}</div>`;
+      const footer=eligible.length&&role.status==='active'?'<button type="submit" class="module-primary" id="role-members-save">Add selected users</button>':'';
+      const d=showDialog('Add users - '+role.name,body,footer);
+      if(role.status!=='active'){d.querySelector('.live-dialog-notice').textContent='Activate this role before assigning users.';return;}
+      if(!eligible.length)return;
+      d.querySelector('form').onsubmit=async event=>{
+        event.preventDefault();
+        const selected=[...d.querySelectorAll('[name="role-member"]:checked')].map(box=>eligible.find(account=>account.id===box.value)).filter(Boolean);
+        if(!selected.length){d.querySelector('.live-dialog-notice').textContent='Select at least one User.';return;}
+        const button=d.querySelector('#role-members-save');button.disabled=true;
+        let completed=0;
+        try{
+          for(const account of selected){await send('/api/admin/users/'+account.id+'/permission-role','PUT',{permission_role_id:role.id},account);completed++;}
+          d.close();await load(true);notice(completed+' user'+(completed===1?'':'s')+' added to '+role.name+'.');
+        }catch(error){d.querySelector('.live-dialog-notice').textContent=(completed?completed+' assigned before the error. ':'')+error.message;button.disabled=false;}
+      };
     }catch(error){notice(error.message,true);}
   }
   async function openRights(row) {
     try{
       const [catalogueResponse,rightsResponse,rolesResponse]=await Promise.all([request('/api/admin/rights-catalogue'),request('/api/admin/users/'+row.id+'/rights'),row.role==='user'?request('/api/admin/roles?status=all&limit=200'):Promise.resolve({data:[]})]);
-      const fixed=row.role==='superadmin',profiles=rolesResponse.data;
+      const fixed=row.role==='superadmin',presetOrder={Admin:0,Staff:1,User:2},profiles=[...rolesResponse.data].sort((a,b)=>(presetOrder[a.name]??10)-(presetOrder[b.name]??10)||a.name.localeCompare(b.name));
       const selector=row.role==='user'?`<label class="field"><span>Permission role</span><select id="live-permission-role"><option value="">Custom permissions</option>${profiles.filter(p=>p.status==='active'||p.id===row.permission_role_id).map(p=>`<option value="${p.id}" ${p.id===row.permission_role_id?'selected':''} ${p.status==='inactive'?'disabled':''}>${h(p.name)}${p.status==='inactive'?' (inactive)':''}</option>`).join('')}</select></label><p class="live-role-note">Choose a named role to follow its permissions, or Custom permissions to edit this user only.</p>`:fixed?'<p class="live-role-note">Superadmin has fixed full access. Its permissions cannot be customized.</p>':'';
       const rights=fixed?Object.fromEntries(Object.keys(catalogueResponse.data).map(k=>[k,true])):rightsResponse.data;
       const d=showDialog('Assign rights - '+row.name,selector+permissionsMarkup(catalogueResponse.data,rights),fixed?'':'<button type="submit" class="module-primary" id="rights-save">Save rights</button>');
@@ -1139,6 +1209,16 @@
       const params=new URLSearchParams(location.search);params.set("screen",module);params.set("status","active");params.set("limit","50");
       const boot=(await request("/api/ui-bootstrap?"+params)).data;
       user=boot.user;schema=boot.schema;
+      const workspace=document.body.dataset.workspace||"admin";
+      if(workspace==="staff"&&user.workspace!=="staff"){
+        location.replace(user.workspace==="admin"?"/UI-UX/modules/dashboard/index.html":"/UI-UX/user/dashboard/index.html");
+        return;
+      }
+      if(workspace==="admin"&&user.workspace!=="admin"){
+        location.replace(user.workspace==="staff"?"/UI-UX/staff/modules/dashboard/index.html":"/UI-UX/user/dashboard/index.html");
+        return;
+      }
+      if(!boot.view&&!['user-management','administrator'].includes(module))throw new Error('This module is not permitted for your assigned role.');
       if(boot.records)initialRecords={view:boot.view,result:boot.records};
       if(lifecycle.signal.aborted)return;
       await shell();
