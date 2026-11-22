@@ -287,7 +287,7 @@
     </dialog>
 
     <dialog class="flow-dialog flow-dialog--wide" id="create-dialog" aria-labelledby="create-title">
-      <form class="flow-dialog__surface" id="create-form" novalidate>
+      <form class="flow-dialog__surface" id="create-form" autocomplete="off" novalidate>
         <button class="dialog-close" id="create-close" type="button" aria-label="Close account creation">×</button>
         <div class="dialog-heading">
           <p class="feature-kicker">Join HOPE, Inc.</p>
@@ -319,11 +319,21 @@
           </div>
           <div class="dialog-field">
             <label for="create-password">Password</label>
-            <input class="dialog-input" id="create-password" name="create-password" type="password" autocomplete="new-password" minlength="12" required />
+            <div class="dialog-password-shell">
+              <input class="dialog-input" id="create-password" name="create-password" type="password" autocomplete="off" data-1p-ignore data-lpignore="true" minlength="12" required />
+              <button class="dialog-visibility-toggle" type="button" data-password-target="create-password" aria-label="Show password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.18 0 8.8 5.6 8.95 5.84a2.1 2.1 0 0 1 0 2.32C20.8 13.4 17.18 19 12 19s-8.8-5.6-8.95-5.84a2.1 2.1 0 0 1 0-2.32C3.2 10.6 6.82 5 12 5Zm0 2c-3.92 0-6.98 4.54-7.27 5 .29.46 3.35 5 7.27 5s6.98-4.54 7.27-5C18.98 11.54 15.92 7 12 7Zm0 1.75A3.25 3.25 0 1 1 12 15.25 3.25 3.25 0 0 1 12 8.75Zm0 2A1.25 1.25 0 1 0 12 13.25 1.25 1.25 0 0 0 12 10.75Z" /></svg>
+              </button>
+            </div>
           </div>
           <div class="dialog-field">
             <label for="confirm-password">Confirm password</label>
-            <input class="dialog-input" id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="12" required />
+            <div class="dialog-password-shell">
+              <input class="dialog-input" id="confirm-password" name="confirm-password" type="password" autocomplete="off" data-1p-ignore data-lpignore="true" minlength="12" required />
+              <button class="dialog-visibility-toggle" type="button" data-password-target="confirm-password" aria-label="Show confirm password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.18 0 8.8 5.6 8.95 5.84a2.1 2.1 0 0 1 0 2.32C20.8 13.4 17.18 19 12 19s-8.8-5.6-8.95-5.84a2.1 2.1 0 0 1 0-2.32C3.2 10.6 6.82 5 12 5Zm0 2c-3.92 0-6.98 4.54-7.27 5 .29.46 3.35 5 7.27 5s6.98-4.54 7.27-5C18.98 11.54 15.92 7 12 7Zm0 1.75A3.25 3.25 0 1 1 12 15.25 3.25 3.25 0 0 1 12 8.75Zm0 2A1.25 1.25 0 1 0 12 13.25 1.25 1.25 0 0 0 12 10.75Z" /></svg>
+              </button>
+            </div>
           </div>
         </div>
 
