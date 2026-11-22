@@ -230,12 +230,21 @@ confirmPasswordInput.addEventListener("input", () => {
 
 renderPasswordStrength();
 
-function closeDialogFromBackdrop(event) {
-  if (event.target === event.currentTarget) event.currentTarget.close();
+function closeDialogOnBackdropClick(dialog) {
+  // Only close when the press both started and ended on the backdrop, so
+  // drag-selecting text in an input and releasing outside the form keeps it open.
+  let pressedBackdrop = false;
+  dialog.addEventListener("pointerdown", (event) => {
+    pressedBackdrop = event.target === dialog;
+  });
+  dialog.addEventListener("click", (event) => {
+    if (pressedBackdrop && event.target === dialog) dialog.close();
+    pressedBackdrop = false;
+  });
 }
 
-resetDialog.addEventListener("click", closeDialogFromBackdrop);
-createDialog.addEventListener("click", closeDialogFromBackdrop);
+closeDialogOnBackdropClick(resetDialog);
+closeDialogOnBackdropClick(createDialog);
 
 recoveryEmail.addEventListener("input", () => {
   recoveryEmail.setAttribute("aria-invalid", "false");

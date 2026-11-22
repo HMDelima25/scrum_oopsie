@@ -1,4 +1,17 @@
 (() => {
+  function closeDialogOnBackdropClick(dialog) {
+    // Only close when the press both started and ended on the backdrop, so
+    // drag-selecting text in an input and releasing outside the form keeps it open.
+    let pressedBackdrop = false;
+    dialog.addEventListener("pointerdown", (e) => {
+      pressedBackdrop = e.target === dialog;
+    });
+    dialog.addEventListener("click", (e) => {
+      if (pressedBackdrop && e.target === dialog) dialog.close();
+      pressedBackdrop = false;
+    });
+  }
+
   const $ = (s) => document.querySelector(s);
   const { send } = window.HopeAuthApi;
   function fieldError(input, text) {
@@ -105,9 +118,7 @@
       $("#login-success-message").textContent = error.message;
     }
   };
-  successDialog.addEventListener("click", (e) => {
-    if (e.target === successDialog) successDialog.close();
-  });
+  closeDialogOnBackdropClick(successDialog);
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : null))
     .then((result) => {
@@ -192,9 +203,7 @@
     "close",
     () => ($("#quick-email-password").value = ""),
   );
-  quickEmailDialog.addEventListener("click", (e) => {
-    if (e.target === quickEmailDialog) quickEmailDialog.close();
-  });
+  closeDialogOnBackdropClick(quickEmailDialog);
   $("#quick-email-create").onclick = () => {
     const address = $("#quick-email").value;
     quickEmailDialog.close();
@@ -233,10 +242,7 @@
   };
   window.initializeHopeRegistration({ $, matchPassword, validateInputs, fieldError, send });
   const reset = window.initializeHopeRecovery({ $, guides, email, password, matchPassword, validateInputs, fieldError, send });
-  for (const d of [create, reset])
-    d.addEventListener("click", (e) => {
-      if (e.target === d) d.close();
-    });
+  for (const d of [create, reset]) closeDialogOnBackdropClick(d);
   const highlights = [
     [
       "Built for daily operations",

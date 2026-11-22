@@ -1,4 +1,18 @@
 const {test,expect}=require('@playwright/test');
+test('Create Account stays open after drag-selecting text past the form edge',async({page})=>{
+ await page.goto('/UI-UX/index.html');
+ await page.locator('#create-account').click();
+ const dialog=page.locator('#create-dialog');
+ await expect(dialog).toBeVisible();
+ const input=page.locator('#first-name');
+ await input.fill('Selectable text');
+ const box=await input.boundingBox();
+ await page.mouse.move(box.x+box.width-4,box.y+box.height/2);
+ await page.mouse.down();
+ await page.mouse.move(4,4,{steps:5});
+ await page.mouse.up();
+ await expect(dialog).toBeVisible();
+});
 test('Create Account fields remain interactive without closing the prompt',async({page})=>{
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
